@@ -127,6 +127,9 @@ func (influx *Influx) WriteData(serie string) {
     series.Columns = append([]string{"time"}, dataSerie.Columns...)
 
     for i := 0; i < len(dataSerie.Points); i++ {
+        if dataSerie.Points[i] == nil {
+            break
+        }
         series.Points = append(series.Points, dataSerie.Points[i])
     }
 
@@ -140,6 +143,7 @@ func (influx *Influx) WriteData(serie string) {
         panic(err)
     }
 }
+
 
 func NewSession(database string, admin string, pass string) *Influx {
 
@@ -182,7 +186,6 @@ func NewSession(database string, admin string, pass string) *Influx {
     }
 
     dbexists = false
-
     //checking if grafana database exists
     for _, v := range dbs {
         if v["name"] == "grafana" {
@@ -229,12 +232,14 @@ func NewSession(database string, admin string, pass string) *Influx {
     client.DisableCompression()
     return &Influx{ Client: client, DataSeries: make(map[string]DataSerie), MaxPoints: 50 }
 }
+func (influx *Influx) GenerateTemplate() {
 
+}
 func main() {
     // parsing parameters
     file := flag.String("file", "nmonfile", "nmon file")
     admin := flag.String("admin", "admin", "influxdb administor user")
-    pass := flag.String("pass", "password", "influxdb administor password")
+    pass := flag.String("pass", "admin", "influxdb administor password")
 
     flag.Parse()
 
@@ -244,7 +249,6 @@ func main() {
     }
 
     var config Config
-    //headers := make(map[string]Header)
     influx := NewSession("nmon_reports", *admin, *pass)
     scanner := ParseFile(*file)
 
@@ -270,16 +274,23 @@ func main() {
         }
     }
 
-    scanner = ParseFile(*file)
+    // scanner = ParseFile(*file)
 
-    for scanner.Scan() {
-        switch {
-            case statsRegexp.MatchString(scanner.Text()):
-                matched := statsRegexp.FindStringSubmatch(scanner.Text())
-                step := StringToInt64(matched[1])
-                timestamp := config.GetTimestamp(step)
-                elems := strings.Split(scanner.Text(), ",")
-                influx.AddData(elems[0], timestamp, elems[2:])
-        }
-    }
+    // for scanner.Scan() {
+    //     switch {
+    //         case statsRegexp.MatchString(scanner.Text()):
+    //             matched := statsRegexp.FindStringSubmatch(scanner.Text())
+    //             step := StringToInt64(matched[1])
+    //             timestamp := config.GetTimestamp(step)
+    //             elems := strings.Split(scanner.Text(), ",")
+    //             influx.AddData(elems[0], timestamp, elems[2:])
+    //     }
+    // }
+
+    // //flushing remaining data
+    // for serie := range influx.DataSeries {
+    //     influx.WriteData(serie)
+    // }
+
+    influx.GetTemplate()
 }
