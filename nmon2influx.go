@@ -7,6 +7,7 @@ package main
 
 import (
     influxdb "github.com/influxdb/influxdb/client"
+    "text/template"
     "flag"
     "fmt"
     "regexp"
@@ -22,7 +23,7 @@ var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
 var timeRegexp = regexp.MustCompile(`^AAA,time,(\S+)`)
 var dateRegexp = regexp.MustCompile(`^AAA,date,(\S+)`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
-var headerRegexp = regexp.MustCompile(`^AAA|^BBB|,T0`)
+var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|,T\d`)
 var statsRegexp = regexp.MustCompile(`[^Z]+,T(\d+)`)
 
 type Config struct {
@@ -33,13 +34,17 @@ type Config struct {
     startTime int64
 }
 
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
 func (c *Config) StartTime() int64 {
     if c.startTime == 0 {
         const timeformat = "02-Jan-2006 15:04:05"
         t, err := time.Parse(timeformat, c.Date + " " + c.Time)
-        if err != nil {
-          panic(err)
-        }
+        check(err)
         c.startTime = t.Unix()
         fmt.Println(t.Unix())
     }
@@ -53,18 +58,15 @@ func (c *Config) GetTimestamp(step int64) int64 {
 
 func StringToInt64(s string) int64 {
     intvalue, err := strconv.Atoi(s)
-    if err != nil {
-        panic(err)
-    }
+    check(err)
+
     return int64(intvalue)
 }
 
 func ParseFile(filepath string) *bufio.Scanner {
     file, err := os.Open(filepath)
-    if err != nil {
-      fmt.Fprintln(os.Stderr, "ERROR", err)
-      os.Exit(2)
-    }
+    check(err)
+
 
     //defer file.Close()
     reader := bufio.NewReader(file)
@@ -77,12 +79,17 @@ type Influx struct {
     Client *influxdb.Client
     MaxPoints int
     DataSeries map[string]DataSerie
+    Hostname string
 }
 
 type DataSerie struct {
     Columns []string
     PointSeq int
-    Points [50][]interface{}
+    Points [10][]interface{}
+}
+
+func (influx *Influx) GetColumns(serie string) ([]string) {
+   return influx.DataSeries[serie].Columns
 }
 
 func (influx *Influx) AddData(serie string, timestamp int64, elems []string) {
@@ -91,6 +98,10 @@ func (influx *Influx) AddData(serie string, timestamp int64, elems []string) {
 
     if len(dataSerie.Columns) == 0 {
         //fmt.Printf("No defined fields for %s. No datas inserted\n", serie)
+        return
+    }
+
+    if len(dataSerie.Columns) != len(elems) {
         return
     }
 
@@ -118,12 +129,34 @@ func (influx *Influx) AddData(serie string, timestamp int64, elems []string) {
     influx.DataSeries[serie]=dataSerie
 }
 
+func (influx *Influx) WriteTemplate() {
+
+    tmpl := template.New("influxtempl")
+    tmpl.Parse(influxtempl)
+
+    // open output file
+    filename := influx.Hostname + "_dashboard"
+    fo, err := os.Create(filename)
+    check(err)
+
+    // make a write buffer
+    w := bufio.NewWriter(fo)
+    err2 := tmpl.Execute(w, influx)
+    check(err2)
+    w.Flush()
+    fo.Close()
+
+    fmt.Printf("Writing GRAFANA dashboard: %s\n",filename)
+
+}
+
 func (influx *Influx) WriteData(serie string) {
 
     dataSerie := influx.DataSeries[serie]
     series := &influxdb.Series{}
 
-    series.Name = serie
+    series.Name = influx.Hostname + "_" + serie
+
     series.Columns = append([]string{"time"}, dataSerie.Columns...)
 
     for i := 0; i < len(dataSerie.Points); i++ {
@@ -145,17 +178,15 @@ func (influx *Influx) WriteData(serie string) {
 }
 
 
-func NewSession(database string, admin string, pass string) *Influx {
-
+func (influx *Influx) InitSession(admin string, pass string) {
+    database := influx.Hostname + "_nmon"
     client, err := influxdb.NewClient(&influxdb.ClientConfig{})
-    if err != nil {
-        panic(err)
-    }
+    check(err)
+
 
     admins, err := client.GetClusterAdminList()
-    if err != nil {
-        panic(err)
-    }
+    check(err)
+
 
     if len(admins) == 1 {
         fmt.Printf("No administrator defined. Creating user %s with password %s\n", admin, pass)
@@ -165,9 +196,7 @@ func NewSession(database string, admin string, pass string) *Influx {
     }
 
     dbs, err := client.GetDatabaseList()
-    if err != nil {
-        panic(err)
-    }
+    check(err)
 
     dbexists := false
 
@@ -201,9 +230,7 @@ func NewSession(database string, admin string, pass string) *Influx {
     }
 
     users, err := client.GetDatabaseUserList(database)
-    if err != nil {
-        panic(err)
-    }
+    check(err)
 
     dbuser := database + "user"
     dbpass := "pass"
@@ -225,16 +252,17 @@ func NewSession(database string, admin string, pass string) *Influx {
         Database: database,
 
         })
-    if err != nil {
-        panic(err)
-    }
+    check(err)
 
     client.DisableCompression()
-    return &Influx{ Client: client, DataSeries: make(map[string]DataSerie), MaxPoints: 50 }
+    influx.Client = client
 }
-func (influx *Influx) GenerateTemplate() {
+
+func NewInflux() *Influx {
+    return &Influx{DataSeries: make(map[string]DataSerie), MaxPoints: 10}
 
 }
+
 func main() {
     // parsing parameters
     file := flag.String("file", "nmonfile", "nmon file")
@@ -249,14 +277,15 @@ func main() {
     }
 
     var config Config
-    influx := NewSession("nmon_reports", *admin, *pass)
+    influx := NewInflux()
+
     scanner := ParseFile(*file)
 
     for scanner.Scan() {
         switch {
             case hostRegexp.MatchString(scanner.Text()):
                 matched := hostRegexp.FindStringSubmatch(scanner.Text())
-                config.Hostname = matched[1]
+                influx.Hostname = matched[1]
             case timeRegexp.MatchString(scanner.Text()):
                 matched := timeRegexp.FindStringSubmatch(scanner.Text())
                 config.Time = matched[1]
@@ -274,6 +303,7 @@ func main() {
         }
     }
 
+    influx.InitSession(*admin, *pass)
     // scanner = ParseFile(*file)
 
     // for scanner.Scan() {
@@ -287,10 +317,9 @@ func main() {
     //     }
     // }
 
-    // //flushing remaining data
+    // // flushing remaining data
     // for serie := range influx.DataSeries {
     //     influx.WriteData(serie)
     // }
-
-    influx.GetTemplate()
+    influx.WriteTemplate()
 }
