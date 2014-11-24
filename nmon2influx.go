@@ -24,6 +24,7 @@ var timeRegexp = regexp.MustCompile(`^AAA,time,(\S+)`)
 var dateRegexp = regexp.MustCompile(`^AAA,date,(\S+)`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
 var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|,T\d`)
+var diskRegexp = regexp.MustCompile(`^DISK`)
 var statsRegexp = regexp.MustCompile(`[^Z]+,T(\d+)`)
 
 type Config struct {
@@ -85,7 +86,7 @@ type Influx struct {
 type DataSerie struct {
     Columns []string
     PointSeq int
-    Points [10][]interface{}
+    Points [50][]interface{}
 }
 
 func (influx *Influx) GetColumns(serie string) ([]string) {
@@ -179,14 +180,12 @@ func (influx *Influx) WriteData(serie string) {
 
 
 func (influx *Influx) InitSession(admin string, pass string) {
-    database := influx.Hostname + "_nmon"
+    database := "nmon_reports"
     client, err := influxdb.NewClient(&influxdb.ClientConfig{})
     check(err)
 
-
     admins, err := client.GetClusterAdminList()
     check(err)
-
 
     if len(admins) == 1 {
         fmt.Printf("No administrator defined. Creating user %s with password %s\n", admin, pass)
@@ -259,13 +258,16 @@ func (influx *Influx) InitSession(admin string, pass string) {
 }
 
 func NewInflux() *Influx {
-    return &Influx{DataSeries: make(map[string]DataSerie), MaxPoints: 10}
+    return &Influx{DataSeries: make(map[string]DataSerie), MaxPoints: 50}
 
 }
 
 func main() {
     // parsing parameters
     file := flag.String("file", "nmonfile", "nmon file")
+    tmplonly := flag.Bool("tmplonly", false, "generate template only")
+    dataonly := flag.Bool("dataonly", false, "upload data only")
+    nodisk := flag.Bool("nodisk", false, "skip disk metrics")
     admin := flag.String("admin", "admin", "influxdb administor user")
     pass := flag.String("pass", "admin", "influxdb administor password")
 
@@ -283,6 +285,10 @@ func main() {
 
     for scanner.Scan() {
         switch {
+            case diskRegexp.MatchString(scanner.Text()):
+                if *nodisk == true {
+                    continue
+                }
             case hostRegexp.MatchString(scanner.Text()):
                 matched := hostRegexp.FindStringSubmatch(scanner.Text())
                 influx.Hostname = matched[1]
@@ -303,23 +309,31 @@ func main() {
         }
     }
 
-    influx.InitSession(*admin, *pass)
-    // scanner = ParseFile(*file)
+    if *tmplonly == false {
+        influx.InitSession(*admin, *pass)
+        scanner = ParseFile(*file)
 
-    // for scanner.Scan() {
-    //     switch {
-    //         case statsRegexp.MatchString(scanner.Text()):
-    //             matched := statsRegexp.FindStringSubmatch(scanner.Text())
-    //             step := StringToInt64(matched[1])
-    //             timestamp := config.GetTimestamp(step)
-    //             elems := strings.Split(scanner.Text(), ",")
-    //             influx.AddData(elems[0], timestamp, elems[2:])
-    //     }
-    // }
+        for scanner.Scan() {
+            switch {
+                case diskRegexp.MatchString(scanner.Text()):
+                if *nodisk == true {
+                    continue
+                }
+                case statsRegexp.MatchString(scanner.Text()):
+                    matched := statsRegexp.FindStringSubmatch(scanner.Text())
+                    step := StringToInt64(matched[1])
+                    timestamp := config.GetTimestamp(step)
+                    elems := strings.Split(scanner.Text(), ",")
+                    influx.AddData(elems[0], timestamp, elems[2:])
+            }
+        }
+        // flushing remaining data
+        for serie := range influx.DataSeries {
+            influx.WriteData(serie)
+        }
+    }
 
-    // // flushing remaining data
-    // for serie := range influx.DataSeries {
-    //     influx.WriteData(serie)
-    // }
-    influx.WriteTemplate()
+    if *dataonly == false {
+        influx.WriteTemplate()
+    }
 }
