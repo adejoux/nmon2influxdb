@@ -10,6 +10,7 @@ import (
     "text/template"
     "flag"
     "fmt"
+    "sort"
     "regexp"
     "encoding/json"
     "bufio"
@@ -18,23 +19,14 @@ import (
     "os"
     "time"
 )
-
+const timeformat = "15:04:05,02-Jan-2006"
 var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
-var timeRegexp = regexp.MustCompile(`^AAA,time,(\S+)`)
-var dateRegexp = regexp.MustCompile(`^AAA,date,(\S+)`)
+var timeRegexp = regexp.MustCompile(`^ZZZZ,([^,]+),(.*)$`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
 var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|,T\d`)
 var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
 var diskRegexp = regexp.MustCompile(`^DISK`)
-var statsRegexp = regexp.MustCompile(`[^Z]+,T(\d+)`)
-
-type Config struct {
-    Hostname string
-    Date string
-    Time string
-    Interval int64
-    startTime int64
-}
+var statsRegexp = regexp.MustCompile(`[^Z]+,(T\d+)`)
 
 func check(e error) {
     if e != nil {
@@ -42,20 +34,10 @@ func check(e error) {
     }
 }
 
-func (c *Config) StartTime() int64 {
-    if c.startTime == 0 {
-        const timeformat = "02-Jan-2006 15:04:05"
-        t, err := time.Parse(timeformat, c.Date + " " + c.Time)
-        check(err)
-        c.startTime = t.Unix()
-        fmt.Println(t.Unix())
-    }
-
-    return c.startTime
-}
-
-func (c *Config) GetTimestamp(step int64) int64 {
-  return  c.StartTime() + step * c.Interval
+func ConvertTimeStamp(s string) int64 {
+  t, err := time.Parse(timeformat, s)
+  check(err)
+  return t.Unix()
 }
 
 func StringToInt64(s string) int64 {
@@ -81,8 +63,11 @@ type Influx struct {
     Client *influxdb.Client
     MaxPoints int
     DataSeries map[string]DataSerie
+    TimeStamps map[string]int64
     Hostname string
     TextContent string
+    starttime int64
+    stoptime int64
 }
 
 type DataSerie struct {
@@ -260,7 +245,7 @@ func (influx *Influx) InitSession(admin string, pass string) {
 }
 
 func NewInflux() *Influx {
-    return &Influx{DataSeries: make(map[string]DataSerie), MaxPoints: 50}
+    return &Influx{DataSeries: make(map[string]DataSerie), TimeStamps: make(map[string]int64),  MaxPoints: 50}
 
 }
 
@@ -270,6 +255,41 @@ func (influx *Influx) AppendText(text string) {
 
 func ReplaceComma(s string) (string) {
     return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
+}
+
+func (influx *Influx) GetTimeStamp(label string) int64 {
+    if val, ok := influx.TimeStamps[label]; ok {
+        return val
+    } else {
+        fmt.Printf("no time label for %s\n", label)
+        os.Exit(1)
+    }
+
+    return 0
+}
+
+func (influx *Influx) SetTimeFrame() {
+    keys := make([]string, 0, len(influx.TimeStamps))
+    for k := range influx.TimeStamps {
+        keys = append(keys, k)
+    }
+    sort.Strings(keys)
+    influx.starttime=influx.TimeStamps[keys[0]]
+    influx.stoptime=influx.TimeStamps[keys[len(keys)-1]]
+}
+
+func (influx *Influx) StartTime() string {
+    if influx.starttime == 0 {
+        influx.SetTimeFrame()
+    }
+    return time.Unix(influx.starttime,0).Format(time.RFC3339)
+}
+
+func (influx *Influx) StopTime() string {
+    if influx.stoptime == 0 {
+        influx.SetTimeFrame()
+    }
+    return time.Unix(influx.stoptime,0).Format(time.RFC3339)
 }
 
 func main() {
@@ -288,9 +308,7 @@ func main() {
         os.Exit(1)
     }
 
-    var config Config
     influx := NewInflux()
-
     scanner := ParseFile(*file)
 
     for scanner.Scan() {
@@ -299,21 +317,15 @@ func main() {
                 if *nodisk == true {
                     continue
                 }
+            case timeRegexp.MatchString(scanner.Text()):
+                matched := timeRegexp.FindStringSubmatch(scanner.Text())
+                influx.TimeStamps[matched[1]]=ConvertTimeStamp(matched[2])
             case hostRegexp.MatchString(scanner.Text()):
                 matched := hostRegexp.FindStringSubmatch(scanner.Text())
                 influx.Hostname = matched[1]
-            case timeRegexp.MatchString(scanner.Text()):
-                matched := timeRegexp.FindStringSubmatch(scanner.Text())
-                config.Time = matched[1]
-            case dateRegexp.MatchString(scanner.Text()):
-                matched := dateRegexp.FindStringSubmatch(scanner.Text())
-                config.Date = matched[1]
             case infoRegexp.MatchString(scanner.Text()):
                 matched := infoRegexp.FindStringSubmatch(scanner.Text())
                 influx.AppendText(matched[1])
-            case intervalRegexp.MatchString(scanner.Text()):
-                matched := intervalRegexp.FindStringSubmatch(scanner.Text())
-                config.Interval = StringToInt64(matched[1])
             case ! headerRegexp.MatchString(scanner.Text()):
                 elems := strings.Split(scanner.Text(), ",")
                 dataserie := influx.DataSeries[elems[0]]
@@ -334,9 +346,8 @@ func main() {
                 }
                 case statsRegexp.MatchString(scanner.Text()):
                     matched := statsRegexp.FindStringSubmatch(scanner.Text())
-                    step := StringToInt64(matched[1])
-                    timestamp := config.GetTimestamp(step)
                     elems := strings.Split(scanner.Text(), ",")
+                    timestamp := influx.GetTimeStamp(matched[1])
                     influx.AddData(elems[0], timestamp, elems[2:])
             }
         }

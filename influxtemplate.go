@@ -1038,8 +1038,8 @@ const influxtempl = `
     }
   ],
   "time": {
-    "from": "2014-11-10T00:44:32.089Z",
-    "to": "2014-11-13T16:37:30.528Z",
+    "from": "{{.StartTime}}",
+    "to": "{{.StopTime}}",
     "now": false
   },
   "templating": {
