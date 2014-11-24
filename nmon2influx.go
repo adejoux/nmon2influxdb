@@ -1,7 +1,7 @@
 // nmon2influx
 // import nmon report in Influxdb
 //version: 0.1
-// author: adejoux@djouctech.net
+// author: adejoux@djouxtech.net
 
 package main
 
@@ -24,6 +24,7 @@ var timeRegexp = regexp.MustCompile(`^AAA,time,(\S+)`)
 var dateRegexp = regexp.MustCompile(`^AAA,date,(\S+)`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
 var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|,T\d`)
+var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
 var diskRegexp = regexp.MustCompile(`^DISK`)
 var statsRegexp = regexp.MustCompile(`[^Z]+,T(\d+)`)
 
@@ -81,6 +82,7 @@ type Influx struct {
     MaxPoints int
     DataSeries map[string]DataSerie
     Hostname string
+    TextContent string
 }
 
 type DataSerie struct {
@@ -262,11 +264,19 @@ func NewInflux() *Influx {
 
 }
 
+func (influx *Influx) AppendText(text string) {
+    influx.TextContent +=  ReplaceComma(text)
+}
+
+func ReplaceComma(s string) (string) {
+    return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
+}
+
 func main() {
     // parsing parameters
     file := flag.String("file", "nmonfile", "nmon file")
-    tmplonly := flag.Bool("tmplonly", false, "generate template only")
-    dataonly := flag.Bool("dataonly", false, "upload data only")
+    nodata := flag.Bool("nodata", false, "generate template only")
+    notmpl := flag.Bool("notmpl", false, "only upload data")
     nodisk := flag.Bool("nodisk", false, "skip disk metrics")
     admin := flag.String("admin", "admin", "influxdb administor user")
     pass := flag.String("pass", "admin", "influxdb administor password")
@@ -298,6 +308,9 @@ func main() {
             case dateRegexp.MatchString(scanner.Text()):
                 matched := dateRegexp.FindStringSubmatch(scanner.Text())
                 config.Date = matched[1]
+            case infoRegexp.MatchString(scanner.Text()):
+                matched := infoRegexp.FindStringSubmatch(scanner.Text())
+                influx.AppendText(matched[1])
             case intervalRegexp.MatchString(scanner.Text()):
                 matched := intervalRegexp.FindStringSubmatch(scanner.Text())
                 config.Interval = StringToInt64(matched[1])
@@ -309,7 +322,7 @@ func main() {
         }
     }
 
-    if *tmplonly == false {
+    if *nodata == false {
         influx.InitSession(*admin, *pass)
         scanner = ParseFile(*file)
 
@@ -333,7 +346,7 @@ func main() {
         }
     }
 
-    if *dataonly == false {
+    if *notmpl == false {
         influx.WriteTemplate()
     }
 }

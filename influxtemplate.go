@@ -4,161 +4,6 @@
 
 package main
 
-const influxdiskserv = `
-    {
-      "title": "DISKREADSERV",
-      "height": "250px",
-      "editable": true,
-      "collapse": false,
-      "panels": [
-        {
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "graph",
-          "id": 9,
-          "datasource": null,
-          "renderer": "flot",
-          "x-axis": true,
-          "y-axis": true,
-          "scale": 1,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "grid": {
-            "leftMax": null,
-            "rightMax": null,
-            "leftMin": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "annotate": {
-            "enable": false
-          },
-          "resolution": 100,
-          "lines": true,
-          "fill": 5,
-          "linewidth": 1,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": true,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "percentage": false,
-          "zerofill": true,
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "query_as_alias": true
-          },
-          "targets": [
-            {{ range $index, $disk := .GetColumns "DISKREADSERV" }}{{ if $index}},{{end}}
-                {
-                    "function": "mean",
-                    "column": "{{$disk}}",
-                    "series": "{{$.Hostname}}_DISKREADSERV",
-                    "query": "select mean({{$disk}}) from \"{{$.Hostname}}_DISKREADSERV\" where $timeFilter group by time($interval) order asc",
-                    "alias": "{{$disk}}"
-                }{{end}}
-          ],
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "title": "DISKREADSERV",
-          "leftYAxisLabel": "ms"
-        }
-      ]
-    },
-    {
-      "title": "DISKWRITESERV",
-      "height": "250px",
-      "editable": true,
-      "collapse": false,
-      "panels": [
-        {
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "graph",
-          "id": 10,
-          "datasource": null,
-          "renderer": "flot",
-          "x-axis": true,
-          "y-axis": true,
-          "scale": 1,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "grid": {
-            "leftMax": null,
-            "rightMax": null,
-            "leftMin": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "annotate": {
-            "enable": false
-          },
-          "resolution": 100,
-          "lines": true,
-          "fill": 5,
-          "linewidth": 1,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": true,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "percentage": false,
-          "zerofill": true,
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "query_as_alias": true
-          },
-          "targets": [
-            {{ range $index, $disk := .GetColumns "DISKWRITESERV" }}{{ if $index}},{{end}}
-                {
-                    "function": "mean",
-                    "column": "{{$disk}}",
-                    "series": "{{$.Hostname}}_DISKWRITESERV",
-                    "query": "select mean({{$disk}}) from \"{{$.Hostname}}_DISKWRITESERV\" where $timeFilter group by time($interval) order asc",
-                    "alias": "{{$disk}}"
-                }{{end}}
-          ],
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "title": "DISKWRITESERV",
-          "leftYAxisLabel": "ms"
-        }
-      ]
-    }
-    `
-
 const influxtempl = `
 {
   "id": null,
@@ -170,6 +15,25 @@ const influxtempl = `
   "editable": true,
   "hideControls": false,
   "rows": [
+      {
+      "title": "INFORMATION",
+      "height": "250px",
+      "editable": true,
+      "collapse": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "type": "text",
+          "id": 10,
+          "mode": "html",
+          "content": "<table>{{.TextContent}}</table>",
+          "style": {},
+          "title": "INFORMATION"
+        }
+      ]
+    },
     {
       "title": "CPU",
       "height": "250px",
@@ -178,7 +42,7 @@ const influxtempl = `
       "panels": [
         {
           "error": false,
-          "span": 6,
+          "span": 4,
           "editable": true,
           "type": "graph",
           "id": 1,
@@ -241,7 +105,7 @@ const influxtempl = `
             },
             {
               "function": "mean",
-              "column": "User%",
+              "column": "Sys%",
               "series": "{{$.Hostname}}_CPU_ALL",
               "query": "select mean(\"Sys%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Sys%",
@@ -250,7 +114,7 @@ const influxtempl = `
             },
             {
               "function": "mean",
-              "column": "User%",
+              "column": "Wait%",
               "series": "{{$.Hostname}}_CPU_ALL",
               "query": "select mean(\"Wait%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Wait%",
@@ -259,7 +123,7 @@ const influxtempl = `
             },
             {
               "function": "mean",
-              "column": "User%",
+              "column": "Idle%",
               "series": "{{$.Hostname}}_CPU_ALL",
               "query": "select mean(\"Idle%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Idle%",
@@ -274,7 +138,7 @@ const influxtempl = `
         },
         {
           "error": false,
-          "span": 6,
+          "span": 4,
           "editable": true,
           "type": "graph",
           "id": 2,
@@ -302,12 +166,12 @@ const influxtempl = `
           },
           "resolution": 100,
           "lines": true,
-          "fill": 0,
+          "fill": 1,
           "linewidth": 1,
           "points": false,
           "pointradius": 5,
           "bars": false,
-          "stack": false,
+          "stack": true,
           "legend": {
             "show": true,
             "values": false,
@@ -337,10 +201,19 @@ const influxtempl = `
             },
             {
               "function": "mean",
-              "column": "usedPoolCPU%",
+              "column": "EC_Sys%",
               "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"usedPoolCPU%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
-              "alias": "usedPoolCPU%",
+              "query": "select mean(\"EC_Sys%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "alias": "EC_Sys%",
+              "rawQuery": true,
+              "hide": false
+            },
+            {
+              "function": "mean",
+              "column": "EC_Wait%",
+              "series": "{{$.Hostname}}_LPAR",
+              "query": "select mean(\"EC_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "alias": "EC_Wait%",
               "rawQuery": true,
               "hide": false
             },
@@ -350,6 +223,75 @@ const influxtempl = `
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"EC_Idle%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_Idle%",
+              "rawQuery": true,
+              "hide": false
+            }
+          ],
+          "aliasColors": {},
+          "seriesOverrides": [],
+          "title": "LPAR",
+          "leftYAxisLabel": "%"
+        },
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "graph",
+          "id": 2,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "leftMax": null,
+            "rightMax": null,
+            "leftMin": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "function": "mean",
+              "column": "VP_User%",
+              "series": "{{$.Hostname}}_LPAR",
+              "query": "select mean(\"VP_User%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "alias": "VP_User%",
               "rawQuery": true,
               "hide": false
             },
@@ -364,16 +306,16 @@ const influxtempl = `
             },
             {
               "function": "mean",
-              "column": "VP_User%",
+              "column": "VP_Wait%",
               "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"VP_User%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
-              "alias": "VP_User%",
+              "query": "select mean(\"VP_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "alias": "VP_Wait%",
               "rawQuery": true,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "VP_User%",
+              "column": "VP_Idle%",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"VP_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_Wait%",
@@ -432,12 +374,12 @@ const influxtempl = `
           "stack": false,
           "legend": {
             "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
+            "values": true,
+            "min": true,
+            "max": true,
             "current": false,
             "total": false,
-            "avg": false
+            "avg": true
           },
           "percentage": false,
           "zerofill": true,
@@ -448,6 +390,13 @@ const influxtempl = `
             "query_as_alias": true
           },
           "targets": [
+            {
+              "function": "mean",
+              "column": "PhysicalCPU",
+              "series": "{{$.Hostname}}_LPAR",
+              "query": "select mean(PhysicalCPU) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "alias": "PhysicalCPU"
+            },
             {
               "function": "mean",
               "column": "entitled",
@@ -502,11 +451,11 @@ const influxtempl = `
       "title": "MEM",
       "height": "250px",
       "editable": true,
-      "collapse": false,
+      "collapse": true,
       "panels": [
         {
           "error": false,
-          "span": 6,
+          "span": 4,
           "editable": true,
           "type": "graph",
           "id": 4,
@@ -598,7 +547,7 @@ const influxtempl = `
         },
         {
           "error": false,
-          "span": 6,
+          "span": 4,
           "editable": true,
           "type": "graph",
           "id": 5,
@@ -687,6 +636,91 @@ const influxtempl = `
           "seriesOverrides": [],
           "title": "MEM",
           "leftYAxisLabel": "MB"
+        },
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "graph",
+          "id": 5,
+          "datasource": null,
+          "renderer": "flot",
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "grid": {
+            "leftMax": null,
+            "rightMax": null,
+            "leftMin": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "resolution": 100,
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": true,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "percentage": false,
+          "zerofill": true,
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "targets": [
+            {
+              "function": "mean",
+              "column": "Process%",
+              "series": "{{$.Hostname}}_MEMNEW",
+              "query": "select mean(\"Process%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
+              "rawQuery": true,
+              "alias": "Process%"
+            },
+            {
+              "function": "mean",
+              "column": "FScache%",
+              "series": "{{$.Hostname}}_MEMNEW",
+              "query": "select mean(\"FScache%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
+              "rawQuery": true,
+              "alias": "FScache%"
+            },
+            {
+              "function": "mean",
+              "column": "System%",
+              "series": "{{$.Hostname}}_MEMNEW",
+              "query": "select mean(\"System%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
+              "rawQuery": true,
+              "alias": "System%"
+            }
+
+          ],
+          "aliasColors": {},
+          "seriesOverrides": [],
+          "title": "MEMNEW",
+          "leftYAxisLabel": "MB"
         }
       ]
     },
@@ -694,7 +728,7 @@ const influxtempl = `
       "title": "IOADAPT",
       "height": "250px",
       "editable": true,
-      "collapse": false,
+      "collapse": true,
       "panels": [
         {
           "error": false,
@@ -774,7 +808,7 @@ const influxtempl = `
       "title": "NET",
       "height": "250px",
       "editable": true,
-      "collapse": false,
+      "collapse": true,
       "panels": [
         {
           "error": false,
@@ -850,7 +884,7 @@ const influxtempl = `
       "title": "PAGE",
       "height": "250px",
       "editable": true,
-      "collapse": false,
+      "collapse": true,
       "panels": [
         {
           "error": false,
@@ -969,7 +1003,6 @@ const influxtempl = `
         }
       ]
     }
-
   ],
   "nav": [
     {
