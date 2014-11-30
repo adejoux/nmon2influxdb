@@ -10,6 +10,7 @@ import (
     "text/template"
     "flag"
     "fmt"
+    "path"
     "sort"
     "regexp"
     "encoding/json"
@@ -80,6 +81,16 @@ func (influx *Influx) GetColumns(serie string) ([]string) {
    return influx.DataSeries[serie].Columns
 }
 
+func (influx *Influx) GetFilteredColumns(serie string, filter string) ([]string) {
+    var res []string
+    for _, field := range influx.DataSeries[serie].Columns {
+        if strings.Contains(field,filter) {
+            res = append(res,field)
+        }
+    }
+    return res
+}
+
 func (influx *Influx) AddData(serie string, timestamp int64, elems []string) {
 
     dataSerie := influx.DataSeries[serie]
@@ -117,10 +128,20 @@ func (influx *Influx) AddData(serie string, timestamp int64, elems []string) {
     influx.DataSeries[serie]=dataSerie
 }
 
-func (influx *Influx) WriteTemplate() {
+func (influx *Influx) WriteTemplate(tmplfile string) {
 
-    tmpl := template.New("influxtempl")
-    tmpl.Parse(influxtempl)
+    var tmplname string
+    tmpl := template.New("grafana")
+
+    if _, err := os.Stat(tmplfile); os.IsNotExist(err) {
+        fmt.Printf("no such file or directory: %s\n", tmplfile)
+        fmt.Printf("ERROR: unable to parse grafana template. Using default template.\n")
+        tmpl.Parse(influxtempl)
+        tmplname="grafana"
+    } else {
+        tmpl.ParseFiles(tmplfile)
+        tmplname=path.Base(tmplfile)
+    }
 
     // open output file
     filename := influx.Hostname + "_dashboard"
@@ -129,7 +150,7 @@ func (influx *Influx) WriteTemplate() {
 
     // make a write buffer
     w := bufio.NewWriter(fo)
-    err2 := tmpl.Execute(w, influx)
+    err2 := tmpl.ExecuteTemplate(w, tmplname, influx)
     check(err2)
     w.Flush()
     fo.Close()
@@ -295,8 +316,9 @@ func (influx *Influx) StopTime() string {
 func main() {
     // parsing parameters
     file := flag.String("file", "nmonfile", "nmon file")
-    nodata := flag.Bool("nodata", false, "generate template only")
-    notmpl := flag.Bool("notmpl", false, "only upload data")
+    tmplfile := flag.String("tmplfile", "tmplfile", "grafana dashboard template")
+    nodata := flag.Bool("nodata", false, "generate dashboard only")
+    nodboard := flag.Bool("nodboard", false, "only upload data")
     nodisk := flag.Bool("nodisk", false, "skip disk metrics")
     admin := flag.String("admin", "admin", "influxdb administor user")
     pass := flag.String("pass", "admin", "influxdb administor password")
@@ -357,7 +379,7 @@ func main() {
         }
     }
 
-    if *notmpl == false {
-        influx.WriteTemplate()
+    if *nodboard == false {
+        influx.WriteTemplate(*tmplfile)
     }
 }
