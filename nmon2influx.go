@@ -29,6 +29,10 @@ var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
 var diskRegexp = regexp.MustCompile(`^DISK`)
 var statsRegexp = regexp.MustCompile(`[^Z]+,(T\d+)`)
 
+
+//
+//helper functions
+//
 func check(e error) {
     if e != nil {
         panic(e)
@@ -41,17 +45,9 @@ func ConvertTimeStamp(s string) int64 {
   return t.Unix()
 }
 
-func StringToInt64(s string) int64 {
-    intvalue, err := strconv.Atoi(s)
-    check(err)
-
-    return int64(intvalue)
-}
-
 func ParseFile(filepath string) *bufio.Scanner {
     file, err := os.Open(filepath)
     check(err)
-
 
     //defer file.Close()
     reader := bufio.NewReader(file)
@@ -59,6 +55,30 @@ func ParseFile(filepath string) *bufio.Scanner {
     scanner.Split(bufio.ScanLines)
     return scanner
 }
+
+func (influx *Influx) AppendText(text string) {
+    influx.TextContent +=  ReplaceComma(text)
+}
+
+func ReplaceComma(s string) (string) {
+    return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
+}
+
+//
+// DataSerie structure
+// contains the columns and points to insert in InfluxDB
+//
+
+type DataSerie struct {
+    Columns []string
+    PointSeq int
+    Points [50][]interface{}
+}
+
+//
+// influx structure
+// contains the main structures and methods used to parse nmon files and upload data in Influxdb
+//
 
 type Influx struct {
     Client *influxdb.Client
@@ -71,10 +91,21 @@ type Influx struct {
     stoptime int64
 }
 
-type DataSerie struct {
-    Columns []string
-    PointSeq int
-    Points [50][]interface{}
+// initialize a Influx structure
+func NewInflux() *Influx {
+    return &Influx{DataSeries: make(map[string]DataSerie), TimeStamps: make(map[string]int64),  MaxPoints: 50}
+
+}
+
+func (influx *Influx) GetTimeStamp(label string) int64 {
+    if val, ok := influx.TimeStamps[label]; ok {
+        return val
+    } else {
+        fmt.Printf("no time label for %s\n", label)
+        os.Exit(1)
+    }
+
+    return 0
 }
 
 func (influx *Influx) GetColumns(serie string) ([]string) {
@@ -265,30 +296,6 @@ func (influx *Influx) InitSession(admin string, pass string) {
     influx.Client = client
 }
 
-func NewInflux() *Influx {
-    return &Influx{DataSeries: make(map[string]DataSerie), TimeStamps: make(map[string]int64),  MaxPoints: 50}
-
-}
-
-func (influx *Influx) AppendText(text string) {
-    influx.TextContent +=  ReplaceComma(text)
-}
-
-func ReplaceComma(s string) (string) {
-    return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
-}
-
-func (influx *Influx) GetTimeStamp(label string) int64 {
-    if val, ok := influx.TimeStamps[label]; ok {
-        return val
-    } else {
-        fmt.Printf("no time label for %s\n", label)
-        os.Exit(1)
-    }
-
-    return 0
-}
-
 func (influx *Influx) SetTimeFrame() {
     keys := make([]string, 0, len(influx.TimeStamps))
     for k := range influx.TimeStamps {
@@ -318,7 +325,7 @@ func main() {
     file := flag.String("file", "nmonfile", "nmon file")
     tmplfile := flag.String("tmplfile", "tmplfile", "grafana dashboard template")
     nodata := flag.Bool("nodata", false, "generate dashboard only")
-    nodboard := flag.Bool("nodboard", false, "only upload data")
+    nodashboard := flag.Bool("nodashboard", false, "only upload data")
     nodisk := flag.Bool("nodisk", false, "skip disk metrics")
     admin := flag.String("admin", "admin", "influxdb administor user")
     pass := flag.String("pass", "admin", "influxdb administor password")
@@ -379,7 +386,7 @@ func main() {
         }
     }
 
-    if *nodboard == false {
+    if *nodashboard == false {
         influx.WriteTemplate(*tmplfile)
     }
 }
