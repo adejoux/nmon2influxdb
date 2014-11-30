@@ -218,7 +218,7 @@ func (influx *Influx) WriteData(serie string) {
 }
 
 
-func (influx *Influx) InitSession(admin string, pass string) {
+func (influx *Influx) InitSession(host string, user string, pass string) {
     database := "nmon_reports"
     client, err := influxdb.NewClient(&influxdb.ClientConfig{})
     check(err)
@@ -227,8 +227,8 @@ func (influx *Influx) InitSession(admin string, pass string) {
     check(err)
 
     if len(admins) == 1 {
-        fmt.Printf("No administrator defined. Creating user %s with password %s\n", admin, pass)
-        if err := client.CreateClusterAdmin(admin, pass); err != nil {
+        fmt.Printf("No administrator defined. Creating user %s with password %s\n", user, pass)
+        if err := client.CreateClusterAdmin(user, pass); err != nil {
             panic(err)
         }
     }
@@ -268,10 +268,10 @@ func (influx *Influx) InitSession(admin string, pass string) {
     }
 
     client, err = influxdb.NewClient(&influxdb.ClientConfig{
-        Username: dbuser,
-        Password: dbpass,
+        Host: host,
+        Username: user,
+        Password: pass,
         Database: database,
-
         })
     check(err)
 
@@ -310,7 +310,8 @@ func main() {
     nodata := flag.Bool("nodata", false, "generate dashboard only")
     nodashboard := flag.Bool("nodashboard", false, "only upload data")
     nodisk := flag.Bool("nodisk", false, "skip disk metrics")
-    admin := flag.String("admin", "admin", "influxdb administor user")
+    host := flag.String("host", "localhost:8086", "influxdb server and port")
+    user := flag.String("user", "admin", "influxdb administor user")
     pass := flag.String("pass", "admin", "influxdb administor password")
 
     flag.Parse()
@@ -347,7 +348,7 @@ func main() {
     }
 
     if *nodata == false {
-        influx.InitSession(*admin, *pass)
+        influx.InitSession(*host, *user, *pass)
         scanner = ParseFile(*file)
 
         for scanner.Scan() {
