@@ -267,23 +267,6 @@ func (influx *Influx) InitSession(admin string, pass string) {
         }
     }
 
-    users, err := client.GetDatabaseUserList(database)
-    check(err)
-
-    dbuser := database + "user"
-    dbpass := "pass"
-
-    if len(users) == 0 {
-        fmt.Printf("Creating database user : %s\n", dbuser)
-        if err := client.CreateDatabaseUser(database, dbuser, dbpass); err != nil {
-            panic(err)
-        }
-
-        if err := client.AlterDatabasePrivilege(database, dbuser, true); err != nil {
-            panic(err)
-        }
-    }
-
     client, err = influxdb.NewClient(&influxdb.ClientConfig{
         Username: dbuser,
         Password: dbpass,
