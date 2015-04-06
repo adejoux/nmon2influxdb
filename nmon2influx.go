@@ -220,7 +220,7 @@ func (influx *Influx) WriteData(serie string) {
 
 func (influx *Influx) InitSession(host string, user string, pass string) {
     database := "nmon_reports"
-    client, err := influxdb.NewClient(&influxdb.ClientConfig{})
+    client, err := influxdb.NewClient(&influxdb.ClientConfig{Host: host})
     check(err)
 
     admins, err := client.GetClusterAdminList()
