@@ -24,7 +24,7 @@ const timeformat = "15:04:05,02-Jan-2006"
 var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
 var timeRegexp = regexp.MustCompile(`^ZZZZ,([^,]+),(.*)$`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
-var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|,T\d`)
+var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|^TOP|,T\d`)
 var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
 var diskRegexp = regexp.MustCompile(`^DISK`)
 var statsRegexp = regexp.MustCompile(`[^Z]+,(T\d+)`)
@@ -340,7 +340,15 @@ func main() {
                 matched := infoRegexp.FindStringSubmatch(scanner.Text())
                 influx.AppendText(matched[1])
             case ! headerRegexp.MatchString(scanner.Text()):
+                if len(scanner.Text()) == 0 {
+                    continue
+                }
+
                 elems := strings.Split(scanner.Text(), ",")
+                if len(elems) < 3 {
+                    fmt.Printf("error parsing the following line : %s\n", scanner.Text() )
+                    os.Exit(1)
+                }
                 dataserie := influx.DataSeries[elems[0]]
                 dataserie.Columns = elems[2:]
                 influx.DataSeries[elems[0]]=dataserie
