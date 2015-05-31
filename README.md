@@ -1,4 +1,4 @@
-nmon2influx
+nmon2influxdb
 ===========
 
 This application take a nmon file and upload it in a [InfluxDB](influxdb.com) database.
@@ -8,17 +8,17 @@ It's working on linux only for now.
 Download
 ========
 
-I made available a compiled version for linux x86_64 on Dropbox : https://www.dropbox.com/s/zylemeaas1w2o2g/nmon2influx
+I made available a compiled version for linux x86_64 on Dropbox : https://www.dropbox.com/s/3keh5d6umnvcwv8/nmon2influxdb?dl=0
 
 Else you can download the git repository and build the binary from source(you need to have a working GO environment):
 
 ~~~
-git clone https://github.com/adejoux/nmon2influx
-cd nmon2influx
+git clone https://github.com/adejoux/nmon2influxdb
+cd nmon2influxdb
 go build
 ~~~
 
-nmon2influx will upload all nmon data in influxDB in series.
+nmon2influxdb will upload all nmon data in InfluxDB in series.
 
 If you import a nmon file for server **testsrv**, it will create series starting by the server hostname.
 
@@ -29,19 +29,19 @@ You can list all series stored in InfluxDB by executing "list series" command.
 InfluxDB and Grafana
 ====================
 
-You need a working InfluxDB database to use **nmon2influx**.
+You need a working InfluxDB database to use **nmon2influxdb**.
 
 You can use also my influx_grafana docker image :
 
-    # docker pull adejoux/influxdb_grafana
+    # docker pull adejoux/docker-influxdb-grafana
 
 To start the container :
 
-    # docker run -d -p 80:80 -p 8083:8083 -p 8086:8086 --name="nmon_reports3" -t adejoux/influxdb_grafana
+    # docker run -d -p 3000:3000 -p 8083:8083 -p 8086:8086 --name="nmon_reports" -t adejoux/docker-influxdb-grafana
 
 The git repository of this image is available at : [docker_influxdb_grafana](https://github.com/adejoux/docker_influxdb_grafana)
 
-Grafana will be available at url : [http://localhost/grafana](http://localhost/grafana)
+Grafana will be available at url : [http://localhost:3000](http://localhost:3000)
 
 InfluxDB administration interface will be available at : [http://localhost:8083](http://localhost:8083)
 
@@ -49,15 +49,61 @@ InfluxDB administration interface will be available at : [http://localhost:8083]
 Usage
 =======
 
-The different parameters are :
-  * -file="nmonfile": nmon file
-  *  -nodashboard=false: only upload data
-  *  -nodata=false: generate dashboard only
-  *  -nodisk=false: skip disk metrics
-  *  -pass="admin": influxdb administor password
-  *  -host="localhost:8086": influxdb server and port
-  *  -tmplfile="tmplfile": grafana dashboard template
-  *  -user="admin": influxdb administor user
+~~~
+nmon2influxdb
+NAME:
+   nmon2influxdb - upload NMON stats to InfluxDB database
+
+USAGE:
+   nmon2influxdb [global options] command [command options] [arguments...]
+
+VERSION:
+   0.2.0
+
+AUTHOR(S):
+   Alain Dejoux <adejoux@djouxtech.net>
+
+COMMANDS:
+   import import a nmon file
+   dashboard  generate a dashboard from a nmon file
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --server, -s "localhost" InfluxDB server and port
+   --port "8086"    InfluxDB port
+   --db, -d "nmon_reports"  InfluxDB database
+   --user, -u "root"    InfluxDB administrator user
+   --pass, -p "root"    InfluxDB administrator pass
+   --debug      debug mode
+   --help, -h     show help
+   --version, -v    print the version
+~~~
+
+~~~
+nmon2influxdb import -h
+NAME:
+   import - import a nmon file
+
+USAGE:
+   command import [command options] [arguments...]
+
+OPTIONS:
+   --nodisks, --nd  add disk metrics
+   --cpus, -c   add per cpu metrics
+~~~
+
+~~~
+nmon2influxdb dashboard -h
+NAME:
+   dashboard - generate a dashboard from a nmon file
+
+USAGE:
+   command dashboard [command options] [arguments...]
+
+OPTIONS:
+   --template, -t optional template file to use
+
+~~~
 
 Examples
 ========
@@ -65,46 +111,29 @@ Examples
 Importing a nmon file :
 
 ~~~
-# nmon2influx -file=testsrv_141114_0000.nmon
-administrator not defined. Creating user admin with password admin
-Creating database : nmon_reports
-Creating database : grafana
+# nmon2influxdb import testsrv_141114_0000.nmon
+File testsrv_141114_0000.nmon imported !
+~~~
+
+Generate a dashboard from the NMON file :
+~~~
+nmon2influxdb dashboard testsrv_141114_0000.nmon
 Writing GRAFANA dashboard: testsrv_dashboard
 ~~~
 
 Importing a nmon file without the disk data :
 ~~~
-# nmon2influx -nodisk -file=testsrv_141114_0000.nmon
-Writing GRAFANA dashboard: testsrv_dashboard
-~~~
-
-Do not generate the grafana dashboard :
-
-~~~
-# nmon2influx -nodashboard -file=testsrv_141114_0000.nmon
-~~~
-
-Generating only the grafana dashboard :
-
-~~~
-# nmon2influx -nodata -file=testsrv_141114_0000.nmon
-Writing GRAFANA dashboard: testsrv_dashboard
-~~~
-
-Generating only a grafana dashboard but using a specific template :
-
-~~~
-# nmon2influx -nodata -file=testsrv_141114_0000.nmon -tmplfile=grafana.json.tmpl
+# nmon2influx import -nodisks testsrv_141114_0000.nmon
 Writing GRAFANA dashboard: testsrv_dashboard
 ~~~
 
 template
 ========
 
-**nmon2influx** use a default template internally. It's the one you find in the file **grafana.json.tmpl**.
+**nmon2influxdb** use a default template internally. It's the one you find in the file **grafana.json.tmpl**.
 
 It's possible to override it. Grafana dashboard are defined in json.
-nmon2influx use test/template to extend the json file.
+nmon2influxdb use test/template to extend the json file.
 For now, it's still not evolved and is mainly standard GO.
 
 * **.GetColumns "NMONCATEGORY"** : will return every columns registered in influxdb for [hostname]_[NMON CATEGORY]

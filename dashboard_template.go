@@ -10,7 +10,7 @@ const influxtempl = `
   "title": "{{.Hostname}} nmon report",
   "originalTitle": "{{.Hostname}} nmon report",
   "tags": [],
-  "style": "dark",
+  "style": "light",
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
@@ -46,7 +46,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 1,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -96,38 +96,38 @@ const influxtempl = `
           "targets": [
             {
               "function": "mean",
-              "column": "User%",
+              "column": "\"User%\"",
               "series": "{{$.Hostname}}_CPU_ALL",
               "query": "select mean(\"User%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "User%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "Sys%",
+              "column": "\"Sys%\"",
               "series": "{{$.Hostname}}_CPU_ALL",
               "query": "select mean(\"Sys%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Sys%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "Wait%",
+              "column": "\"Wait%\"",
               "series": "{{$.Hostname}}_CPU_ALL",
               "query": "select mean(\"Wait%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Wait%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "Idle%",
+              "column": "\"Idle%\"",
               "series": "{{$.Hostname}}_CPU_ALL",
               "query": "select mean(\"Idle%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Idle%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             }
           ],
@@ -142,7 +142,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 2,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -192,38 +192,38 @@ const influxtempl = `
           "targets": [
             {
               "function": "mean",
-              "column": "EC_User%",
+              "column": "\"EC_User%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"EC_User%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_User%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "EC_Sys%",
+              "column": "\"EC_Sys%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"EC_Sys%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_Sys%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "EC_Wait%",
+              "column": "\"EC_Wait%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"EC_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_Wait%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "EC_Idle%",
+              "column": "\"EC_Idle%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"EC_Idle%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_Idle%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             }
           ],
@@ -238,7 +238,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 2,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -288,38 +288,38 @@ const influxtempl = `
           "targets": [
             {
               "function": "mean",
-              "column": "VP_User%",
+              "column": "\"VP_User%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"VP_User%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_User%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "VP_Sys%",
+              "column": "\"VP_Sys%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"VP_Sys%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_Sys%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "VP_Wait%",
+              "column": "\"VP_Wait%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"VP_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_Wait%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             },
             {
               "function": "mean",
-              "column": "VP_Idle%",
+              "column": "\"VP_Idle%\"",
               "series": "{{$.Hostname}}_LPAR",
               "query": "select mean(\"VP_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_Wait%",
-              "rawQuery": true,
+              "rawQuery": false,
               "hide": false
             }
           ],
@@ -342,7 +342,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 6,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -459,7 +459,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 4,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -509,34 +509,34 @@ const influxtempl = `
           "targets": [
             {
               "function": "mean",
-              "column": "%minperm",
+              "column": "\"%minperm\"",
               "series": "{{$.Hostname}}_MEMUSE",
               "query": "select mean(\"%minperm\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "%minperm"
             },
             {
               "function": "mean",
-              "column": "%minperm",
+              "column": "\"%maxperm\"",
               "series": "{{$.Hostname}}_MEMUSE",
               "query": "select mean(\"%maxperm\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "%maxperm"
             },
             {
               "function": "mean",
-              "column": "%numperm",
+              "column": "\"%numperm\"",
               "series": "{{$.Hostname}}_MEMUSE",
               "query": "select mean(\"%numperm\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "%numperm"
             },
             {
               "function": "mean",
-              "column": "%numperm",
+              "column": "\"%numclient\"",
               "series": "{{$.Hostname}}_MEMUSE",
               "query": "select mean(\"%numclient\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "%numclient"
             }
           ],
@@ -551,7 +551,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 5,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -601,34 +601,34 @@ const influxtempl = `
           "targets": [
             {
               "function": "mean",
-              "column": "Real free(MB)",
+              "column": "\"Real free(MB)\"",
               "series": "{{$.Hostname}}_MEM",
               "query": "select mean(\"Real free(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "Real free(MB)"
             },
             {
               "function": "mean",
-              "column": "Virtual free(MB)",
+              "column": "\"Virtual free(MB)\"",
               "series": "{{$.Hostname}}_MEM",
               "query": "select mean(\"Virtual free(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "Virtual free(MB)"
             },
             {
               "function": "mean",
-              "column": "Real total(MB)",
+              "column": "\"Real total(MB)\"",
               "series": "{{$.Hostname}}_MEM",
               "query": "select mean(\"Real total(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "Real total(MB)"
             },
             {
               "function": "mean",
-              "column": "Virtual total(MB)",
+              "column": "\"Virtual total(MB)\"",
               "series": "{{$.Hostname}}_MEM",
               "query": "select mean(\"Virtual total(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "Virtual total(MB)"
             }
           ],
@@ -643,7 +643,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 5,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -693,26 +693,26 @@ const influxtempl = `
           "targets": [
             {
               "function": "mean",
-              "column": "Process%",
+              "column": "\"Process%\"",
               "series": "{{$.Hostname}}_MEMNEW",
               "query": "select mean(\"Process%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "Process%"
             },
             {
               "function": "mean",
-              "column": "FScache%",
+              "column": "\"FScache%\"",
               "series": "{{$.Hostname}}_MEMNEW",
               "query": "select mean(\"FScache%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "FScache%"
             },
             {
               "function": "mean",
-              "column": "System%",
+              "column": "\"System%\"",
               "series": "{{$.Hostname}}_MEMNEW",
               "query": "select mean(\"System%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
-              "rawQuery": true,
+              "rawQuery": false,
               "alias": "System%"
             }
 
@@ -736,7 +736,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 3,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -759,12 +759,12 @@ const influxtempl = `
             "enable": false
           },
           "resolution": 100,
-          "lines": false,
-          "fill": 0,
+          "lines": true,
+          "fill": 4,
           "linewidth": 1,
           "points": false,
           "pointradius": 5,
-          "bars": true,
+          "bars": false,
           "stack": true,
           "legend": {
             "show": true,
@@ -784,13 +784,13 @@ const influxtempl = `
             "query_as_alias": true
           },
           "targets": [
-            {{ range $index, $adapter := .GetColumns "IOADAPT" }}{{ if $index}},{{end}}
+            {{ range $index, $adapter := .GetFilteredColumns "IOADAPT"  "-KB/s"}}{{ if $index}},{{end}}
                 {
                   "function": "mean",
-                  "column": "{{$adapter}}",
+                  "column": "\"{{$adapter}}\"",
                   "series": "{{$.Hostname}}_IOADAPT",
                   "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_IOADAPT\" where $timeFilter group by time($interval) order asc",
-                  "rawQuery": true,
+                  "rawQuery": false,
                   "alias": "{{$adapter}}"
                 }{{end}}
           ],
@@ -814,7 +814,6 @@ const influxtempl = `
             "editable": true,
             "type": "graph",
             "id": 3,
-            "datasource": null,
             "renderer": "flot",
             "x-axis": true,
             "y-axis": true,
@@ -865,10 +864,10 @@ const influxtempl = `
               {{ range $index, $adapter := .GetColumns "SEA" }}{{ if $index}},{{end}}
                   {
                     "function": "mean",
-                    "column": "{{$adapter}}",
+                    "column": "\"{{$adapter}}\"",
                     "series": "{{$.Hostname}}_SEA",
                     "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_SEA\" where $timeFilter group by time($interval) order asc",
-                    "rawQuery": true,
+                    "rawQuery": false,
                     "alias": "{{$adapter}}"
                   }{{end}}
             ],
@@ -893,7 +892,7 @@ const influxtempl = `
             "editable": true,
             "type": "graph",
             "id": 3,
-            "datasource": null,
+            "datasource": "{{ .DataSource }}",
             "renderer": "flot",
             "x-axis": true,
             "y-axis": true,
@@ -944,10 +943,10 @@ const influxtempl = `
               {{ range $index, $adapter := .GetFilteredColumns "NPIV" "e-KB"}}{{ if $index}},{{end}}
                   {
                     "function": "mean",
-                    "column": "{{$adapter}}",
+                    "column": "\"{{$adapter}}\"",
                     "series": "{{$.Hostname}}_NPIV",
                     "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_NPIV\" where $timeFilter group by time($interval) order asc",
-                    "rawQuery": true,
+                    "rawQuery": false,
                     "alias": "{{$adapter}}"
                   }{{end}}
             ],
@@ -972,7 +971,7 @@ const influxtempl = `
             "editable": true,
             "type": "graph",
             "id": 3,
-            "datasource": null,
+            "datasource": "{{ .DataSource }}",
             "renderer": "flot",
             "x-axis": true,
             "y-axis": true,
@@ -1023,10 +1022,10 @@ const influxtempl = `
               {{ range $index, $adapter := .GetFilteredColumns "SEACLITRAFFIC" "e-KB"}}{{ if $index}},{{end}}
                   {
                     "function": "mean",
-                    "column": "{{$adapter}}",
+                    "column": "\"{{$adapter}}\"",
                     "series": "{{$.Hostname}}_SEACLITRAFFIC",
                     "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_SEACLITRAFFIC\" where $timeFilter group by time($interval) order asc",
-                    "rawQuery": true,
+                    "rawQuery": false,
                     "alias": "{{$adapter}}"
                   }{{end}}
             ],
@@ -1050,7 +1049,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 7,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -1101,10 +1100,10 @@ const influxtempl = `
             {{ range $index, $adapter := .GetColumns "NET" }}{{ if $index}},{{end}}
                 {
                     "function": "mean",
-                    "column": "{{$adapter}}",
+                    "column": "\"{{$adapter}}\"",
                     "series": "{{$.Hostname}}_NET",
                     "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_NET\" where $timeFilter group by time($interval) order asc",
-                    "rawQuery": true,
+                    "rawQuery": false,
                     "alias": "{{$adapter}}"
                 }{{end}}
             ],
@@ -1126,7 +1125,7 @@ const influxtempl = `
           "editable": true,
           "type": "graph",
           "id": 8,
-          "datasource": null,
+          "datasource": "{{ .DataSource }}",
           "renderer": "flot",
           "x-axis": true,
           "y-axis": true,
@@ -1287,9 +1286,3 @@ const influxtempl = `
   "version": 6
 }
 `
-
-
-
-
-
-
