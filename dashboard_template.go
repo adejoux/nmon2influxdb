@@ -1,6 +1,6 @@
-// nmon2influx
-// import nmon report in Influxdb
-// author: adejoux@djouctech.net
+// nmon2influxdb
+// import nmon data in InfluxDB
+// author: adejoux@djouxtech.net
 
 package main
 

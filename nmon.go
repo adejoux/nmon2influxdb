@@ -1,3 +1,7 @@
+// nmon2influxdb
+// import nmon data in InfluxDB
+// author: adejoux@djouxtech.net
+
 package main
 
 import (
@@ -17,9 +21,9 @@ type Nmon struct {
 	TextContent string
 	DataSeries  map[string]DataSerie
 	Debug       bool
+	Params      *Params
 	starttime   int64
 	stoptime    int64
-	ds          string
 }
 
 //
@@ -37,7 +41,7 @@ func (nmon *Nmon) AppendText(text string) {
 
 // initialize a Nmon structure
 func NewNmon() *Nmon {
-	return &Nmon{DataSeries: make(map[string]DataSerie), TimeStamps: make(map[string]string), ds: "influxdb"}
+	return &Nmon{DataSeries: make(map[string]DataSerie), TimeStamps: make(map[string]string)}
 
 }
 
@@ -87,7 +91,7 @@ func (nmon *Nmon) GetTimeStamp(label string) (t string, err error) {
 
 func InitNmon(params *Params) (nmon *Nmon) {
 	nmon = NewNmon()
-
+	nmon.Params = params
 	file, err := os.Open(params.Filepath)
 	check(err)
 
@@ -189,5 +193,13 @@ func ConvertTimeStamp(s string) (int64, error) {
 }
 
 func (nmon *Nmon) DataSource() string {
-	return nmon.ds
+	return nmon.Params.DS
+}
+
+func (nmon *Nmon) Host() string {
+	return nmon.Params.Server + ":" + nmon.Params.Port
+}
+
+func (nmon *Nmon) DbURL() string {
+	return "http://" + nmon.Host()
 }
