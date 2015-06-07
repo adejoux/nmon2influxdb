@@ -1,6 +1,5 @@
-// nmon2influx
-// import nmon report in Influxdb
-//version: 0.1
+// nmon2influxdb
+// import nmon data in InfluxDB
 // author: adejoux@djouxtech.net
 
 package main
@@ -15,7 +14,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "0.2.0"
+	app.Version = "0.3.0"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
@@ -36,9 +35,33 @@ func main() {
 			Name:  "dashboard",
 			Usage: "generate a dashboard from a nmon file",
 			Flags: []cli.Flag{
-				cli.BoolFlag{
+				cli.StringFlag{
 					Name:  "template,t",
 					Usage: "optional template file to use",
+				},
+				cli.BoolFlag{
+					Name:  "file,f",
+					Usage: "generate Grafana dashboard file",
+				},
+				cli.StringFlag{
+					Name:  "guser",
+					Usage: "grafana user",
+					Value: "admin",
+				},
+				cli.StringFlag{
+					Name:  "gpassword,gpass",
+					Usage: "grafana password",
+					Value: "admin",
+				},
+				cli.StringFlag{
+					Name:  "gurl",
+					Usage: "grafana url",
+					Value: "http://localhost:3000",
+				},
+				cli.StringFlag{
+					Name:  "datasource",
+					Usage: "grafana datasource",
+					Value: "nmon2influxdb",
 				},
 			},
 			Action: NmonDashboard,

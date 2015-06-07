@@ -1,6 +1,5 @@
 // nmon2influxdb
 // import nmon report in InfluxDB
-//version: 0.1
 // author: adejoux@djouxtech.net
 
 package main
@@ -40,8 +39,7 @@ func NmonImport(c *cli.Context) {
 	nmon.Debug = params.Debug
 	influxdb.SetDebug(params.Debug)
 
-	host := params.Host + ":" + params.Port
-	influxdb.InitSession(host, params.Db, params.User, params.Password)
+	influxdb.InitSession(nmon.Host(), params.Db, params.User, params.Password)
 	influxdb.Label = nmon.Hostname
 
 	// Hack for influxdb 0.8 API
