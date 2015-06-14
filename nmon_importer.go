@@ -39,7 +39,7 @@ func NmonImport(c *cli.Context) {
 	nmon.Debug = params.Debug
 	influxdb.SetDebug(params.Debug)
 
-	influxdb.InitSession(nmon.Host(), params.Db, params.User, params.Password)
+	influxdb.InitSession(nmon.Params.Host(), params.Db, params.User, params.Password)
 	influxdb.Label = nmon.Hostname
 
 	// Hack for influxdb 0.8 API

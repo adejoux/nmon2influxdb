@@ -196,10 +196,6 @@ func (nmon *Nmon) DataSource() string {
 	return nmon.Params.DS
 }
 
-func (nmon *Nmon) Host() string {
-	return nmon.Params.Server + ":" + nmon.Params.Port
-}
-
 func (nmon *Nmon) DbURL() string {
-	return "http://" + nmon.Host()
+	return "http://" + nmon.Params.Host()
 }

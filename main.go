@@ -14,7 +14,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "0.3.0"
+	app.Version = "0.4.0"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
@@ -65,6 +65,33 @@ func main() {
 				},
 			},
 			Action: NmonDashboard,
+		},
+		{
+			Name:  "stats",
+			Usage: "generate stats from a InfluxDB metric",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "metric,m",
+					Usage: "mandatory metric for stats",
+				},
+				cli.StringFlag{
+					Name:  "statshost,s",
+					Usage: "host metrics",
+				},
+				cli.StringFlag{
+					Name:  "from,f",
+					Usage: "from date",
+				},
+				cli.StringFlag{
+					Name:  "to,t",
+					Usage: "from date",
+				},
+				cli.StringFlag{
+					Name:  "aggregate,a",
+					Usage: "aggregate function",
+				},
+			},
+			Action: NmonStat,
 		},
 	}
 
