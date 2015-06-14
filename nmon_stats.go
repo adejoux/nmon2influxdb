@@ -20,7 +20,7 @@ func NmonStat(c *cli.Context) {
 	influxdb.InitSession(params.Host(), params.Db, params.User, params.Password)
 
 	metric := params.StatsHost + "_" + params.Metric
-	result, err := influxdb.ReadPoints("*", metric, params.From, params.To, params.Aggregate)
+	result, err := influxdb.ReadPoints("*", metric, params.From, params.To, "")
 	if err != nil {
 		check(err)
 	}

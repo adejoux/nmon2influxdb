@@ -86,10 +86,6 @@ func main() {
 					Name:  "to,t",
 					Usage: "from date",
 				},
-				cli.StringFlag{
-					Name:  "aggregate,a",
-					Usage: "aggregate function",
-				},
 			},
 			Action: NmonStat,
 		},
