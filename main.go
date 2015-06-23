@@ -86,6 +86,15 @@ func main() {
 					Name:  "to,t",
 					Usage: "from date",
 				},
+				cli.StringFlag{
+					Name:  "sort",
+					Usage: "field to perform sort",
+					Value: "mean",
+				},
+				cli.IntFlag{
+					Name:  "limit,l",
+					Usage: "limit the output",
+				},
 			},
 			Action: NmonStat,
 		},

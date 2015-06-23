@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/adejoux/influxdbclient"
 	"github.com/codegangsta/cli"
-	"sort"
 	"time"
 )
 
@@ -36,19 +35,18 @@ func NmonStat(c *cli.Context) {
 	//generate stats
 	stats := influxdb.BuildStats(result)
 
-	DisplayStats(&stats)
+	DisplayStats(&stats, params.Sort, params.Limit)
 }
 
-func DisplayStats(stats *map[string]influxdbclient.DataStats) {
+func DisplayStats(stats *influxdbclient.DataStats, sort string, limit int) {
 	fmt.Printf("%20s|%10s|%10s|%10s|%10s|%10s\n", "field", "Min", "Mean", "Median", "Max", "Points #")
-
-	var keys []string
-	for k := range *stats {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, field := range keys {
-		stat := (*stats)[field]
-		fmt.Printf("%20s|%10.2f|%10.2f|%10.2f|%10.2f|%8d\n", field, stat.Min, stat.Mean, stat.Median, stat.Max, stat.Length)
+	stats.FieldSort(sort)
+	for i, stat := range *stats {
+		fmt.Printf("%20s|%10.2f|%10.2f|%10.2f|%10.2f|%8d\n", stat.Name, stat.Min, stat.Mean, stat.Median, stat.Max, stat.Length)
+		if limit > 0 {
+			if i > limit {
+				break
+			}
+		}
 	}
 }
