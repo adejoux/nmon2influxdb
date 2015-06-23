@@ -121,6 +121,10 @@ func main() {
 			Name:  "debug",
 			Usage: "debug mode",
 		},
+		cli.StringFlag{
+			Name:  "tz,t",
+			Usage: "timezone",
+		},
 	}
 	app.Author = "Alain Dejoux"
 	app.Email = "adejoux@djouxtech.net"

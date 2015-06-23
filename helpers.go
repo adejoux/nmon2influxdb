@@ -41,6 +41,7 @@ type Params struct {
 	StatsHost string
 	From      string
 	To        string
+	TZ        string
 	Aggregate string
 	Debug     bool
 }
@@ -69,6 +70,7 @@ func ParseParameters(c *cli.Context) (params *Params) {
 		Port:      c.GlobalString("port"),
 		Db:        c.GlobalString("db"),
 		Password:  c.GlobalString("pass"),
+		TZ:        c.GlobalString("tz"),
 		Template:  c.String("template"),
 	}
 }
@@ -86,5 +88,6 @@ func ParseStatsParameters(c *cli.Context) (params *Params) {
 		Port:      c.GlobalString("port"),
 		Db:        c.GlobalString("db"),
 		Password:  c.GlobalString("pass"),
+		TZ:        c.GlobalString("tz"),
 	}
 }

@@ -160,8 +160,8 @@ func (nmon *Nmon) SetTimeFrame() {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	nmon.starttime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[0]])
-	nmon.stoptime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[len(keys)-1]])
+	nmon.starttime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[0]], nmon.Params.TZ)
+	nmon.stoptime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[len(keys)-1]], nmon.Params.TZ)
 }
 
 func (nmon *Nmon) StartTime() string {
@@ -180,12 +180,20 @@ func (nmon *Nmon) StopTime() string {
 
 const timeformat = "15:04:05,02-Jan-2006"
 
-func ConvertTimeStamp(s string) (int64, error) {
-	timezone, _ := time.Now().In(time.Local).Zone()
-	loc, err := time.LoadLocation(timezone)
-
-	if err != nil {
-		loc = time.FixedZone("Europe/Paris", 2*60*60)
+func ConvertTimeStamp(s string, tz string) (int64, error) {
+	var err error
+	var loc *time.Location
+	if len(tz) > 0 {
+		loc, err = time.LoadLocation(tz)
+		if err != nil {
+			loc = time.FixedZone("Europe/Paris", 2*60*60)
+		}
+	} else {
+		timezone, _ := time.Now().In(time.Local).Zone()
+		loc, err = time.LoadLocation(timezone)
+		if err != nil {
+			loc = time.FixedZone("Europe/Paris", 2*60*60)
+		}
 	}
 
 	t, err := time.ParseInLocation(timeformat, s, loc)

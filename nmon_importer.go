@@ -79,9 +79,10 @@ func NmonImport(c *cli.Context) {
 		if statsRegexp.MatchString(scanner.Text()) {
 			matched := statsRegexp.FindStringSubmatch(scanner.Text())
 			elems := strings.Split(scanner.Text(), ",")
-			timestamp, err := nmon.GetTimeStamp(matched[1])
+			timeStr, err := nmon.GetTimeStamp(matched[1])
 			check(err)
 			name := elems[0]
+			timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
 			influxdb.AddPoint(name, timestamp, elems[2:])
 
 			if influxdb.MaxPointsCount(name) {
