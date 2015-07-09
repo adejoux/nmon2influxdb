@@ -15,7 +15,7 @@ import (
 	"text/template"
 )
 
-func NmonDashboard(c *cli.Context) {
+func NmonDashboardFile(c *cli.Context) {
 
 	if len(c.Args()) < 1 {
 		fmt.Printf("file name needs to be provided\n")
@@ -29,7 +29,27 @@ func NmonDashboard(c *cli.Context) {
 		nmon.WriteDashboard(params.Template)
 		return
 	}
-	nmon.UploadDashboard(params.Template)
+	dashboard, _ := nmon.GenerateDashboard(params.Template)
+	err := nmon.UploadDashboard(dashboard)
+	check(err)
+	return
+}
+
+func NmonDashboardTemplate(c *cli.Context) {
+	if len(c.Args()) < 1 {
+		fmt.Printf("file name needs to be provided\n")
+		os.Exit(1)
+	}
+	// parsing parameters
+	params := ParseParameters(c)
+	nmon := InitNmonTemplate(params)
+	dashboard, err := grafanaclient.ConvertTemplate(params.Filepath)
+	if err != nil {
+		fmt.Printf("Cannot convert template !\n")
+		check(err)
+	}
+	err = nmon.UploadDashboardTemplate(dashboard)
+	check(err)
 	return
 
 }
@@ -74,9 +94,7 @@ func (nmon *Nmon) GenerateDashboard(tmplfile string) (dashboard bytes.Buffer, er
 	return
 }
 
-func (nmon *Nmon) UploadDashboard(tmplfile string) (err error) {
-	dashboard, err := nmon.GenerateDashboard(tmplfile)
-
+func (nmon *Nmon) UploadDashboard(dashboard bytes.Buffer) (err error) {
 	//check if datasource for nmon2influxdb exist
 	grafana := grafanaclient.NewSession(nmon.Params.Guser, nmon.Params.Gpass, nmon.Params.Gurl)
 	err = grafana.DoLogon()
@@ -103,6 +121,42 @@ func (nmon *Nmon) UploadDashboard(tmplfile string) (err error) {
 	}
 
 	err = grafana.UploadDashboardString(dashboard.String(), true)
+	if err != nil {
+		fmt.Printf("Unable to upload Grafana dashboard ! \n")
+	}
+
+	fmt.Printf("Dashboard uploaded to grafana\n")
+	return
+}
+
+func (nmon *Nmon) UploadDashboardTemplate(dashboard grafanaclient.Dashboard) (err error) {
+
+	//check if datasource for nmon2influxdb exist
+	grafana := grafanaclient.NewSession(nmon.Params.Guser, nmon.Params.Gpass, nmon.Params.Gurl)
+	err = grafana.DoLogon()
+
+	if err != nil {
+		return
+	}
+
+	resDs, err := grafana.GetDataSource(nmon.Params.DS)
+	if resDs.Name == "" {
+		var ds = grafanaclient.DataSource{Name: nmon.Params.DS,
+			Type:     "influxdb_08",
+			Access:   "direct",
+			URL:      nmon.DbURL(),
+			User:     nmon.Params.User,
+			Password: nmon.Params.Password,
+			Database: nmon.Params.Db,
+		}
+		err = grafana.CreateDataSource(ds)
+		if err != nil {
+			return
+		}
+		fmt.Printf("Grafana %s DataSource created.\n", nmon.Params.DS)
+	}
+
+	err = grafana.UploadDashboard(dashboard, true)
 	if err != nil {
 		fmt.Printf("Unable to upload Grafana dashboard ! \n")
 	}

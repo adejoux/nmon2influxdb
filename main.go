@@ -33,15 +33,11 @@ func main() {
 		},
 		{
 			Name:  "dashboard",
-			Usage: "generate a dashboard from a nmon file",
+			Usage: "generate a dashboard from a nmon file or template",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "template,t",
 					Usage: "optional template file to use",
-				},
-				cli.BoolFlag{
-					Name:  "file,f",
-					Usage: "generate Grafana dashboard file",
 				},
 				cli.StringFlag{
 					Name:  "guser",
@@ -64,7 +60,78 @@ func main() {
 					Value: "nmon2influxdb",
 				},
 			},
-			Action: NmonDashboard,
+			Subcommands: []cli.Command{
+				{
+					Name:  "file",
+					Usage: "generate a dashboard from a nmon file",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "template,t",
+							Usage: "optional json template file to use",
+						},
+						cli.BoolFlag{
+							Name:  "file,f",
+							Usage: "generate Grafana dashboard file",
+						},
+						cli.StringFlag{
+							Name:  "guser",
+							Usage: "grafana user",
+							Value: "admin",
+						},
+						cli.StringFlag{
+							Name:  "gpassword,gpass",
+							Usage: "grafana password",
+							Value: "admin",
+						},
+						cli.StringFlag{
+							Name:  "gurl",
+							Usage: "grafana url",
+							Value: "http://localhost:3000",
+						},
+						cli.StringFlag{
+							Name:  "datasource",
+							Usage: "grafana datasource",
+							Value: "nmon2influxdb",
+						},
+					},
+					Action: NmonDashboardFile,
+				},
+				{
+					Name:  "template",
+					Usage: "generate a dashboard from a TOML template",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "template,t",
+							Usage: "optional json template file to use",
+						},
+						cli.BoolFlag{
+							Name:  "file,f",
+							Usage: "generate Grafana dashboard file",
+						},
+						cli.StringFlag{
+							Name:  "guser",
+							Usage: "grafana user",
+							Value: "admin",
+						},
+						cli.StringFlag{
+							Name:  "gpassword,gpass",
+							Usage: "grafana password",
+							Value: "admin",
+						},
+						cli.StringFlag{
+							Name:  "gurl",
+							Usage: "grafana url",
+							Value: "http://localhost:3000",
+						},
+						cli.StringFlag{
+							Name:  "datasource",
+							Usage: "grafana datasource",
+							Value: "nmon2influxdb",
+						},
+					},
+					Action: NmonDashboardTemplate,
+				},
+			},
 		},
 		{
 			Name:  "stats",
@@ -97,6 +164,11 @@ func main() {
 				},
 			},
 			Action: NmonStat,
+		},
+		{
+			Name:   "list",
+			Usage:  "list InfluxDB metrics",
+			Action: NmonList,
 		},
 	}
 

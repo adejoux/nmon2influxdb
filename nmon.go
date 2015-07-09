@@ -89,6 +89,12 @@ func (nmon *Nmon) GetTimeStamp(label string) (t string, err error) {
 	return t, err
 }
 
+func InitNmonTemplate(params *Params) (nmon *Nmon) {
+	nmon = NewNmon()
+	nmon.Params = params
+	return
+}
+
 func InitNmon(params *Params) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Params = params
