@@ -97,8 +97,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"User%\"",
-              "series": "{{$.Hostname}}_CPU_ALL",
-              "query": "select mean(\"User%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
+              "series": "CPU_ALL",
+              "query": "select mean(\"User%\") from \"CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "User%",
               "rawQuery": false,
               "hide": false
@@ -106,8 +106,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"Sys%\"",
-              "series": "{{$.Hostname}}_CPU_ALL",
-              "query": "select mean(\"Sys%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
+              "series": "CPU_ALL",
+              "query": "select mean(\"Sys%\") from \"CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Sys%",
               "rawQuery": false,
               "hide": false
@@ -115,8 +115,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"Wait%\"",
-              "series": "{{$.Hostname}}_CPU_ALL",
-              "query": "select mean(\"Wait%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
+              "series": "CPU_ALL",
+              "query": "select mean(\"Wait%\") from \"CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Wait%",
               "rawQuery": false,
               "hide": false
@@ -124,8 +124,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"Idle%\"",
-              "series": "{{$.Hostname}}_CPU_ALL",
-              "query": "select mean(\"Idle%\") from \"{{$.Hostname}}_CPU_ALL\" where $timeFilter group by time($interval) order asc",
+              "series": "CPU_ALL",
+              "query": "select mean(\"Idle%\") from \"CPU_ALL\" where $timeFilter group by time($interval) order asc",
               "alias": "Idle%",
               "rawQuery": false,
               "hide": false
@@ -193,8 +193,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"EC_User%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"EC_User%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"EC_User%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_User%",
               "rawQuery": false,
               "hide": false
@@ -202,8 +202,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"EC_Sys%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"EC_Sys%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"EC_Sys%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_Sys%",
               "rawQuery": false,
               "hide": false
@@ -211,8 +211,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"EC_Wait%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"EC_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"EC_Wait%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_Wait%",
               "rawQuery": false,
               "hide": false
@@ -220,8 +220,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"EC_Idle%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"EC_Idle%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"EC_Idle%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "EC_Idle%",
               "rawQuery": false,
               "hide": false
@@ -289,8 +289,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"VP_User%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"VP_User%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"VP_User%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_User%",
               "rawQuery": false,
               "hide": false
@@ -298,8 +298,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"VP_Sys%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"VP_Sys%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"VP_Sys%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_Sys%",
               "rawQuery": false,
               "hide": false
@@ -307,8 +307,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"VP_Wait%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"VP_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"VP_Wait%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_Wait%",
               "rawQuery": false,
               "hide": false
@@ -316,8 +316,8 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"VP_Idle%\"",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(\"VP_Wait%\") from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(\"VP_Wait%\") from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "VP_Wait%",
               "rawQuery": false,
               "hide": false
@@ -393,50 +393,50 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "PhysicalCPU",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(PhysicalCPU) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(PhysicalCPU) from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "PhysicalCPU"
             },
             {
               "function": "mean",
               "column": "entitled",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(entitled) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(entitled) from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "entitled"
             },
             {
               "function": "mean",
               "column": "Folded",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(Folded) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(Folded) from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "folded"
             },
             {
               "function": "mean",
               "column": "virtualCPUs",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(virtualCPUs) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(virtualCPUs) from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "virtualCPUs"
             },
             {
               "function": "mean",
               "column": "logicalCPUs",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(logicalCPUs) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(logicalCPUs) from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "logicalCPUs"
             },
             {
               "function": "mean",
               "column": "PoolIdle",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(PoolIdle) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(PoolIdle) from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "PoolIdle"
             },
             {
               "function": "mean",
               "column": "poolCPUs",
-              "series": "{{$.Hostname}}_LPAR",
-              "query": "select mean(poolCPUs) from \"{{$.Hostname}}_LPAR\" where $timeFilter group by time($interval) order asc",
+              "series": "LPAR",
+              "query": "select mean(poolCPUs) from \"LPAR\" where $timeFilter group by time($interval) order asc",
               "alias": "poolCPUs"
             }
           ],
@@ -510,32 +510,32 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"%minperm\"",
-              "series": "{{$.Hostname}}_MEMUSE",
-              "query": "select mean(\"%minperm\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
+              "series": "MEMUSE",
+              "query": "select mean(\"%minperm\") from \"MEMUSE\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "%minperm"
             },
             {
               "function": "mean",
               "column": "\"%maxperm\"",
-              "series": "{{$.Hostname}}_MEMUSE",
-              "query": "select mean(\"%maxperm\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
+              "series": "MEMUSE",
+              "query": "select mean(\"%maxperm\") from \"MEMUSE\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "%maxperm"
             },
             {
               "function": "mean",
               "column": "\"%numperm\"",
-              "series": "{{$.Hostname}}_MEMUSE",
-              "query": "select mean(\"%numperm\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
+              "series": "MEMUSE",
+              "query": "select mean(\"%numperm\") from \"MEMUSE\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "%numperm"
             },
             {
               "function": "mean",
               "column": "\"%numclient\"",
-              "series": "{{$.Hostname}}_MEMUSE",
-              "query": "select mean(\"%numclient\") from \"{{$.Hostname}}_MEMUSE\" where $timeFilter group by time($interval) order asc",
+              "series": "MEMUSE",
+              "query": "select mean(\"%numclient\") from \"MEMUSE\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "%numclient"
             }
@@ -602,32 +602,32 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"Real free(MB)\"",
-              "series": "{{$.Hostname}}_MEM",
-              "query": "select mean(\"Real free(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
+              "series": "MEM",
+              "query": "select mean(\"Real free(MB)\") from \"MEM\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "Real free(MB)"
             },
             {
               "function": "mean",
               "column": "\"Virtual free(MB)\"",
-              "series": "{{$.Hostname}}_MEM",
-              "query": "select mean(\"Virtual free(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
+              "series": "MEM",
+              "query": "select mean(\"Virtual free(MB)\") from \"MEM\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "Virtual free(MB)"
             },
             {
               "function": "mean",
               "column": "\"Real total(MB)\"",
-              "series": "{{$.Hostname}}_MEM",
-              "query": "select mean(\"Real total(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
+              "series": "MEM",
+              "query": "select mean(\"Real total(MB)\") from \"MEM\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "Real total(MB)"
             },
             {
               "function": "mean",
               "column": "\"Virtual total(MB)\"",
-              "series": "{{$.Hostname}}_MEM",
-              "query": "select mean(\"Virtual total(MB)\") from \"{{$.Hostname}}_MEM\" where $timeFilter group by time($interval) order asc",
+              "series": "MEM",
+              "query": "select mean(\"Virtual total(MB)\") from \"MEM\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "Virtual total(MB)"
             }
@@ -694,24 +694,24 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "\"Process%\"",
-              "series": "{{$.Hostname}}_MEMNEW",
-              "query": "select mean(\"Process%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
+              "series": "MEMNEW",
+              "query": "select mean(\"Process%\") from \"MEMNEW\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "Process%"
             },
             {
               "function": "mean",
               "column": "\"FScache%\"",
-              "series": "{{$.Hostname}}_MEMNEW",
-              "query": "select mean(\"FScache%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
+              "series": "MEMNEW",
+              "query": "select mean(\"FScache%\") from \"MEMNEW\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "FScache%"
             },
             {
               "function": "mean",
               "column": "\"System%\"",
-              "series": "{{$.Hostname}}_MEMNEW",
-              "query": "select mean(\"System%\") from \"{{$.Hostname}}_MEMNEW\" where $timeFilter group by time($interval) order asc",
+              "series": "MEMNEW",
+              "query": "select mean(\"System%\") from \"MEMNEW\" where $timeFilter group by time($interval) order asc",
               "rawQuery": false,
               "alias": "System%"
             }
@@ -788,8 +788,8 @@ const influxtempl = `
                 {
                   "function": "mean",
                   "column": "\"{{$adapter}}\"",
-                  "series": "{{$.Hostname}}_IOADAPT",
-                  "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_IOADAPT\" where $timeFilter group by time($interval) order asc",
+                  "series": "IOADAPT",
+                  "query": "select mean(\"{{$adapter}}\") from \"IOADAPT\" where $timeFilter group by time($interval) order asc",
                   "rawQuery": false,
                   "alias": "{{$adapter}}"
                 }{{end}}
@@ -865,8 +865,8 @@ const influxtempl = `
                   {
                     "function": "mean",
                     "column": "\"{{$adapter}}\"",
-                    "series": "{{$.Hostname}}_SEA",
-                    "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_SEA\" where $timeFilter group by time($interval) order asc",
+                    "series": "SEA",
+                    "query": "select mean(\"{{$adapter}}\") from \"SEA\" where $timeFilter group by time($interval) order asc",
                     "rawQuery": false,
                     "alias": "{{$adapter}}"
                   }{{end}}
@@ -944,8 +944,8 @@ const influxtempl = `
                   {
                     "function": "mean",
                     "column": "\"{{$adapter}}\"",
-                    "series": "{{$.Hostname}}_NPIV",
-                    "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_NPIV\" where $timeFilter group by time($interval) order asc",
+                    "series": "NPIV",
+                    "query": "select mean(\"{{$adapter}}\") from \"NPIV\" where $timeFilter group by time($interval) order asc",
                     "rawQuery": false,
                     "alias": "{{$adapter}}"
                   }{{end}}
@@ -1023,8 +1023,8 @@ const influxtempl = `
                   {
                     "function": "mean",
                     "column": "\"{{$adapter}}\"",
-                    "series": "{{$.Hostname}}_SEACLITRAFFIC",
-                    "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_SEACLITRAFFIC\" where $timeFilter group by time($interval) order asc",
+                    "series": "SEACLITRAFFIC",
+                    "query": "select mean(\"{{$adapter}}\") from \"SEACLITRAFFIC\" where $timeFilter group by time($interval) order asc",
                     "rawQuery": false,
                     "alias": "{{$adapter}}"
                   }{{end}}
@@ -1101,8 +1101,8 @@ const influxtempl = `
                 {
                     "function": "mean",
                     "column": "\"{{$adapter}}\"",
-                    "series": "{{$.Hostname}}_NET",
-                    "query": "select mean(\"{{$adapter}}\") from \"{{$.Hostname}}_NET\" where $timeFilter group by time($interval) order asc",
+                    "series": "NET",
+                    "query": "select mean(\"{{$adapter}}\") from \"NET\" where $timeFilter group by time($interval) order asc",
                     "rawQuery": false,
                     "alias": "{{$adapter}}"
                 }{{end}}
@@ -1176,57 +1176,57 @@ const influxtempl = `
             {
               "function": "mean",
               "column": "pgin",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(pgin) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(pgin) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "pgin"
             },
             {
               "function": "mean",
               "column": "pgout",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(pgout) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(pgout) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "pgout"
             },
             {
               "function": "mean",
               "column": "scans",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(scans) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(scans) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "scans"
             },
             {
               "function": "mean",
               "column": "cycles",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(cycles) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(cycles) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "cycles"
             },
             {
               "function": "mean",
               "column": "faults",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(faults) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(faults) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "faults"
             },
             {
               "function": "mean",
               "column": "pgsin",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(pgsin) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(pgsin) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "pgsin"
             },
             {
               "function": "mean",
               "column": "pgsout",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(pgsout) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(pgsout) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "pgsout"
             },
             {
               "function": "mean",
               "column": "reclaims",
-              "series": "{{$.Hostname}}_PAGE",
-              "query": "select mean(reclaims) from \"{{$.Hostname}}_PAGE\" where $timeFilter group by time($interval) order asc",
+              "series": "PAGE",
+              "query": "select mean(reclaims) from \"PAGE\" where $timeFilter group by time($interval) order asc",
               "alias": "reclaims"
             }
           ],

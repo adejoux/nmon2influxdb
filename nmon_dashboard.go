@@ -94,19 +94,16 @@ func (nmon *Nmon) GenerateDashboard(tmplfile string) (dashboard bytes.Buffer, er
 	return
 }
 
-func (nmon *Nmon) UploadDashboard(dashboard bytes.Buffer) (err error) {
+func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 	//check if datasource for nmon2influxdb exist
 	grafana := grafanaclient.NewSession(nmon.Params.Guser, nmon.Params.Gpass, nmon.Params.Gurl)
-	err = grafana.DoLogon()
-
-	if err != nil {
-		return
-	}
+	err := grafana.DoLogon()
+	check(err)
 
 	resDs, err := grafana.GetDataSource(nmon.Params.DS)
 	if resDs.Name == "" {
 		var ds = grafanaclient.DataSource{Name: nmon.Params.DS,
-			Type:     "influxdb_08",
+			Type:     "influxdb_09",
 			Access:   "direct",
 			URL:      nmon.DbURL(),
 			User:     nmon.Params.User,
@@ -114,12 +111,15 @@ func (nmon *Nmon) UploadDashboard(dashboard bytes.Buffer) (err error) {
 			Database: nmon.Params.Db,
 		}
 		err = grafana.CreateDataSource(ds)
-		if err != nil {
-			return
-		}
+		check(err)
 		fmt.Printf("Grafana %s DataSource created.\n", nmon.Params.DS)
 	}
 
+	return grafana
+}
+
+func (nmon *Nmon) UploadDashboard(dashboard bytes.Buffer) (err error) {
+	grafana := nmon.InitGrafanaSession()
 	err = grafana.UploadDashboardString(dashboard.String(), true)
 	if err != nil {
 		fmt.Printf("Unable to upload Grafana dashboard ! \n")
@@ -130,31 +130,7 @@ func (nmon *Nmon) UploadDashboard(dashboard bytes.Buffer) (err error) {
 }
 
 func (nmon *Nmon) UploadDashboardTemplate(dashboard grafanaclient.Dashboard) (err error) {
-
-	//check if datasource for nmon2influxdb exist
-	grafana := grafanaclient.NewSession(nmon.Params.Guser, nmon.Params.Gpass, nmon.Params.Gurl)
-	err = grafana.DoLogon()
-
-	if err != nil {
-		return
-	}
-
-	resDs, err := grafana.GetDataSource(nmon.Params.DS)
-	if resDs.Name == "" {
-		var ds = grafanaclient.DataSource{Name: nmon.Params.DS,
-			Type:     "influxdb_08",
-			Access:   "direct",
-			URL:      nmon.DbURL(),
-			User:     nmon.Params.User,
-			Password: nmon.Params.Password,
-			Database: nmon.Params.Db,
-		}
-		err = grafana.CreateDataSource(ds)
-		if err != nil {
-			return
-		}
-		fmt.Printf("Grafana %s DataSource created.\n", nmon.Params.DS)
-	}
+	grafana := nmon.InitGrafanaSession()
 
 	err = grafana.UploadDashboard(dashboard, true)
 	if err != nil {

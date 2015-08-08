@@ -48,10 +48,6 @@ type Params struct {
 	Debug     bool
 }
 
-func (params *Params) Host() string {
-	return params.Server + ":" + params.Port
-}
-
 func ParseParameters(c *cli.Context) (params *Params) {
 	return &Params{Filepath: c.Args()[0],
 		Metric:    c.String("metric"),

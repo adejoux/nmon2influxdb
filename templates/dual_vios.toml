@@ -5,19 +5,11 @@ title = "LPAR"
     [[row.panel]]
     title = "shared processor"
         [[row.panel.metric]]
-            serie = "vios1_LPAR"
+            measurement = "LPAR"
+            hosts = ["vios1", "vios2"]
             fields = ["PhysicalCPU", "virtualCPUs", "entitled"]
-            alias = ["vios1_cpu","vios1_vcpus", "vios1_entitled"]
         [[row.panel.override]]
-            alias = "vios1_cpu"
-            stack = true
-            fill = 1
-        [[row.panel.metric]]
-            serie = "vios2_LPAR"
-            fields = ["PhysicalCPU", "virtualCPUs", "entitled"]
-            alias = ["vios2_cpu","vios2_vcpus", "vios2_entitled"]
-        [[row.panel.override]]
-            alias = "vios2_cpu"
+            alias = "$tag_host PhysicalCPU"
             stack = true
             fill = 1
         [row.panel.tooltip]
@@ -26,7 +18,8 @@ title = "LPAR"
     [[row.panel]]
         title = "shared processor pool"
         [[row.panel.metric]]
-            serie = "vios1_LPAR"
+            measurement = "LPAR"
+            hosts = ["vios1"]
             fields = ["PoolIdle", "poolCPUs"]
 
 [[row]]
@@ -36,22 +29,14 @@ title = "SEA"
     stack = true
     fill = 1
         [[row.panel.metric]]
-            serie = "vios1_SEA"
-            fields = ["ent10-write-KB/s", "ent11-write-KB/s"]
-            alias = ["vios1_ent10-write", "vios1_ent11-write"]
-        [[row.panel.metric]]
-            serie = "vios2_SEA"
-            fields = ["ent10-write-KB/s", "ent11-write-KB/s"]
-            alias = ["vios2_ent10-write", "vios2_ent11-write"]
+            measurement = "SEA"
+            hosts = ["vios1", "vios2"]
+            fields = ["write-KB"]
     [[row.panel]]
     title = "SEA READ"
     stack = true
     fill = 1
         [[row.panel.metric]]
-            serie = "vios1_SEA"
-            fields = ["ent10-read-KB/s", "ent10-read-KB/s",]
-            alias = ["vios1_ent10-read", "vios1_ent11-read"]
-        [[row.panel.metric]]
-            serie = "vios2_SEA"
-            fields = ["ent10-read-KB/s", "ent10-read-KB/s"]
-            alias = ["vios2_ent10-read", "vios2_ent11-read"]
+            measurement = "SEA"
+            hosts = ["vios1", "vios2"]
+            fields = ["read-KB"]

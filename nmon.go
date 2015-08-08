@@ -22,8 +22,8 @@ type Nmon struct {
 	DataSeries  map[string]DataSerie
 	Debug       bool
 	Params      *Params
-	starttime   int64
-	stoptime    int64
+	starttime   time.Time
+	stoptime    time.Time
 }
 
 //
@@ -171,22 +171,22 @@ func (nmon *Nmon) SetTimeFrame() {
 }
 
 func (nmon *Nmon) StartTime() string {
-	if nmon.starttime == 0 {
+	if nmon.starttime == (time.Time{}) {
 		nmon.SetTimeFrame()
 	}
-	return time.Unix(nmon.starttime, 0).UTC().Format(time.RFC3339)
+	return nmon.starttime.UTC().Format(time.RFC3339)
 }
 
 func (nmon *Nmon) StopTime() string {
-	if nmon.stoptime == 0 {
+	if nmon.stoptime == (time.Time{}) {
 		nmon.SetTimeFrame()
 	}
-	return time.Unix(nmon.stoptime, 0).UTC().Format(time.RFC3339)
+	return nmon.stoptime.UTC().Format(time.RFC3339)
 }
 
 const timeformat = "15:04:05,02-Jan-2006"
 
-func ConvertTimeStamp(s string, tz string) (int64, error) {
+func ConvertTimeStamp(s string, tz string) (time.Time, error) {
 	var err error
 	var loc *time.Location
 	if len(tz) > 0 {
@@ -203,7 +203,7 @@ func ConvertTimeStamp(s string, tz string) (int64, error) {
 	}
 
 	t, err := time.ParseInLocation(timeformat, s, loc)
-	return t.Unix(), err
+	return t, err
 }
 
 func (nmon *Nmon) DataSource() string {
@@ -211,5 +211,5 @@ func (nmon *Nmon) DataSource() string {
 }
 
 func (nmon *Nmon) DbURL() string {
-	return "http://" + nmon.Params.Host()
+	return "http://" + nmon.Params.Server + ":" + nmon.Params.Port
 }

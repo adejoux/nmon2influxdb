@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/adejoux/influxdbclient"
 	"github.com/codegangsta/cli"
-	"time"
 )
 
 const querytimeformat = "2006-01-02 15:04:05"
@@ -16,17 +15,16 @@ func NmonStat(c *cli.Context) {
 	// parsing parameters
 	params := ParseStatsParameters(c)
 
-	influxdb := influxdbclient.NewInfluxDB()
+	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
 	influxdb.SetDebug(params.Debug)
-
-	influxdb.InitSession(params.Host(), params.Db, params.User, params.Password)
+	influxdb.Connect()
 
 	metric := params.StatsHost + "_" + params.Metric
 
 	fromUnix, _ := ConvertTimeStamp(params.From, params.TZ)
-	fromTime := time.Unix(fromUnix, 0).UTC().Format(querytimeformat)
+	fromTime := fromUnix.UTC().Format(querytimeformat)
 	toUnix, _ := ConvertTimeStamp(params.To, params.TZ)
-	toTime := time.Unix(toUnix, 0).UTC().Format(querytimeformat)
+	toTime := toUnix.UTC().Format(querytimeformat)
 	result, err := influxdb.ReadPoints("*", metric, fromTime, toTime, "")
 	if err != nil {
 		check(err)
