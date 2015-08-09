@@ -7,12 +7,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/adejoux/grafanaclient"
 	"github.com/codegangsta/cli"
 	"os"
-	"path"
-	"text/template"
 )
 
 func NmonDashboardFile(c *cli.Context) {
@@ -26,10 +25,10 @@ func NmonDashboardFile(c *cli.Context) {
 
 	nmon := InitNmon(params)
 	if params.File {
-		nmon.WriteDashboard(params.Template)
+		nmon.WriteDashboard()
 		return
 	}
-	dashboard, _ := nmon.GenerateDashboard(params.Template)
+	dashboard := nmon.GenerateDashboard()
 	err := nmon.UploadDashboard(dashboard)
 	check(err)
 	return
@@ -48,15 +47,15 @@ func NmonDashboardTemplate(c *cli.Context) {
 		fmt.Printf("Cannot convert template !\n")
 		check(err)
 	}
-	err = nmon.UploadDashboardTemplate(dashboard)
+	err = nmon.UploadDashboard(dashboard)
 	check(err)
 	return
 
 }
 
-func (nmon *Nmon) WriteDashboard(tmplfile string) {
+func (nmon *Nmon) WriteDashboard() {
 
-	dashboard, err := nmon.GenerateDashboard(tmplfile)
+	dashboard := nmon.GenerateDashboard()
 
 	// open output file
 	filename := nmon.Hostname + "_dashboard"
@@ -66,32 +65,58 @@ func (nmon *Nmon) WriteDashboard(tmplfile string) {
 
 	// make a write buffer
 	writer := bufio.NewWriter(file)
-	dashboard.WriteTo(writer)
+	b, _ := json.Marshal(dashboard)
+	r := bytes.NewReader(b)
+	r.WriteTo(writer)
 	writer.Flush()
 
 	fmt.Printf("Writing GRAFANA dashboard: %s\n", filename)
 
 }
 
-func (nmon *Nmon) GenerateDashboard(tmplfile string) (dashboard bytes.Buffer, err error) {
+func (nmon *Nmon) GenerateDashboard() grafanaclient.Dashboard {
 
-	var tmplname string
-	tmpl := template.New("grafana")
+	db := grafanaclient.Dashboard{Editable: true}
 
-	if _, err := os.Stat(tmplfile); os.IsNotExist(err) {
-		if nmon.Debug {
-			fmt.Printf("no such file or directory: %s\n", tmplfile)
-			fmt.Printf("Warning: unable to parse grafana template. Using default template.\n")
-		}
-		tmpl.Parse(influxtempl)
-		tmplname = "grafana"
-	} else {
-		tmpl.ParseFiles(tmplfile)
-		tmplname = path.Base(tmplfile)
+	db.Title = fmt.Sprintf("%s nmon report", nmon.Hostname)
+
+	infoRow := grafanaclient.NewRow()
+	infoRow.Title = "INFORMATION"
+	infoRow.Collapse = true
+	panel := grafanaclient.Panel{Type: "text", Editable: true, Mode: "html"}
+	panel.Content = nmon.TextContent
+	infoRow.Panels = append(infoRow.Panels, panel)
+	db.Rows = append(db.Rows, infoRow)
+
+	cpuRow := grafanaclient.NewRow()
+	cpuRow.Title = "CPU"
+	cpuPanel := BuildGrafanaGraphPanel(nmon.Hostname, "cpu %", "CPU_ALL", "^User%|^Sys%|^Wait%|^Idle%")
+	cpuRow.Panels = append(cpuRow.Panels, cpuPanel)
+	ecPanel := BuildGrafanaGraphPanel(nmon.Hostname, "EC%", "CPU_ALL", "^EC_User%|^EC_Sys%|^EC_Wait%|^EC_Idle%")
+	cpuRow.Panels = append(cpuRow.Panels, ecPanel)
+	db.Rows = append(db.Rows, cpuRow)
+	db.GTime = grafanaclient.GTime{From: nmon.StartTime(), To: nmon.StopTime()}
+	return db
+}
+
+func BuildGrafanaGraphPanel(host string, title string, measurement string, filter string) grafanaclient.Panel {
+	panel := grafanaclient.NewPanel()
+	panel.Title = title
+	target := grafanaclient.NewTarget()
+
+	target.Measurement = measurement
+	hostTag := grafanaclient.Tag{Key: "host", Value: host}
+	target.Tags = append(target.Tags, hostTag)
+	if len(filter) > 0 {
+		fieldsTag := grafanaclient.Tag{Key: "name", Value: "/" + filter + "/", Condition: "AND"}
+		target.Tags = append(target.Tags, fieldsTag)
 	}
-	err = tmpl.ExecuteTemplate(&dashboard, tmplname, nmon)
 
-	return
+	target.GroupByTags = []string{"name"}
+
+	panel.Targets = append(panel.Targets, target)
+
+	return panel
 }
 
 func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
@@ -118,18 +143,7 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 	return grafana
 }
 
-func (nmon *Nmon) UploadDashboard(dashboard bytes.Buffer) (err error) {
-	grafana := nmon.InitGrafanaSession()
-	err = grafana.UploadDashboardString(dashboard.String(), true)
-	if err != nil {
-		fmt.Printf("Unable to upload Grafana dashboard ! \n")
-	}
-
-	fmt.Printf("Dashboard uploaded to grafana\n")
-	return
-}
-
-func (nmon *Nmon) UploadDashboardTemplate(dashboard grafanaclient.Dashboard) (err error) {
+func (nmon *Nmon) UploadDashboard(dashboard grafanaclient.Dashboard) (err error) {
 	grafana := nmon.InitGrafanaSession()
 
 	err = grafana.UploadDashboard(dashboard, true)

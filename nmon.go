@@ -45,20 +45,6 @@ func NewNmon() *Nmon {
 
 }
 
-func (nmon *Nmon) GetColumns(serie string) []string {
-	return nmon.DataSeries[serie].Columns
-}
-
-func (nmon *Nmon) GetFilteredColumns(serie string, filter string) []string {
-	var res []string
-	for _, field := range nmon.DataSeries[serie].Columns {
-		if strings.Contains(field, filter) {
-			res = append(res, field)
-		}
-	}
-	return res
-}
-
 func (nmon *Nmon) BuildPoint(serie string, values []string) map[string]interface{} {
 	columns := nmon.DataSeries[serie].Columns
 	//TODO check output
