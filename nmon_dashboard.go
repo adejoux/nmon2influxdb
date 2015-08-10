@@ -88,30 +88,80 @@ func (nmon *Nmon) GenerateDashboard() grafanaclient.Dashboard {
 	infoRow.Panels = append(infoRow.Panels, panel)
 	db.Rows = append(db.Rows, infoRow)
 
-	cpuRow := grafanaclient.NewRow()
-	cpuRow.Title = "CPU"
-	cpuPanel := BuildGrafanaGraphPanel(nmon.Hostname, "cpu %", "CPU_ALL", "^User%|^Sys%|^Wait%|^Idle%")
-	cpuRow.Panels = append(cpuRow.Panels, cpuPanel)
-	ecPanel := BuildGrafanaGraphPanel(nmon.Hostname, "EC%", "CPU_ALL", "^EC_User%|^EC_Sys%|^EC_Wait%|^EC_Idle%")
-	cpuRow.Panels = append(cpuRow.Panels, ecPanel)
-	db.Rows = append(db.Rows, cpuRow)
+	panels := new(NmonPanels)
+
+	panels.AddPanel(nmon.Hostname, "CPU", "CPU_ALL", "^User%|^Sys%|^Wait%|^Idle%", true)
+	panels.AddPanel(nmon.Hostname, "LPAR", "LPAR", "PhysicalC|entitled|virtualC", false)
+
+	row := BuildGrafanaRow("CPU", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(nmon.Hostname, "I/O Adapters", "IOADAPT", "KB", true)
+	panels.AddPanel(nmon.Hostname, "PAGE", "PAGE", "pgs", false)
+	row = BuildGrafanaRow("IO ADAPTER", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(nmon.Hostname, "Network", "NET", "KB", true)
+	if len(nmon.DataSeries["SEA"].Columns) > 0 {
+		panels.AddPanel(nmon.Hostname, "SEA", "SEA", "KB", true)
+	}
+	row = BuildGrafanaRow("NET", panels)
+	db.Rows = append(db.Rows, row)
+
 	db.GTime = grafanaclient.GTime{From: nmon.StartTime(), To: nmon.StopTime()}
 	return db
+
 }
 
-func BuildGrafanaGraphPanel(host string, title string, measurement string, filter string) grafanaclient.Panel {
-	panel := grafanaclient.NewPanel()
-	panel.Title = title
-	target := grafanaclient.NewTarget()
+type NmonPanel struct {
+	Host        string
+	Title       string
+	Measurement string
+	Filter      string
+	Stack       bool
+}
 
-	target.Measurement = measurement
-	hostTag := grafanaclient.Tag{Key: "host", Value: host}
+type NmonPanels []NmonPanel
+
+func (panels *NmonPanels) AddPanel(host string, title string, measurement string, filter string, stack bool) {
+	*panels = append(*panels, NmonPanel{Host: host,
+		Title:       title,
+		Measurement: measurement,
+		Filter:      filter,
+		Stack:       stack})
+}
+
+func BuildGrafanaRow(title string, panels *NmonPanels) grafanaclient.Row {
+	row := grafanaclient.NewRow()
+	row.Title = title
+
+	for _, panel := range *panels {
+		row.Panels = append(row.Panels, BuildGrafanaGraphPanel(panel))
+	}
+
+	return row
+}
+
+func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
+	panel := grafanaclient.NewPanel()
+	panel.Title = np.Title
+	target := grafanaclient.NewTarget()
+	target.Alias = "$tag_name"
+	target.Measurement = np.Measurement
+	hostTag := grafanaclient.Tag{Key: "host", Value: np.Host}
 	target.Tags = append(target.Tags, hostTag)
-	if len(filter) > 0 {
-		fieldsTag := grafanaclient.Tag{Key: "name", Value: "/" + filter + "/", Condition: "AND"}
+	if len(np.Filter) > 0 {
+		fieldsTag := grafanaclient.Tag{Key: "name", Value: "/" + np.Filter + "/", Condition: "AND"}
 		target.Tags = append(target.Tags, fieldsTag)
 	}
 
+	if np.Stack {
+		panel.Stack = true
+		panel.Fill = 1
+		panel.Tooltip = grafanaclient.Tooltip{ValueType: "individual"}
+	}
 	target.GroupByTags = []string{"name"}
 
 	panel.Targets = append(panel.Targets, target)
