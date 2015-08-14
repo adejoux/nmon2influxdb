@@ -14,7 +14,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "0.4.0"
+	app.Version = "0.5.0"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
@@ -151,7 +151,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "to,t",
-					Usage: "from date",
+					Usage: "to date",
 				},
 				cli.StringFlag{
 					Name:  "sort",

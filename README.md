@@ -58,7 +58,7 @@ USAGE:
    nmon2influxdb [global options] command [command options] [arguments...]
 
 VERSION:
-   0.4.0
+   0.5.0
 
 AUTHOR(S):
    Alain Dejoux <adejoux@djouxtech.net>
@@ -96,18 +96,23 @@ OPTIONS:
 ~~~
 nmon2influxdb dashboard -h
 NAME:
-   dashboard - generate a dashboard from a nmon file
+   nmon2influxdb dashboard - generate a dashboard from a nmon file or template
 
 USAGE:
-   command dashboard [command options] [arguments...]
+   nmon2influxdb dashboard command [command options] [arguments...]
+
+COMMANDS:
+   file   generate a dashboard from a nmon file
+   template generate a dashboard from a TOML template
+   help, h  Shows a list of commands or help for one command
 
 OPTIONS:
    --template, -t       optional template file to use
-   --file, -f       generate Grafana dashboard file
    --guser "admin"      grafana user
    --gpassword, --gpass "admin"   grafana password
    --gurl "http://localhost:3000" grafana url
    --datasource "nmon2influxdb"   grafana datasource
+   --help, -h       show help
 ~~~
 
 ~~~
@@ -119,11 +124,13 @@ USAGE:
    command stats [command options] [arguments...]
 
 OPTIONS:
-   --metric, -m   mandatory metric for stats
-   --statshost, -s  host metrics
-   --from, -f     from date
-   --to, -t     from date
-   --aggregate, -a  aggregate function
+  --metric, -m   mandatory metric for stats
+  --statshost, -s  host metrics
+  --from, -f     from date
+  --to, -t    to date
+  --sort "mean" field to perform sort
+  --limit, -l "0"  limit the output
+
 ~~~
 
 Examples
@@ -133,18 +140,21 @@ Importing a nmon file :
 
 ~~~
 # nmon2influxdb import testsrv_141114_0000.nmon
+##################################################################################
 File testsrv_141114_0000.nmon imported !
 ~~~
 
-Upload a dashboard to Grafana :
+Each '#' character in the output means 10 000 points was inserted in InfluxDB.
+
+Upload a dashboard to Grafana based on a NMON file :
 ~~~
-nmon2influxdb dashboard -f testsrv_141114_0000.nmon
-Writing GRAFANA dashboard: testsrv_dashboard
+nmon2influxdb dashboard file testsrv_141114_0000.nmon
+Dashboard uploaded to grafana
 ~~~
 
 Generate a dashboard file from the NMON file :
 ~~~
-nmon2influxdb dashboard -f testsrv_141114_0000.nmon
+nmon2influxdb dashboard file -f testsrv_141114_0000.nmon
 Writing GRAFANA dashboard: testsrv_dashboard
 ~~~
 
@@ -179,6 +189,19 @@ nmon2influxdb stats -m DISKREADSERV -s lpar1 -f "08:04:05,29-May-2015" -t "15:04
          hdisk8|    0.00|    0.10|    0.00|    1.00|     132
          hdisk9|    2.10|    3.68|    3.55|    5.20|     132
 ~~~
+
+Generating stats for **DISKREADSERV** metric on host **lpar1** and limit output to the 5 most active disk :
+
+~~~
+nmon2influxdb stats -m DISKREADSERV -s lpar1 -l 5
+          field|     Min|    Mean|  Median|     Max|Points #
+        hdisk10|    2.20|    3.80|    3.65|    5.60|     132
+        hdisk11|    2.40|    4.10|    3.90|    5.80|     132
+        hdisk12|    2.30|    4.39|    4.05|    6.50|     132
+        hdisk13|    0.00|    0.73|    0.00|   13.90|     132
+         hdisk7|    0.00|    0.02|    0.00|    0.20|     132
+~~~
+
 
 Copyright
 ==========
