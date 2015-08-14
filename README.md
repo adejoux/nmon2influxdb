@@ -133,6 +133,9 @@ OPTIONS:
 
 ~~~
 
+TOML dashboard templates
+========================
+
 Examples
 ========
 
@@ -201,6 +204,7 @@ nmon2influxdb stats -m DISKREADSERV -s lpar1 -l 5
         hdisk13|    0.00|    0.73|    0.00|   13.90|     132
          hdisk7|    0.00|    0.02|    0.00|    0.20|     132
 ~~~
+
 
 
 Copyright

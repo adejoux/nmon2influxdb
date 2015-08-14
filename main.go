@@ -162,6 +162,11 @@ func main() {
 					Name:  "limit,l",
 					Usage: "limit the output",
 				},
+				cli.StringFlag{
+					Name:  "filter",
+					Usage: "specify a filter on fields",
+					Value: "",
+				},
 			},
 			Action: NmonStat,
 		},

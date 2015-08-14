@@ -27,13 +27,18 @@ func NmonStat(c *cli.Context) {
 
 	metric := params.Metric
 
-	tags := map[string]string{"host": params.StatsHost}
+	filters := new(influxdbclient.Filters)
 
+	filters.Add("host", params.StatsHost, "text")
+
+	if len(params.Filter) > 0 {
+		filters.Add("name", params.Filter, "regexp")
+	}
 	fromUnix, _ := ConvertTimeStamp(params.From, params.TZ)
 	fromTime := fromUnix.Format(querytimeformat)
 	toUnix, _ := ConvertTimeStamp(params.To, params.TZ)
 	toTime := toUnix.Format(querytimeformat)
-	result, err := influxdb.ReadPoints("value", tags, "name", metric, fromTime, toTime, "")
+	result, err := influxdb.ReadPoints("value", filters, "name", metric, fromTime, toTime, "")
 	if err != nil {
 		check(err)
 	}

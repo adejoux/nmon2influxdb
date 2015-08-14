@@ -41,6 +41,7 @@ type Params struct {
 	StatsHost string
 	Sort      string
 	Limit     int
+	Filter    string
 	From      string
 	To        string
 	TZ        string
@@ -81,6 +82,7 @@ func ParseStatsParameters(c *cli.Context) (params *Params) {
 		To:        c.String("to"),
 		Sort:      c.String("sort"),
 		Limit:     c.Int("limit"),
+		Filter:    c.String("filter"),
 		Aggregate: c.String("aggregate"),
 		Debug:     c.GlobalBool("debug"),
 		Server:    c.GlobalString("server"),
