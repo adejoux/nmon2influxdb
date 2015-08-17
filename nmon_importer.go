@@ -89,6 +89,12 @@ func NmonImport(c *cli.Context) {
 			timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
 
 			for i, value := range elems[2:] {
+				if len(nmon.DataSeries[name].Columns) < i+1 {
+					if nmon.Debug {
+						fmt.Printf("Entry added position %d in serie %s since nmon start: skipped\n", i+1, name)
+					}
+					continue
+				}
 				tags := map[string]string{"host": nmon.Hostname, "name": nmon.DataSeries[name].Columns[i]}
 
 				// try to convert string to integer
