@@ -23,7 +23,7 @@ func ReplaceComma(s string) string {
 }
 
 type Params struct {
-	Filepath  string
+	Name      string
 	NoDisks   bool
 	CpuAll    bool
 	Server    string
@@ -41,6 +41,7 @@ type Params struct {
 	StatsHost string
 	Sort      string
 	Limit     int
+	Host      string
 	Filter    string
 	From      string
 	To        string
@@ -50,7 +51,12 @@ type Params struct {
 }
 
 func ParseParameters(c *cli.Context) (params *Params) {
-	return &Params{Filepath: c.Args()[0],
+
+	name := ""
+	if len(c.Args()) > 0 {
+		name = c.Args()[0]
+	}
+	return &Params{Name: name,
 		Metric:    c.String("metric"),
 		StatsHost: c.String("statshost"),
 		From:      c.String("from"),
@@ -59,6 +65,8 @@ func ParseParameters(c *cli.Context) (params *Params) {
 		NoDisks:   c.Bool("nodisks"),
 		CpuAll:    c.Bool("cpus"),
 		File:      c.Bool("file"),
+		Filter:    c.String("filter"),
+		Host:      c.String("host"),
 		Guser:     c.String("guser"),
 		Gpass:     c.String("gpassword"),
 		Gurl:      c.String("gurl"),
@@ -83,6 +91,7 @@ func ParseStatsParameters(c *cli.Context) (params *Params) {
 		Sort:      c.String("sort"),
 		Limit:     c.Int("limit"),
 		Filter:    c.String("filter"),
+		Host:      c.String("host"),
 		Aggregate: c.String("aggregate"),
 		Debug:     c.GlobalBool("debug"),
 		Server:    c.GlobalString("server"),

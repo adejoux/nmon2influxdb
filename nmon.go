@@ -84,7 +84,7 @@ func InitNmonTemplate(params *Params) (nmon *Nmon) {
 func InitNmon(params *Params) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Params = params
-	file, err := os.Open(params.Filepath)
+	file, err := os.Open(params.Name)
 	check(err)
 
 	defer file.Close()

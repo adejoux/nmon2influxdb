@@ -171,9 +171,25 @@ func main() {
 			Action: NmonStat,
 		},
 		{
-			Name:   "list",
-			Usage:  "list InfluxDB metrics",
-			Action: NmonList,
+			Name:  "list",
+			Usage: "list InfluxDB metrics or measurements",
+			Subcommands: []cli.Command{
+				{
+					Name:  "measurement",
+					Usage: "list InfluxDB measurements",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "host",
+							Usage: "only for specified host",
+						},
+						cli.StringFlag{
+							Name:  "filter,f",
+							Usage: "filter measurement",
+						},
+					},
+					Action: NmonListMeasurement,
+				},
+			},
 		},
 	}
 

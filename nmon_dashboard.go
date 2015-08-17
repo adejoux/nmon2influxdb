@@ -42,7 +42,7 @@ func NmonDashboardTemplate(c *cli.Context) {
 	// parsing parameters
 	params := ParseParameters(c)
 	nmon := InitNmonTemplate(params)
-	dashboard, err := grafanaclient.ConvertTemplate(params.Filepath)
+	dashboard, err := grafanaclient.ConvertTemplate(params.Name)
 	if err != nil {
 		fmt.Printf("Cannot convert template !\n")
 		check(err)

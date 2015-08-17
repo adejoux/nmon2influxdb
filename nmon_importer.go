@@ -50,7 +50,7 @@ func NmonImport(c *cli.Context) {
 		check(err)
 	}
 
-	file, err := os.Open(params.Filepath)
+	file, err := os.Open(params.Name)
 	check(err)
 
 	defer file.Close()
@@ -123,5 +123,5 @@ func NmonImport(c *cli.Context) {
 	influxdb.WritePoints()
 	fmt.Printf("#\n")
 
-	fmt.Printf("File %s imported !\n", params.Filepath)
+	fmt.Printf("File %s imported !\n", params.Name)
 }
