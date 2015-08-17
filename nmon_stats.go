@@ -44,7 +44,7 @@ func NmonStat(c *cli.Context) {
 	}
 
 	//generate stats
-	stats := influxdb.BuildStats(result)
+	stats := influxdbclient.BuildStats(result)
 
 	DisplayStats(&stats, params.Sort, params.Limit)
 }
