@@ -17,7 +17,7 @@ import (
 )
 
 var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
-var osRegexp = regexp.MustCompile(`^AAA,OS,(Linux)|^AAA,(AIX)`)
+var osRegexp = regexp.MustCompile(`^AAA,.*(Linux|AIX)`)
 var timeRegexp = regexp.MustCompile(`^ZZZZ,([^,]+),(.*)$`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
 var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|^TOP|,T\d`)
