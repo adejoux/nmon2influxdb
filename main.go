@@ -34,32 +34,6 @@ func main() {
 		{
 			Name:  "dashboard",
 			Usage: "generate a dashboard from a nmon file or template",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "template,t",
-					Usage: "optional template file to use",
-				},
-				cli.StringFlag{
-					Name:  "guser",
-					Usage: "grafana user",
-					Value: "admin",
-				},
-				cli.StringFlag{
-					Name:  "gpassword,gpass",
-					Usage: "grafana password",
-					Value: "admin",
-				},
-				cli.StringFlag{
-					Name:  "gurl",
-					Usage: "grafana url",
-					Value: "http://localhost:3000",
-				},
-				cli.StringFlag{
-					Name:  "datasource",
-					Usage: "grafana datasource",
-					Value: "nmon2influxdb",
-				},
-			},
 			Subcommands: []cli.Command{
 				{
 					Name:  "file",
@@ -200,7 +174,7 @@ func main() {
 			Usage: "InfluxDB server and port",
 		},
 		cli.StringFlag{
-			Name:  "port",
+			Name:  "port,p",
 			Value: "8086",
 			Usage: "InfluxDB port",
 		},
@@ -215,7 +189,7 @@ func main() {
 			Usage: "InfluxDB administrator user",
 		},
 		cli.StringFlag{
-			Name:  "pass,p",
+			Name:  "pass",
 			Value: "root",
 			Usage: "InfluxDB administrator pass",
 		},

@@ -6,6 +6,7 @@ package main
 
 import (
 	"github.com/codegangsta/cli"
+	"log"
 	"strings"
 )
 
@@ -14,7 +15,7 @@ import (
 //
 func check(e error) {
 	if e != nil {
-		panic(e)
+		log.Fatal(e)
 	}
 }
 

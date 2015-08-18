@@ -28,7 +28,15 @@ func NmonDashboardFile(c *cli.Context) {
 		nmon.WriteDashboard()
 		return
 	}
-	dashboard := nmon.GenerateDashboard()
+
+	var dashboard grafanaclient.Dashboard
+	if nmon.OS == "linux" {
+		dashboard = nmon.GenerateLinuxDashboard()
+	}
+
+	if nmon.OS == "aix" {
+		dashboard = nmon.GenerateAixDashboard()
+	}
 	err := nmon.UploadDashboard(dashboard)
 	check(err)
 	return
@@ -55,7 +63,14 @@ func NmonDashboardTemplate(c *cli.Context) {
 
 func (nmon *Nmon) WriteDashboard() {
 
-	dashboard := nmon.GenerateDashboard()
+	var dashboard grafanaclient.Dashboard
+	if nmon.OS == "linux" {
+		dashboard = nmon.GenerateLinuxDashboard()
+	}
+
+	if nmon.OS == "aix" {
+		dashboard = nmon.GenerateAixDashboard()
+	}
 
 	// open output file
 	filename := nmon.Hostname + "_dashboard"
@@ -74,7 +89,7 @@ func (nmon *Nmon) WriteDashboard() {
 
 }
 
-func (nmon *Nmon) GenerateDashboard() grafanaclient.Dashboard {
+func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 
 	db := grafanaclient.Dashboard{Editable: true}
 
@@ -107,6 +122,64 @@ func (nmon *Nmon) GenerateDashboard() grafanaclient.Dashboard {
 	if len(nmon.DataSeries["SEA"].Columns) > 0 {
 		panels.AddPanel(nmon.Hostname, "SEA", "SEA", "KB", true)
 	}
+	row = BuildGrafanaRow("NET", panels)
+	db.Rows = append(db.Rows, row)
+
+	db.GTime = grafanaclient.GTime{From: nmon.StartTime(), To: nmon.StopTime()}
+	return db
+
+}
+
+func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
+
+	db := grafanaclient.Dashboard{Editable: true}
+
+	db.Title = fmt.Sprintf("%s nmon report", nmon.Hostname)
+
+	infoRow := grafanaclient.NewRow()
+	infoRow.Title = "INFORMATION"
+	infoRow.Collapse = true
+	panel := grafanaclient.Panel{Type: "text", Editable: true, Mode: "html"}
+	panel.Content = nmon.TextContent
+	infoRow.Panels = append(infoRow.Panels, panel)
+	db.Rows = append(db.Rows, infoRow)
+
+	panels := new(NmonPanels)
+
+	panels.AddPanel(nmon.Hostname, "CPU", "CPU_ALL", "%", true)
+	panels.AddPanel(nmon.Hostname, "SCAN", "VM", "scan", false)
+	panels.AddPanel(nmon.Hostname, "STEAL", "VM", "steal", false)
+	panels.AddPanel(nmon.Hostname, "COUNTERS", "VM", "nr", false)
+
+	row := BuildGrafanaRow("CPU", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(nmon.Hostname, "MEM", "MEM", "^active|memtotal|cached|inactive", true)
+	row = BuildGrafanaRow("MEM", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(nmon.Hostname, "FS USAGE", "JFSFILE", "", false)
+	row = BuildGrafanaRow("FS", panels)
+
+	db.Rows = append(db.Rows, row)
+	panels = new(NmonPanels)
+	panels.AddPanel(nmon.Hostname, "DISK WRITE", "DISKWRITE", "sd", true)
+	panels.AddPanel(nmon.Hostname, "DM DISK WRITE", "DISKWRITE", "dm", true)
+	row = BuildGrafanaRow("DISK WRITE", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(nmon.Hostname, "DISK READ", "DISKREAD", "sd", true)
+	panels.AddPanel(nmon.Hostname, "DM DISK READ", "DISKREAD", "dm", true)
+	row = BuildGrafanaRow("DISK READ", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(nmon.Hostname, "Network", "NET", "eth|em|en", true)
+	panels.AddPanel(nmon.Hostname, "Docker Network", "NET", "docker", true)
+	panels.AddPanel(nmon.Hostname, "KVM Network", "NET", "virbr", true)
 	row = BuildGrafanaRow("NET", panels)
 	db.Rows = append(db.Rows, row)
 

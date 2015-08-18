@@ -17,6 +17,7 @@ import (
 
 type Nmon struct {
 	Hostname    string
+	OS          string
 	TimeStamps  map[string]string
 	TextContent string
 	DataSeries  map[string]DataSerie
@@ -114,6 +115,12 @@ func InitNmon(params *Params) (nmon *Nmon) {
 			continue
 		}
 
+		if osRegexp.MatchString(scanner.Text()) {
+			matched := osRegexp.FindStringSubmatch(scanner.Text())
+			nmon.OS = strings.ToLower(matched[1])
+			continue
+		}
+
 		if infoRegexp.MatchString(scanner.Text()) {
 			matched := infoRegexp.FindStringSubmatch(scanner.Text())
 			nmon.AppendText(matched[1])
@@ -125,6 +132,9 @@ func InitNmon(params *Params) (nmon *Nmon) {
 				continue
 			}
 
+			if badRegexp.MatchString(scanner.Text()) {
+				continue
+			}
 			elems := strings.Split(scanner.Text(), ",")
 
 			if len(elems) < 3 {

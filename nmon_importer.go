@@ -17,10 +17,12 @@ import (
 )
 
 var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
+var osRegexp = regexp.MustCompile(`^AAA,OS,(Linux)|^AAA,(AIX)`)
 var timeRegexp = regexp.MustCompile(`^ZZZZ,([^,]+),(.*)$`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
 var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|^TOP|,T\d`)
 var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
+var badRegexp = regexp.MustCompile(`,,`)
 var cpuallRegexp = regexp.MustCompile(`^CPU\d+|^SCPU\d+|^PCPU\d+`)
 var diskallRegexp = regexp.MustCompile(`^DISK`)
 var skipRegexp = regexp.MustCompile(`T0000|^TOP`)
@@ -130,4 +132,5 @@ func NmonImport(c *cli.Context) {
 	fmt.Printf("#\n")
 
 	fmt.Printf("File %s imported !\n", params.Name)
+
 }
