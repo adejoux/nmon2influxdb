@@ -1,12 +1,22 @@
-title = "dual vio"
-
+title = "templated dual vio"
+[templates]
+  [[templates.template]]
+    # name of the template variable
+    name = "vios"
+    # the default nmon2influxdb database in InfluxDB
+    datasource = "nmon2influxdb"
+    # query used to retrieve values in InfluxDB
+    query =  "SHOW TAG VALUES FROM CPU_ALL WITH KEY = host"
+    # Regular expression used to filter the query result
+    regex = "vios"
 [[row]]
 title = "LPAR"
     [[row.panel]]
     title = "shared processor"
         [[row.panel.metric]]
             measurement = "LPAR"
-            hosts = ["vios1", "vios2"]
+            # use template variable $vios
+            hosts = ["$vios"]
             fields = ["PhysicalCPU", "virtualCPUs", "entitled"]
         [[row.panel.override]]
             alias = "$tag_host PhysicalCPU"
@@ -19,7 +29,8 @@ title = "LPAR"
         title = "shared processor pool"
         [[row.panel.metric]]
             measurement = "LPAR"
-            hosts = ["vios1"]
+            # use template variable $vios
+            hosts = ["$vios"]
             fields = ["PoolIdle", "poolCPUs"]
 
 [[row]]
@@ -30,7 +41,9 @@ title = "SEA"
     fill = 1
         [[row.panel.metric]]
             measurement = "SEA"
-            hosts = ["vios1", "vios2"]
+            # use template variable $vios
+            hosts = ["$vios"]
+            # regular expressions are used on fields
             fields = ["write-KB"]
     [[row.panel]]
     title = "SEA READ"
@@ -38,5 +51,10 @@ title = "SEA"
     fill = 1
         [[row.panel.metric]]
             measurement = "SEA"
-            hosts = ["vios1", "vios2"]
+            # use template variable $vios
+            hosts = ["$vios"]
+            # regular expressions are used on fields
             fields = ["read-KB"]
+[time]
+  from = "2015-07-06T13:03:56.000Z"
+  to = "2015-07-07T14:23:44.000Z"

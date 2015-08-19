@@ -1,14 +1,13 @@
-nmon2influxdb
-===========
+# nmon2influxdb
+
 
 This application take a nmon file and upload it in a [InfluxDB](influxdb.com) database.
 It generates also a dashboard to allow data visualization in [Grafana](http://grafana.org/).
 It's working on linux only for now.
 
-Download
-========
+# Download
 
-I made available a compiled version for linux x86_64 on Dropbox : https://www.dropbox.com/s/3keh5d6umnvcwv8/nmon2influxdb
+Go to my [github repository Releases section](https://github.com/adejoux/nmon2influxdb/releases)
 
 Else you can download the git repository and build the binary from source(you need to have a working GO environment):
 
@@ -18,20 +17,13 @@ cd nmon2influxdb
 go build
 ~~~
 
-nmon2influxdb will upload all nmon data in InfluxDB in series.
-
-If you import a nmon file for server **testsrv**, it will create series starting by the server hostname.
-
-For example, the data in CPU_ALL will be available in testsrv_CPU_ALL.
-
-You can list all series stored in InfluxDB by executing "list series" command.
-
-InfluxDB and Grafana
-====================
+# InfluxDB and Grafana
 
 You need a working InfluxDB database to use **nmon2influxdb**.
 
-You can use also my influxdb_grafana docker image :
+Both InfluxDB and Grafana are easy to install on linux. On Windows or Mac OS it's doable but more complicated. Using a Docker container is easier.
+
+You can use my docker-influxdb-grafana docker image :
 
     # docker pull adejoux/docker-influxdb-grafana
 
@@ -41,16 +33,34 @@ To start the container :
 
 The git repository of this image is available at : [docker_influxdb_grafana](https://github.com/adejoux/docker_influxdb_grafana)
 
+## On Linux
+
+
 Grafana will be available at url : [http://localhost:3000](http://localhost:3000)
 
 InfluxDB administration interface will be available at : [http://localhost:8083](http://localhost:8083)
+
+## On Windows/Mac OS
+
+You will need to know the IP address of your boot2docker VM.
+You will need to use the options in command line. For example, if my VM has ip **192.168.99.100** :
+~~~
+nmon2influxdb -s 192.168.99.100 import test.nmon
+~~~
+
+For dashboard, you will need to specify the grafana url too :
+~~~
+nmon2influxdb -s 192.168.99.100 dashboard file --gurl "http://192.168.99.100:3000" test.nmon
+~~~
+
 
 
 Usage
 =======
 
+
 ~~~
-nmon2influxdb
+#nmon2influxdb
 NAME:
    nmon2influxdb - upload NMON stats to InfluxDB database
 
@@ -58,28 +68,34 @@ USAGE:
    nmon2influxdb [global options] command [command options] [arguments...]
 
 VERSION:
-   0.5.0
+   0.6.0
 
 AUTHOR(S):
    Alain Dejoux <adejoux@djouxtech.net>
 
 COMMANDS:
    import import a nmon file
-   dashboard  generate a dashboard from a nmon file
-   stats generate stats from a InfluxDB metric
+   dashboard  generate a dashboard from a nmon file or template
+   stats  generate stats from a InfluxDB metric
+   list   list InfluxDB metrics or measurements
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --server, -s "localhost" InfluxDB server and port
-   --port "8086"    InfluxDB port
+   --port, -p "8086"    InfluxDB port
    --db, -d "nmon_reports"  InfluxDB database
    --user, -u "root"    InfluxDB administrator user
-   --pass, -p "root"    InfluxDB administrator pass
+   --pass "root"    InfluxDB administrator pass
    --debug      debug mode
+   --tz, -t       timezone
    --help, -h     show help
    --version, -v    print the version
 ~~~
 
+## import command
+The **import** command is the one used to import NMON files in InfluxDB.
+
+You can skip disks metrics with **nd** option. Can be interesting when you have a system with a lot of disks and where you are interested only in CPU performance.
 ~~~
 nmon2influxdb import -h
 NAME:
@@ -93,6 +109,9 @@ OPTIONS:
    --cpus, -c   add per cpu metrics
 ~~~
 
+## dashboard
+
+The **dashboard** command has two subcommands to create dashboards in Grafana.
 ~~~
 nmon2influxdb dashboard -h
 NAME:
@@ -107,13 +126,54 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 OPTIONS:
-   --template, -t       optional template file to use
+   --help, -h show help
+~~~
+
+### dashboard file
+
+The **dashboard file** subcommand will create and upload a dashboard from a NMON file.
+
+It's great as a starting point with Grafana.
+
+~~~
+NAME:
+   file - generate a dashboard from a nmon file
+
+USAGE:
+   command file [command options] [arguments...]
+
+OPTIONS:
+   --template, -t       optional json template file to use
+   --file, -f       generate Grafana dashboard file
    --guser "admin"      grafana user
    --gpassword, --gpass "admin"   grafana password
    --gurl "http://localhost:3000" grafana url
    --datasource "nmon2influxdb"   grafana datasource
-   --help, -h       show help
 ~~~
+
+### dashboard template
+
+The **dashboard template** subcommand will create and upload a dashboard from a TOML template file.
+
+~~~
+NAME:
+   template - generate a dashboard from a TOML template
+
+USAGE:
+   command template [command options] [arguments...]
+
+OPTIONS:
+   --template, -t       optional json template file to use
+   --file, -f       generate Grafana dashboard file
+   --guser "admin"      grafana user
+   --gpassword, --gpass "admin"   grafana password
+   --gurl "http://localhost:3000" grafana url
+   --datasource "nmon2influxdb"   grafana datasource
+~~~
+
+## stats
+
+Dashboards are not always the best way to analyze data. When you have hundred or thousands disks it's better to have a summary of stats.
 
 ~~~
 nmon2influxdb stats -h
@@ -124,17 +184,86 @@ USAGE:
    command stats [command options] [arguments...]
 
 OPTIONS:
-  --metric, -m   mandatory metric for stats
-  --statshost, -s  host metrics
-  --from, -f     from date
-  --to, -t    to date
-  --sort "mean" field to perform sort
-  --limit, -l "0"  limit the output
-
+   --metric, -m   mandatory metric for stats
+   --statshost, -s  host metrics
+   --from, -f     from date
+   --to, -t     to date
+   --sort "mean"  field to perform sort
+   --limit, -l "0"  limit the output
+   --filter     specify a filter on fields
 ~~~
+
+
 
 TOML dashboard templates
 ========================
+
+Grafana is really great to build templates but you need to learn it to build advanced dashboard. It's pretty easy but I wanted to provide ready to use templates. JSON is pretty hard to read for humans so I implemented TOML templates.
+
+For example, this template will display informations coming from two differents VIO servers :
+
+~~~ toml
+title = "templated dual vio"
+[templates]
+  [[templates.template]]
+    # name of the template variable
+    name = "vios"
+    # the default nmon2influxdb database in InfluxDB
+    datasource = "nmon2influxdb"
+    # query used to retrieve values in InfluxDB
+    query =  "SHOW TAG VALUES FROM CPU_ALL WITH KEY = host"
+    # Regular expression used to filter the query result
+    regex = "vios"
+[[row]]
+title = "LPAR"
+    [[row.panel]]
+    title = "shared processor"
+        [[row.panel.metric]]
+            measurement = "LPAR"
+            # use template variable $vios
+            hosts = ["$vios"]
+            fields = ["PhysicalCPU", "virtualCPUs", "entitled"]
+        [[row.panel.override]]
+            alias = "$tag_host PhysicalCPU"
+            stack = true
+            fill = 1
+        [row.panel.tooltip]
+            value_type = "individual"
+
+    [[row.panel]]
+        title = "shared processor pool"
+        [[row.panel.metric]]
+            measurement = "LPAR"
+            # use template variable $vios
+            hosts = ["$vios"]
+            fields = ["PoolIdle", "poolCPUs"]
+
+[[row]]
+title = "SEA"
+    [[row.panel]]
+    title = "SEA WRITE"
+    stack = true
+    fill = 1
+        [[row.panel.metric]]
+            measurement = "SEA"
+            # use template variable $vios
+            hosts = ["$vios"]
+            # regular expressions are used on fields
+            fields = ["write-KB"]
+    [[row.panel]]
+    title = "SEA READ"
+    stack = true
+    fill = 1
+        [[row.panel.metric]]
+            measurement = "SEA"
+            # use template variable $vios
+            hosts = ["$vios"]
+            # regular expressions are used on fields
+            fields = ["read-KB"]
+[time]
+  from = "2015-07-06T13:03:56.000Z"
+  to = "2015-07-07T14:23:44.000Z"
+~~~
 
 Examples
 ========
