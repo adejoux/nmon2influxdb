@@ -29,10 +29,10 @@ func NmonDashboardFile(c *cli.Context) {
 		return
 	}
 
-        if (nmon.OS != "linux" && nmon.OS != "aix" ) {
-          fmt.Printf("Error: unable to find if it's a Linux or AIX nmon file !\n")
-          os.Exit(1)
-        }
+	if nmon.OS != "linux" && nmon.OS != "aix" {
+		fmt.Printf("Error: unable to find if it's a Linux or AIX nmon file !\n")
+		os.Exit(1)
+	}
 
 	var dashboard grafanaclient.Dashboard
 	if nmon.OS == "linux" {
@@ -255,8 +255,15 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 
 	resDs, err := grafana.GetDataSource(nmon.Params.DS)
 	if resDs.Name == "" {
+		plugins, err := grafana.GetDataSourcePlugins()
+		check(err)
+		if _, present := plugins["influxdb"]; !present {
+			fmt.Printf("No plugin for influxDB in Grafana !\n")
+			os.Exit(1)
+		}
+
 		var ds = grafanaclient.DataSource{Name: nmon.Params.DS,
-			Type:     "influxdb",
+			Type:     plugins["influxdb"].Type,
 			Access:   "direct",
 			URL:      nmon.DbURL(),
 			User:     nmon.Params.User,
