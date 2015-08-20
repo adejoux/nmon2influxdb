@@ -50,7 +50,7 @@ nmon2influxdb -s 192.168.99.100 import test.nmon
 
 For dashboard, you will need to specify the grafana url too :
 ~~~
-nmon2influxdb -s 192.168.99.100 dashboard file --gurl "http://192.168.99.100:3000" test.nmon
+nmon2influxdb dashboard file --gurl "http://192.168.99.100:3000" test.nmon
 ~~~
 
 
@@ -334,6 +334,17 @@ nmon2influxdb stats -m DISKREADSERV -s lpar1 -l 5
          hdisk7|    0.00|    0.02|    0.00|    0.20|     132
 ~~~
 
+Listing measurements available for a specific host and containing DISK in the name :
+
+~~~
+nmon2influxdb list measurement --host feddy --filter DISK
+measurements
+DISKBSIZE
+DISKBUSY
+DISKREAD
+DISKWRITE
+DISKXFER
+~~~
 
 
 Copyright
