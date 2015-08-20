@@ -264,7 +264,7 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 
 		var ds = grafanaclient.DataSource{Name: nmon.Params.DS,
 			Type:     plugins["influxdb"].Type,
-			Access:   "direct",
+			Access:   "proxy",
 			URL:      nmon.DbURL(),
 			User:     nmon.Params.User,
 			Password: nmon.Params.Password,
