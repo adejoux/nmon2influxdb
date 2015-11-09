@@ -110,24 +110,70 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 
 	panels := new(NmonPanels)
 
-	panels.AddPanel(nmon.Hostname, "CPU", "CPU_ALL", "^User%|^Sys%|^Wait%|^Idle%", true)
-	panels.AddPanel(nmon.Hostname, "LPAR", "LPAR", "PhysicalC|entitled|virtualC", false)
+	host := nmon.Hostname
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "CPU",
+		Measurement: "CPU_ALL",
+		Filters:     NameFilter("^User%|^Sys%|^Wait%|^Idle%"),
+		Group:       []string{"name"},
+		Stack:       false})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "LPAR",
+		Measurement: "LPAR",
+		Filters:     NameFilter("PhysicalC|entitled|virtualC"),
+		Group:       []string{"name"},
+		Stack:       false})
 
 	row := BuildGrafanaRow("CPU", panels)
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
-	panels.AddPanel(nmon.Hostname, "I/O Adapters", "IOADAPT", "KB", true)
-	panels.AddPanel(nmon.Hostname, "PAGE", "PAGE", "pgs", false)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "I/O Adapters",
+		Measurement: "IOADAPT",
+		Filters:     NameFilter("KB"),
+		Group:       []string{"name"},
+		Stack:       true})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "PAGE",
+		Measurement: "PAGE",
+		Filters:     NameFilter("pgs"),
+		Group:       []string{"name"},
+		Stack:       false})
+
 	row = BuildGrafanaRow("IO ADAPTER", panels)
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
-	panels.AddPanel(nmon.Hostname, "Network", "NET", "KB", true)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "Network",
+		Measurement: "NET",
+		Filters:     NameFilter("KB"),
+		Group:       []string{"name"},
+		Stack:       true})
+
 	if len(nmon.DataSeries["SEA"].Columns) > 0 {
-		panels.AddPanel(nmon.Hostname, "SEA", "SEA", "KB", true)
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:       "SEA",
+			Measurement: "SEA",
+			Filters:     NameFilter("KB"),
+			Group:       []string{"name"},
+			Stack:       true})
 	}
 	row = BuildGrafanaRow("NET", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "TOP",
+		Measurement: "TOP",
+		Filters:     NameFilter("%CPU"),
+		Group:       []string{"name", "command"},
+		Stack:       true})
+	row = BuildGrafanaRow("TOP", panels)
 	db.Rows = append(db.Rows, row)
 
 	db.GTime = grafanaclient.GTime{From: nmon.StartTime(), To: nmon.StopTime()}
@@ -151,41 +197,129 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 
 	panels := new(NmonPanels)
 
-	panels.AddPanel(nmon.Hostname, "CPU", "CPU_ALL", "%", true)
-	panels.AddPanel(nmon.Hostname, "SCAN", "VM", "scan", false)
-	panels.AddPanel(nmon.Hostname, "STEAL", "VM", "steal", false)
-	panels.AddPanel(nmon.Hostname, "COUNTERS", "VM", "nr", false)
+	host := nmon.Hostname
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "CPU",
+		Measurement: "CPU_ALL",
+		Filters:     NameFilter("%"),
+		Group:       []string{"name"},
+		Stack:       true})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "SCAN",
+		Measurement: "VM",
+		Filters:     NameFilter("scan"),
+		Group:       []string{"name"},
+		Stack:       false})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "STEAL",
+		Measurement: "VM",
+		Filters:     NameFilter("steal"),
+		Group:       []string{"name"},
+		Stack:       false})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "COUNTERS",
+		Measurement: "VM",
+		Filters:     NameFilter("nr"),
+		Group:       []string{"name"},
+		Stack:       false})
 
 	row := BuildGrafanaRow("CPU", panels)
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
-	panels.AddPanel(nmon.Hostname, "MEM", "MEM", "^active|memtotal|cached|inactive", true)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "MEM",
+		Measurement: "MEM",
+		Filters:     NameFilter("^active|memtotal|cached|inactive"),
+		Group:       []string{"name"},
+		Stack:       true})
+
 	row = BuildGrafanaRow("MEM", panels)
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
-	panels.AddPanel(nmon.Hostname, "FS USAGE", "JFSFILE", "", false)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "FS USAGE",
+		Measurement: "JFSFILE",
+		Filters:     NameFilter(""),
+		Group:       []string{"name"},
+		Stack:       false})
+
 	row = BuildGrafanaRow("FS", panels)
 
 	db.Rows = append(db.Rows, row)
 	panels = new(NmonPanels)
-	panels.AddPanel(nmon.Hostname, "DISK WRITE", "DISKWRITE", "sd", true)
-	panels.AddPanel(nmon.Hostname, "DM DISK WRITE", "DISKWRITE", "dm", true)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "DISK WRITE",
+		Measurement: "DISKWRITE",
+		Filters:     NameFilter("sd"),
+		Group:       []string{"name"},
+		Stack:       true})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "DM DISK WRITE",
+		Measurement: "DISKWRITE",
+		Filters:     NameFilter("dm"),
+		Group:       []string{"name"},
+		Stack:       true})
+
 	row = BuildGrafanaRow("DISK WRITE", panels)
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
-	panels.AddPanel(nmon.Hostname, "DISK READ", "DISKREAD", "sd", true)
-	panels.AddPanel(nmon.Hostname, "DM DISK READ", "DISKREAD", "dm", true)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "DISK READ",
+		Measurement: "DISKREAD",
+		Filters:     NameFilter("sd"),
+		Group:       []string{"name"},
+		Stack:       true})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "DM DISK READ",
+		Measurement: "DISKREAD",
+		Filters:     NameFilter("dm"),
+		Group:       []string{"name"},
+		Stack:       true})
+
 	row = BuildGrafanaRow("DISK READ", panels)
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
-	panels.AddPanel(nmon.Hostname, "Network", "NET", "eth|em|en", true)
-	panels.AddPanel(nmon.Hostname, "Docker Network", "NET", "docker", true)
-	panels.AddPanel(nmon.Hostname, "KVM Network", "NET", "virbr", true)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "Network",
+		Measurement: "NET",
+		Filters:     NameFilter("eth|em|en"),
+		Group:       []string{"name"},
+		Stack:       true})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "Docker Network",
+		Measurement: "NET",
+		Filters:     NameFilter("docker"),
+		Group:       []string{"name"},
+		Stack:       true})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "KVM Network",
+		Measurement: "NET",
+		Filters:     NameFilter("virbr"),
+		Group:       []string{"name"},
+		Stack:       true})
+
 	row = BuildGrafanaRow("NET", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "TOP",
+		Measurement: "TOP",
+		Filters:     NameFilter("%CPU"),
+		Group:       []string{"name", "command"},
+		Stack:       true})
+	row = BuildGrafanaRow("TOP", panels)
 	db.Rows = append(db.Rows, row)
 
 	db.GTime = grafanaclient.GTime{From: nmon.StartTime(), To: nmon.StopTime()}
@@ -197,18 +331,15 @@ type NmonPanel struct {
 	Host        string
 	Title       string
 	Measurement string
-	Filter      string
+	Filters     []grafanaclient.Tag
+	Group       []string
 	Stack       bool
 }
 
 type NmonPanels []NmonPanel
 
-func (panels *NmonPanels) AddPanel(host string, title string, measurement string, filter string, stack bool) {
-	*panels = append(*panels, NmonPanel{Host: host,
-		Title:       title,
-		Measurement: measurement,
-		Filter:      filter,
-		Stack:       stack})
+func (panels *NmonPanels) AddPanel(npanel *NmonPanel) {
+	*panels = append(*panels, *npanel)
 }
 
 func BuildGrafanaRow(title string, panels *NmonPanels) grafanaclient.Row {
@@ -222,17 +353,28 @@ func BuildGrafanaRow(title string, panels *NmonPanels) grafanaclient.Row {
 	return row
 }
 
+func NameFilter(filter string) (tags []grafanaclient.Tag) {
+	tags = append(tags, grafanaclient.Tag{Key: "name", Value: "/" + filter + "/", Condition: "AND"})
+	return
+}
+
+func TagsFilter(filters map[string]string) (tags []grafanaclient.Tag) {
+	for _, key := range filters {
+		tags = append(tags, grafanaclient.Tag{Key: key, Value: "/" + filters[key] + "/", Condition: "AND"})
+	}
+	return
+}
+
 func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 	panel := grafanaclient.NewPanel()
 	panel.Title = np.Title
 	target := grafanaclient.NewTarget()
-	target.Alias = "$tag_name"
 	target.Measurement = np.Measurement
 	hostTag := grafanaclient.Tag{Key: "host", Value: np.Host}
 	target.Tags = append(target.Tags, hostTag)
-	if len(np.Filter) > 0 {
-		fieldsTag := grafanaclient.Tag{Key: "name", Value: "/" + np.Filter + "/", Condition: "AND"}
-		target.Tags = append(target.Tags, fieldsTag)
+
+	for _, filt := range np.Filters {
+		target.Tags = append(target.Tags, filt)
 	}
 
 	if np.Stack {
@@ -240,7 +382,15 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 		panel.Fill = 1
 		panel.Tooltip = grafanaclient.Tooltip{ValueType: "individual"}
 	}
-	target.GroupByTags = []string{"name"}
+
+	if len(np.Group) > 0 {
+		target.GroupByTags = np.Group
+		target.Alias = ""
+	}
+
+	for _, field := range np.Group {
+		target.Alias += "$tag_" + field + " "
+	}
 
 	panel.Targets = append(panel.Targets, target)
 
@@ -263,12 +413,13 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 		}
 
 		var ds = grafanaclient.DataSource{Name: nmon.Params.DS,
-			Type:     plugins["influxdb"].Type,
-			Access:   "proxy",
-			URL:      nmon.DbURL(),
-			User:     nmon.Params.User,
-			Password: nmon.Params.Password,
-			Database: nmon.Params.Db,
+			Type:      plugins["influxdb"].Type,
+			Access:    "proxy",
+			URL:       nmon.DbURL(),
+			User:      nmon.Params.User,
+			Password:  nmon.Params.Password,
+			Database:  nmon.Params.Db,
+			IsDefault: true,
 		}
 		err = grafana.CreateDataSource(ds)
 		check(err)

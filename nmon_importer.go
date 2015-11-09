@@ -20,13 +20,14 @@ var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
 var osRegexp = regexp.MustCompile(`^AAA,.*(Linux|AIX)`)
 var timeRegexp = regexp.MustCompile(`^ZZZZ,([^,]+),(.*)$`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
-var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|^TOP|,T\d`)
+var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|,T\d`)
 var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
 var badRegexp = regexp.MustCompile(`,,`)
 var cpuallRegexp = regexp.MustCompile(`^CPU\d+|^SCPU\d+|^PCPU\d+`)
 var diskallRegexp = regexp.MustCompile(`^DISK`)
-var skipRegexp = regexp.MustCompile(`T0000|^TOP`)
-var statsRegexp = regexp.MustCompile(`[^Z]+,(T\d+)`)
+var skipRegexp = regexp.MustCompile(`T0000|^Z|^TOP,%CPU`)
+var statsRegexp = regexp.MustCompile(`^[^,]+?,(T\d+)`)
+var topRegexp = regexp.MustCompile(`^TOP,\d+,(T\d+)`)
 var nfsRegexp = regexp.MustCompile(`^NFS`)
 var nameRegexp = regexp.MustCompile(`(\d+)$`)
 
@@ -85,19 +86,24 @@ func NmonImport(c *cli.Context) {
 		if statsRegexp.MatchString(line) {
 			matched := statsRegexp.FindStringSubmatch(line)
 			elems := strings.Split(line, ",")
+			name := elems[0]
+
 			timeStr, err := nmon.GetTimeStamp(matched[1])
 			check(err)
-			name := elems[0]
+
 			timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
 
 			for i, value := range elems[2:] {
 				if len(nmon.DataSeries[name].Columns) < i+1 {
 					if nmon.Debug {
+						fmt.Printf(line)
 						fmt.Printf("Entry added position %d in serie %s since nmon start: skipped\n", i+1, name)
 					}
 					continue
 				}
-				tags := map[string]string{"host": nmon.Hostname, "name": nmon.DataSeries[name].Columns[i]}
+				column := nmon.DataSeries[name].Columns[i]
+				tags := map[string]string{"host": nmon.Hostname, "name": column}
+
 
 				// try to convert string to integer
 				converted, err := strconv.ParseFloat(value, 64)
@@ -117,6 +123,40 @@ func NmonImport(c *cli.Context) {
 				}
 
 				influxdb.AddPoint(measurement, timestamp, field, tags)
+
+				if influxdb.PointsCount() == 10000 {
+					err = influxdb.WritePoints()
+					check(err)
+					influxdb.ClearPoints()
+					fmt.Printf("#")
+				}
+			}
+		}
+
+		if topRegexp.MatchString(line) {
+			matched := topRegexp.FindStringSubmatch(line)
+			elems := strings.Split(line, ",")
+			timeStr, err := nmon.GetTimeStamp(matched[1])
+			check(err)
+			timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
+
+			for i, value := range elems[3:12] {
+				column := nmon.DataSeries["TOP"].Columns[i]
+
+				tags := map[string]string{"host": nmon.Hostname, "name": column, "pid": elems[1], "command": elems[13], "wlm": elems[14]}
+
+
+				// try to convert string to integer
+				converted, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					//if not working, skip to next value. We don't want text values in InfluxDB.
+					continue
+				}
+
+				//send integer if it worked
+				field := map[string]interface{}{"value": converted}
+
+				influxdb.AddPoint("TOP", timestamp, field, tags)
 
 				if influxdb.PointsCount() == 10000 {
 					err = influxdb.WritePoints()
