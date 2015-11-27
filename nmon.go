@@ -82,10 +82,11 @@ func InitNmonTemplate(params *Params) (nmon *Nmon) {
 	return
 }
 
-func InitNmon(params *Params) (nmon *Nmon) {
+func InitNmon(params *Params, nmon_file string) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Params = params
-	file, err := os.Open(params.Name)
+	nmon.Debug = params.Debug
+	file, err := os.Open(nmon_file)
 	check(err)
 
 	defer file.Close()

@@ -24,7 +24,6 @@ func ReplaceComma(s string) string {
 }
 
 type Params struct {
-	Name      string
 	NoDisks   bool
 	CpuAll    bool
 	Server    string
@@ -53,12 +52,7 @@ type Params struct {
 
 func ParseParameters(c *cli.Context) (params *Params) {
 
-	name := ""
-	if len(c.Args()) > 0 {
-		name = c.Args()[0]
-	}
-	return &Params{Name: name,
-		Metric:    c.String("metric"),
+	return &Params{Metric: c.String("metric"),
 		StatsHost: c.String("statshost"),
 		From:      c.String("from"),
 		To:        c.String("to"),

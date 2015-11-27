@@ -45,7 +45,7 @@ InfluxDB administration interface will be available at : [http://localhost:8083]
 You will need to know the IP address of your boot2docker VM.
 You will need to use the options in command line. For example, if my VM has ip **192.168.99.100** :
 ~~~
-nmon2influxdb -s 192.168.99.100 import test.nmon
+nmon2influxdb -s 192.168.99.100 import test.nmon test2.nmon
 ~~~
 
 For dashboard, you will need to specify the grafana url too :
@@ -68,13 +68,13 @@ USAGE:
    nmon2influxdb [global options] command [command options] [arguments...]
 
 VERSION:
-   0.7.0
+   0.8.0
 
 AUTHOR(S):
    Alain Dejoux <adejoux@djouxtech.net>
 
 COMMANDS:
-   import import a nmon file
+   import import nmon files
    dashboard  generate a dashboard from a nmon file or template
    stats  generate stats from a InfluxDB metric
    list   list InfluxDB metrics or measurements
@@ -99,13 +99,13 @@ You can skip disks metrics with **nd** option. Can be interesting when you have 
 ~~~
 nmon2influxdb import -h
 NAME:
-   import - import a nmon file
+   import - import nmon files
 
 USAGE:
    command import [command options] [arguments...]
 
 OPTIONS:
-   --nodisks, --nd  add disk metrics
+   --nodisks, --nd  skip disk metrics
    --cpus, -c   add per cpu metrics
 ~~~
 
@@ -268,12 +268,14 @@ title = "SEA"
 Examples
 ========
 
-Importing a nmon file :
+Importing nmon files :
 
 ~~~
-# nmon2influxdb import testsrv_141114_0000.nmon
+# nmon2influxdb import testsrv_141114_0000.nmon testsrv_141115_0000.nmon
 ##################################################################################
 File testsrv_141114_0000.nmon imported !
+##################################################################################
+File testsrv_141115_0000.nmon imported !
 ~~~
 
 Each '#' character in the output means 10 000 points was inserted in InfluxDB.

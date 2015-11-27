@@ -37,140 +37,137 @@ func NmonImport(c *cli.Context) {
 		fmt.Printf("file name needs to be provided\n")
 		os.Exit(1)
 	}
+
 	// parsing parameters
 	params := ParseParameters(c)
 
-	nmon := InitNmon(params)
-
 	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
-	nmon.Debug = params.Debug
 	influxdb.SetDebug(params.Debug)
-
 	influxdb.Connect()
-
 	if exist, _ := influxdb.ExistDB(params.Db); exist != true {
 		_, err := influxdb.CreateDB(params.Db)
 		check(err)
 	}
 
-	file, err := os.Open(params.Name)
-	check(err)
+	for _, nmon_file := range c.Args() {
 
-	defer file.Close()
-	reader := bufio.NewReader(file)
-	scanner := bufio.NewScanner(reader)
-	scanner.Split(bufio.ScanLines)
+		nmon := InitNmon(params, nmon_file)
+		file, err := os.Open(nmon_file)
+		check(err)
 
-	var lines []string
+		defer file.Close()
+		reader := bufio.NewReader(file)
+		scanner := bufio.NewScanner(reader)
+		scanner.Split(bufio.ScanLines)
 
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
+		var lines []string
 
-	sort.Strings(lines)
-
-	for _, line := range lines {
-
-		if cpuallRegexp.MatchString(line) && !params.CpuAll {
-			continue
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text())
 		}
 
-		if diskallRegexp.MatchString(line) && params.NoDisks {
-			continue
-		}
+		sort.Strings(lines)
 
-		if skipRegexp.MatchString(line) {
-			continue
-		}
+		for _, line := range lines {
 
-		if statsRegexp.MatchString(line) {
-			matched := statsRegexp.FindStringSubmatch(line)
-			elems := strings.Split(line, ",")
-			name := elems[0]
+			if cpuallRegexp.MatchString(line) && !params.CpuAll {
+				continue
+			}
 
-			timeStr, err := nmon.GetTimeStamp(matched[1])
-			check(err)
+			if diskallRegexp.MatchString(line) && params.NoDisks {
+				continue
+			}
 
-			timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
+			if skipRegexp.MatchString(line) {
+				continue
+			}
 
-			for i, value := range elems[2:] {
-				if len(nmon.DataSeries[name].Columns) < i+1 {
-					if nmon.Debug {
-						fmt.Printf(line)
-						fmt.Printf("Entry added position %d in serie %s since nmon start: skipped\n", i+1, name)
+			if statsRegexp.MatchString(line) {
+				matched := statsRegexp.FindStringSubmatch(line)
+				elems := strings.Split(line, ",")
+				name := elems[0]
+
+				timeStr, err := nmon.GetTimeStamp(matched[1])
+				check(err)
+
+				timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
+
+				for i, value := range elems[2:] {
+					if len(nmon.DataSeries[name].Columns) < i+1 {
+						if nmon.Debug {
+							fmt.Printf(line)
+							fmt.Printf("Entry added position %d in serie %s since nmon start: skipped\n", i+1, name)
+						}
+						continue
 					}
-					continue
+					column := nmon.DataSeries[name].Columns[i]
+					tags := map[string]string{"host": nmon.Hostname, "name": column}
+
+					// try to convert string to integer
+					converted, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						//if not working, skip to next value. We don't want text values in InfluxDB.
+						continue
+					}
+
+					//send integer if it worked
+					field := map[string]interface{}{"value": converted}
+
+					measurement := ""
+					if nfsRegexp.MatchString(name) {
+						measurement = name
+					} else {
+						measurement = nameRegexp.ReplaceAllString(name, "")
+					}
+
+					influxdb.AddPoint(measurement, timestamp, field, tags)
+
+					if influxdb.PointsCount() == 10000 {
+						err = influxdb.WritePoints()
+						check(err)
+						influxdb.ClearPoints()
+						fmt.Printf("#")
+					}
 				}
-				column := nmon.DataSeries[name].Columns[i]
-				tags := map[string]string{"host": nmon.Hostname, "name": column}
+			}
 
+			if topRegexp.MatchString(line) {
+				matched := topRegexp.FindStringSubmatch(line)
+				elems := strings.Split(line, ",")
+				timeStr, err := nmon.GetTimeStamp(matched[1])
+				check(err)
+				timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
 
-				// try to convert string to integer
-				converted, err := strconv.ParseFloat(value, 64)
-				if err != nil {
-					//if not working, skip to next value. We don't want text values in InfluxDB.
-					continue
-				}
+				for i, value := range elems[3:12] {
+					column := nmon.DataSeries["TOP"].Columns[i]
 
-				//send integer if it worked
-				field := map[string]interface{}{"value": converted}
+					tags := map[string]string{"host": nmon.Hostname, "name": column, "pid": elems[1], "command": elems[13], "wlm": elems[14]}
 
-				measurement := ""
-				if nfsRegexp.MatchString(name) {
-					measurement = name
-				} else {
-					measurement = nameRegexp.ReplaceAllString(name, "")
-				}
+					// try to convert string to integer
+					converted, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						//if not working, skip to next value. We don't want text values in InfluxDB.
+						continue
+					}
 
-				influxdb.AddPoint(measurement, timestamp, field, tags)
+					//send integer if it worked
+					field := map[string]interface{}{"value": converted}
 
-				if influxdb.PointsCount() == 10000 {
-					err = influxdb.WritePoints()
-					check(err)
-					influxdb.ClearPoints()
-					fmt.Printf("#")
+					influxdb.AddPoint("TOP", timestamp, field, tags)
+
+					if influxdb.PointsCount() == 10000 {
+						err = influxdb.WritePoints()
+						check(err)
+						influxdb.ClearPoints()
+						fmt.Printf("#")
+					}
 				}
 			}
 		}
+		// flushing remaining data
+		influxdb.WritePoints()
+		fmt.Printf("#\n")
 
-		if topRegexp.MatchString(line) {
-			matched := topRegexp.FindStringSubmatch(line)
-			elems := strings.Split(line, ",")
-			timeStr, err := nmon.GetTimeStamp(matched[1])
-			check(err)
-			timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
-
-			for i, value := range elems[3:12] {
-				column := nmon.DataSeries["TOP"].Columns[i]
-
-				tags := map[string]string{"host": nmon.Hostname, "name": column, "pid": elems[1], "command": elems[13], "wlm": elems[14]}
-
-
-				// try to convert string to integer
-				converted, err := strconv.ParseFloat(value, 64)
-				if err != nil {
-					//if not working, skip to next value. We don't want text values in InfluxDB.
-					continue
-				}
-
-				//send integer if it worked
-				field := map[string]interface{}{"value": converted}
-
-				influxdb.AddPoint("TOP", timestamp, field, tags)
-
-				if influxdb.PointsCount() == 10000 {
-					err = influxdb.WritePoints()
-					check(err)
-					influxdb.ClearPoints()
-					fmt.Printf("#")
-				}
-			}
-		}
+		fmt.Printf("File %s imported !\n", nmon_file)
 	}
-	// flushing remaining data
-	influxdb.WritePoints()
-	fmt.Printf("#\n")
-
-	fmt.Printf("File %s imported !\n", params.Name)
-
 }

@@ -23,7 +23,7 @@ func NmonDashboardFile(c *cli.Context) {
 	// parsing parameters
 	params := ParseParameters(c)
 
-	nmon := InitNmon(params)
+	nmon := InitNmon(params, c.Args().First())
 	if params.File {
 		nmon.WriteDashboard()
 		return
@@ -55,7 +55,7 @@ func NmonDashboardTemplate(c *cli.Context) {
 	// parsing parameters
 	params := ParseParameters(c)
 	nmon := InitNmonTemplate(params)
-	dashboard, err := grafanaclient.ConvertTemplate(params.Name)
+	dashboard, err := grafanaclient.ConvertTemplate(c.Args().First())
 	if err != nil {
 		fmt.Printf("Cannot convert template !\n")
 		check(err)
