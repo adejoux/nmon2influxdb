@@ -9,11 +9,11 @@ It's working on linux only for now.
 
 Go to my [github repository Releases section](https://github.com/adejoux/nmon2influxdb/releases)
 
-You can build the binary from source. You need to have a working GO environment, see [golang.org installation instructions](https://golang.org/doc/install). Check Go_PATH environment variable to be sure it's defined.
+You can build the binary from source. You need to have a working GO environment, see [golang.org installation instructions](https://golang.org/doc/install). Check GOPATH environment variable to be sure it's defined.
 
 ~~~
 go get -u github.com/adejoux/nmon2influxdb
-cd $GO_PATH/src/github.com/adejoux/nmon2influxdb
+cd $GOPATH/src/github.com/adejoux/nmon2influxdb
 go build
 ~~~
 
