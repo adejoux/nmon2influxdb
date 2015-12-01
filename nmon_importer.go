@@ -138,10 +138,23 @@ func NmonImport(c *cli.Context) {
 				check(err)
 				timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
 
+				if len(elems) < 14 {
+					fmt.Printf("error TOP import:")
+					fmt.Println(elems)
+					continue
+				}
+
 				for i, value := range elems[3:12] {
 					column := nmon.DataSeries["TOP"].Columns[i]
 
-					tags := map[string]string{"host": nmon.Hostname, "name": column, "pid": elems[1], "command": elems[13], "wlm": elems[14]}
+					var wlmclass string
+					if len(elems) < 15 {
+						wlmclass = "none"
+					} else {
+						wlmclass = elems[14]
+					}
+
+					tags := map[string]string{"host": nmon.Hostname, "name": column, "pid": elems[1], "command": elems[13], "wlm": wlmclass}
 
 					// try to convert string to integer
 					converted, err := strconv.ParseFloat(value, 64)
