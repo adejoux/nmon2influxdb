@@ -25,7 +25,7 @@ var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
 var badRegexp = regexp.MustCompile(`,,`)
 var cpuallRegexp = regexp.MustCompile(`^CPU\d+|^SCPU\d+|^PCPU\d+`)
 var diskallRegexp = regexp.MustCompile(`^DISK`)
-var skipRegexp = regexp.MustCompile(`T0000|^Z|^TOP,%CPU`)
+var skipRegexp = regexp.MustCompile(`T0+,|^Z|^TOP,%CPU`)
 var statsRegexp = regexp.MustCompile(`^[^,]+?,(T\d+)`)
 var topRegexp = regexp.MustCompile(`^TOP,\d+,(T\d+)`)
 var nfsRegexp = regexp.MustCompile(`^NFS`)
@@ -52,7 +52,8 @@ func NmonImport(c *cli.Context) {
 	}
 
 	for _, nmon_file := range c.Args() {
-
+		var count int64
+		count = 0
 		nmon := InitNmon(params, nmon_file)
 		file, err := os.Open(nmon_file)
 		check(err)
@@ -127,6 +128,7 @@ func NmonImport(c *cli.Context) {
 					if influxdb.PointsCount() == 10000 {
 						err = influxdb.WritePoints()
 						check(err)
+						count += influxdb.PointsCount()
 						influxdb.ClearPoints()
 						fmt.Printf("#")
 					}
@@ -173,6 +175,7 @@ func NmonImport(c *cli.Context) {
 					if influxdb.PointsCount() == 10000 {
 						err = influxdb.WritePoints()
 						check(err)
+						count += influxdb.PointsCount()
 						influxdb.ClearPoints()
 						fmt.Printf("#")
 					}
@@ -181,8 +184,8 @@ func NmonImport(c *cli.Context) {
 		}
 		// flushing remaining data
 		influxdb.WritePoints()
-		fmt.Printf("#\n")
+		count += influxdb.PointsCount()
 
-		fmt.Printf("File %s imported !\n", nmon_file)
+		fmt.Printf("\nFile %s imported : %d points !\n", nmon_file, count)
 	}
 }
