@@ -43,7 +43,9 @@ func NmonImport(c *cli.Context) {
 
 	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
 	influxdb.SetDebug(params.Debug)
-	influxdb.Connect()
+	err := influxdb.Connect()
+	check(err)
+
 	if exist, _ := influxdb.ExistDB(params.Db); exist != true {
 		_, err := influxdb.CreateDB(params.Db)
 		check(err)
