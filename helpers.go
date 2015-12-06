@@ -19,6 +19,12 @@ func check(e error) {
 	}
 }
 
+func check_info(e error) {
+	if e != nil {
+		log.Printf("info: %s", e)
+	}
+}
+
 func ReplaceComma(s string) string {
 	return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
 }

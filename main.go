@@ -1,5 +1,6 @@
 // nmon2influxdb
 // import nmon data in InfluxDB
+
 // author: adejoux@djouxtech.net
 
 package main
@@ -11,6 +12,23 @@ import (
 
 func main() {
 
+	config := InitConfig()
+
+	config.LoadCfgFile()
+
+	// cannot set values directly for boolean flags
+	if config.DashboardWriteFile {
+		os.Setenv("DASHBOARD_TO_FILE", "true")
+	}
+
+	if config.ImportSkipDisks {
+		os.Setenv("SKIP_DISKS", "true")
+	}
+
+	if config.ImportAllCpus {
+		os.Setenv("ADD_ALL_CPUS", "true")
+	}
+
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
@@ -21,12 +39,14 @@ func main() {
 			Usage: "import nmon files",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "nodisks,nd",
-					Usage: "skip disk metrics",
+					Name:   "nodisks,nd",
+					Usage:  "skip disk metrics",
+					EnvVar: "SKIP_DISKS",
 				},
 				cli.BoolFlag{
-					Name:  "cpus,c",
-					Usage: "add per cpu metrics",
+					Name:   "cpus,c",
+					Usage:  "add per cpu metrics",
+					EnvVar: "ADD_ALL_CPU",
 				},
 			},
 			Action: NmonImport,
@@ -44,28 +64,29 @@ func main() {
 							Usage: "optional json template file to use",
 						},
 						cli.BoolFlag{
-							Name:  "file,f",
-							Usage: "generate Grafana dashboard file",
+							Name:   "file,f",
+							Usage:  "generate Grafana dashboard file",
+							EnvVar: "DASHBOARD_TO_FILE",
 						},
 						cli.StringFlag{
 							Name:  "guser",
 							Usage: "grafana user",
-							Value: "admin",
+							Value: config.GrafanaUser,
 						},
 						cli.StringFlag{
 							Name:  "gpassword,gpass",
 							Usage: "grafana password",
-							Value: "admin",
+							Value: config.GrafanaPassword,
 						},
 						cli.StringFlag{
 							Name:  "gurl",
 							Usage: "grafana url",
-							Value: "http://localhost:3000",
+							Value: config.GrafanaUrl,
 						},
 						cli.StringFlag{
 							Name:  "datasource",
 							Usage: "grafana datasource",
-							Value: "nmon2influxdb",
+							Value: config.GrafanaDatasource,
 						},
 					},
 					Action: NmonDashboardFile,
@@ -79,28 +100,29 @@ func main() {
 							Usage: "optional json template file to use",
 						},
 						cli.BoolFlag{
-							Name:  "file,f",
-							Usage: "generate Grafana dashboard file",
+							Name:   "file,f",
+							Usage:  "generate Grafana dashboard file",
+							EnvVar: "DASHBOARD_TO_FILE",
 						},
 						cli.StringFlag{
 							Name:  "guser",
 							Usage: "grafana user",
-							Value: "admin",
+							Value: config.GrafanaUser,
 						},
 						cli.StringFlag{
 							Name:  "gpassword,gpass",
 							Usage: "grafana password",
-							Value: "admin",
+							Value: config.GrafanaPassword,
 						},
 						cli.StringFlag{
 							Name:  "gurl",
 							Usage: "grafana url",
-							Value: "http://localhost:3000",
+							Value: config.GrafanaUrl,
 						},
 						cli.StringFlag{
 							Name:  "datasource",
 							Usage: "grafana datasource",
-							Value: "nmon2influxdb",
+							Value: config.GrafanaDatasource,
 						},
 					},
 					Action: NmonDashboardTemplate,
@@ -118,28 +140,32 @@ func main() {
 				cli.StringFlag{
 					Name:  "statshost,s",
 					Usage: "host metrics",
+					Value: config.StatsHost,
 				},
 				cli.StringFlag{
 					Name:  "from,f",
 					Usage: "from date",
+					Value: config.StatsFrom,
 				},
 				cli.StringFlag{
 					Name:  "to,t",
 					Usage: "to date",
+					Value: config.StatsTo,
 				},
 				cli.StringFlag{
 					Name:  "sort",
 					Usage: "field to perform sort",
-					Value: "mean",
+					Value: config.StatsSort,
 				},
 				cli.IntFlag{
 					Name:  "limit,l",
 					Usage: "limit the output",
+					Value: config.StatsLimit,
 				},
 				cli.StringFlag{
 					Name:  "filter",
 					Usage: "specify a filter on fields",
-					Value: "",
+					Value: config.StatsFilter,
 				},
 			},
 			Action: NmonStat,
@@ -170,36 +196,38 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "server,s",
-			Value: "localhost",
 			Usage: "InfluxDB server and port",
+			Value: config.InfluxdbServer,
 		},
 		cli.StringFlag{
 			Name:  "port,p",
-			Value: "8086",
 			Usage: "InfluxDB port",
+			Value: config.InfluxdbPort,
 		},
 		cli.StringFlag{
 			Name:  "db,d",
-			Value: "nmon_reports",
 			Usage: "InfluxDB database",
+			Value: config.InfluxdbDatabase,
 		},
 		cli.StringFlag{
 			Name:  "user,u",
-			Value: "root",
 			Usage: "InfluxDB administrator user",
+			Value: config.InfluxdbUser,
 		},
 		cli.StringFlag{
 			Name:  "pass",
-			Value: "root",
 			Usage: "InfluxDB administrator pass",
+			Value: config.InfluxdbPassword,
 		},
 		cli.BoolFlag{
-			Name:  "debug",
-			Usage: "debug mode",
+			Name:   "debug",
+			Usage:  "debug mode",
+			EnvVar: "NMON2INFLUXDB_DEBUG",
 		},
 		cli.StringFlag{
 			Name:  "tz,t",
 			Usage: "timezone",
+			Value: config.Timezone,
 		},
 	}
 	app.Author = "Alain Dejoux"

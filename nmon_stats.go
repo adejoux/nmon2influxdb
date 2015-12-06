@@ -23,8 +23,8 @@ func NmonStat(c *cli.Context) {
 
 	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
 	influxdb.SetDebug(params.Debug)
-	influxdb.Connect()
-
+	err := influxdb.Connect()
+	check(err)
 	metric := params.Metric
 
 	filters := new(influxdbclient.Filters)

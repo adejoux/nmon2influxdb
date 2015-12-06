@@ -17,7 +17,8 @@ func NmonListMeasurement(c *cli.Context) {
 
 	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
 	influxdb.SetDebug(params.Debug)
-	influxdb.Connect()
+	err := influxdb.Connect()
+	check(err)
 
 	filters := new(influxdbclient.Filters)
 
