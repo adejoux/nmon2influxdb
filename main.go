@@ -18,15 +18,19 @@ func main() {
 
 	// cannot set values directly for boolean flags
 	if config.DashboardWriteFile {
-		os.Setenv("DASHBOARD_TO_FILE", "true")
+		os.Setenv("NMON2INFLUXDB_DASHBOARD_TO_FILE", "true")
 	}
 
 	if config.ImportSkipDisks {
-		os.Setenv("SKIP_DISKS", "true")
+		os.Setenv("NMON2INFLUXDB_SKIP_DISKS", "true")
 	}
 
 	if config.ImportAllCpus {
-		os.Setenv("ADD_ALL_CPUS", "true")
+		os.Setenv("NMON2INFLUXDB_ADD_ALL_CPUS", "true")
+	}
+
+	if config.ImportBuildDashboard {
+		os.Setenv("NMON2INFLUXDB_BUILD_DASHBOARD", "true")
 	}
 
 	app := cli.NewApp()
@@ -41,12 +45,17 @@ func main() {
 				cli.BoolFlag{
 					Name:   "nodisks,nd",
 					Usage:  "skip disk metrics",
-					EnvVar: "SKIP_DISKS",
+					EnvVar: "NMON2INFLUXDB_SKIP_DISKS",
 				},
 				cli.BoolFlag{
 					Name:   "cpus,c",
 					Usage:  "add per cpu metrics",
-					EnvVar: "ADD_ALL_CPU",
+					EnvVar: "NMON2INFLUXDB_ADD_ALL_CPU",
+				},
+				cli.BoolFlag{
+					Name:   "build,b",
+					Usage:  "build dashboard",
+					EnvVar: "NMON2INFLUXDB_BUILD_DASHBOARD",
 				},
 			},
 			Action: NmonImport,
@@ -54,80 +63,38 @@ func main() {
 		{
 			Name:  "dashboard",
 			Usage: "generate a dashboard from a nmon file or template",
-			Subcommands: []cli.Command{
-				{
-					Name:  "file",
-					Usage: "generate a dashboard from a nmon file",
-					Flags: []cli.Flag{
-						cli.StringFlag{
-							Name:  "template,t",
-							Usage: "optional json template file to use",
-						},
-						cli.BoolFlag{
-							Name:   "file,f",
-							Usage:  "generate Grafana dashboard file",
-							EnvVar: "DASHBOARD_TO_FILE",
-						},
-						cli.StringFlag{
-							Name:  "guser",
-							Usage: "grafana user",
-							Value: config.GrafanaUser,
-						},
-						cli.StringFlag{
-							Name:  "gpassword,gpass",
-							Usage: "grafana password",
-							Value: config.GrafanaPassword,
-						},
-						cli.StringFlag{
-							Name:  "gurl",
-							Usage: "grafana url",
-							Value: config.GrafanaUrl,
-						},
-						cli.StringFlag{
-							Name:  "datasource",
-							Usage: "grafana datasource",
-							Value: config.GrafanaDatasource,
-						},
-					},
-					Action: NmonDashboardFile,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "template,t",
+					Usage: "optional json template file to use",
 				},
-				{
-					Name:  "template",
-					Usage: "generate a dashboard from a TOML template",
-					Flags: []cli.Flag{
-						cli.StringFlag{
-							Name:  "template,t",
-							Usage: "optional json template file to use",
-						},
-						cli.BoolFlag{
-							Name:   "file,f",
-							Usage:  "generate Grafana dashboard file",
-							EnvVar: "DASHBOARD_TO_FILE",
-						},
-						cli.StringFlag{
-							Name:  "guser",
-							Usage: "grafana user",
-							Value: config.GrafanaUser,
-						},
-						cli.StringFlag{
-							Name:  "gpassword,gpass",
-							Usage: "grafana password",
-							Value: config.GrafanaPassword,
-						},
-						cli.StringFlag{
-							Name:  "gurl",
-							Usage: "grafana url",
-							Value: config.GrafanaUrl,
-						},
-						cli.StringFlag{
-							Name:  "datasource",
-							Usage: "grafana datasource",
-							Value: config.GrafanaDatasource,
-						},
-					},
-					Action: NmonDashboardTemplate,
+				cli.BoolFlag{
+					Name:   "file,f",
+					Usage:  "generate Grafana dashboard file",
+					EnvVar: "NMON2INFLUXDB_DASHBOARD_TO_FILE",
+				},
+				cli.StringFlag{
+					Name:  "guser",
+					Usage: "grafana user",
+					Value: config.GrafanaUser,
+				},
+				cli.StringFlag{
+					Name:  "gpassword,gpass",
+					Usage: "grafana password",
+					Value: config.GrafanaPassword,
+				},
+				cli.StringFlag{
+					Name:  "gurl",
+					Usage: "grafana url",
+					Value: config.GrafanaUrl,
+				},
+				cli.StringFlag{
+					Name:  "datasource",
+					Usage: "grafana datasource",
+					Value: config.GrafanaDatasource,
 				},
 			},
+			Action: NmonDashboard,
 		},
 		{
 			Name:  "stats",

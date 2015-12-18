@@ -30,56 +30,58 @@ func ReplaceComma(s string) string {
 }
 
 type Params struct {
-	NoDisks   bool
-	CpuAll    bool
-	Server    string
-	User      string
-	Port      string
-	File      bool
-	Guser     string
-	Gpass     string
-	Gurl      string
-	Db        string
-	DS        string
-	Password  string
-	Template  string
-	Metric    string
-	StatsHost string
-	Sort      string
-	Limit     int
-	Host      string
-	Filter    string
-	From      string
-	To        string
-	TZ        string
-	Aggregate string
-	Debug     bool
+	NoDisks        bool
+	CpuAll         bool
+	BuildDashboard bool
+	Server         string
+	User           string
+	Port           string
+	File           bool
+	Guser          string
+	Gpass          string
+	Gurl           string
+	Db             string
+	DS             string
+	Password       string
+	Template       string
+	Metric         string
+	StatsHost      string
+	Sort           string
+	Limit          int
+	Host           string
+	Filter         string
+	From           string
+	To             string
+	TZ             string
+	Aggregate      string
+	Debug          bool
 }
 
 func ParseParameters(c *cli.Context) (params *Params) {
 
 	return &Params{Metric: c.String("metric"),
-		StatsHost: c.String("statshost"),
-		From:      c.String("from"),
-		To:        c.String("to"),
-		Aggregate: c.String("aggregate"),
-		NoDisks:   c.Bool("nodisks"),
-		CpuAll:    c.Bool("cpus"),
-		File:      c.Bool("file"),
-		Filter:    c.String("filter"),
-		Host:      c.String("host"),
-		Guser:     c.String("guser"),
-		Gpass:     c.String("gpassword"),
-		Gurl:      c.String("gurl"),
-		DS:        c.String("datasource"),
-		Debug:     c.GlobalBool("debug"),
-		Server:    c.GlobalString("server"),
-		User:      c.GlobalString("user"),
-		Port:      c.GlobalString("port"),
-		Db:        c.GlobalString("db"),
-		Password:  c.GlobalString("pass"),
-		TZ:        c.GlobalString("tz"),
-		Template:  c.String("template"),
+		StatsHost:      c.String("statshost"),
+		From:           c.String("from"),
+		To:             c.String("to"),
+		Aggregate:      c.String("aggregate"),
+		NoDisks:        c.Bool("nodisks"),
+		CpuAll:         c.Bool("cpus"),
+		BuildDashboard: c.Bool("build"),
+		File:           c.Bool("file"),
+		Filter:         c.String("filter"),
+		Host:           c.String("host"),
+		Guser:          c.String("guser"),
+		Gpass:          c.String("gpassword"),
+		Gurl:           c.String("gurl"),
+		DS:             c.String("datasource"),
+		Debug:          c.GlobalBool("debug"),
+		Server:         c.GlobalString("server"),
+		User:           c.GlobalString("user"),
+		Port:           c.GlobalString("port"),
+		Db:             c.GlobalString("db"),
+		Password:       c.GlobalString("pass"),
+		TZ:             c.GlobalString("tz"),
+		Template:       c.String("template"),
 	}
 }
 

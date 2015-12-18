@@ -17,49 +17,51 @@ import (
 )
 
 type Config struct {
-	Debug              bool
-	Timezone           string
-	InfluxdbUser       string
-	InfluxdbPassword   string
-	InfluxdbServer     string
-	InfluxdbPort       string
-	InfluxdbDatabase   string
-	GrafanaUser        string
-	GrafanaPassword    string
-	GrafanaUrl         string
-	GrafanaDatasource  string
-	ImportSkipDisks    bool
-	ImportAllCpus      bool
-	DashboardWriteFile bool
-	StatsLimit         int
-	StatsSort          string
-	StatsFilter        string
-	StatsFrom          string
-	StatsTo            string
-	StatsHost          string
+	Debug                bool
+	Timezone             string
+	InfluxdbUser         string
+	InfluxdbPassword     string
+	InfluxdbServer       string
+	InfluxdbPort         string
+	InfluxdbDatabase     string
+	GrafanaUser          string
+	GrafanaPassword      string
+	GrafanaUrl           string
+	GrafanaDatasource    string
+	ImportSkipDisks      bool
+	ImportAllCpus        bool
+	ImportBuildDashboard bool
+	DashboardWriteFile   bool
+	StatsLimit           int
+	StatsSort            string
+	StatsFilter          string
+	StatsFrom            string
+	StatsTo              string
+	StatsHost            string
 }
 
 func InitConfig() Config {
 	return Config{Debug: false,
-		Timezone:           "Europe/Paris",
-		InfluxdbUser:       "root",
-		InfluxdbPassword:   "root",
-		InfluxdbServer:     "localhost",
-		InfluxdbPort:       "8086",
-		InfluxdbDatabase:   "nmon_reports",
-		GrafanaUser:        "admin",
-		GrafanaPassword:    "admin",
-		GrafanaUrl:         "http://localhost:3000",
-		GrafanaDatasource:  "nmon2influxdb",
-		ImportSkipDisks:    false,
-		ImportAllCpus:      false,
-		DashboardWriteFile: false,
-		StatsLimit:         20,
-		StatsSort:          "mean",
-		StatsFilter:        "",
-		StatsFrom:          "",
-		StatsTo:            "",
-		StatsHost:          "",
+		Timezone:             "Europe/Paris",
+		InfluxdbUser:         "root",
+		InfluxdbPassword:     "root",
+		InfluxdbServer:       "localhost",
+		InfluxdbPort:         "8086",
+		InfluxdbDatabase:     "nmon_reports",
+		GrafanaUser:          "admin",
+		GrafanaPassword:      "admin",
+		GrafanaUrl:           "http://localhost:3000",
+		GrafanaDatasource:    "nmon2influxdb",
+		ImportSkipDisks:      false,
+		ImportAllCpus:        false,
+		ImportBuildDashboard: false,
+		DashboardWriteFile:   false,
+		StatsLimit:           20,
+		StatsSort:            "mean",
+		StatsFilter:          "",
+		StatsFrom:            "",
+		StatsTo:              "",
+		StatsHost:            "",
 	}
 }
 

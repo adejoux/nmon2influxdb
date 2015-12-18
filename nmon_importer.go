@@ -41,6 +41,16 @@ func NmonImport(c *cli.Context) {
 	// parsing parameters
 	params := ParseParameters(c)
 
+	if params.BuildDashboard {
+		// TODO: really not clean config loading .... Should be fixed
+		config := InitConfig()
+		config.LoadCfgFile()
+		params.Gurl = config.GrafanaUrl
+		params.Guser = config.GrafanaUser
+		params.Gpass = config.GrafanaPassword
+		params.DS = config.GrafanaDatasource
+	}
+
 	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
 	influxdb.SetDebug(params.Debug)
 	err := influxdb.Connect()
@@ -187,5 +197,8 @@ func NmonImport(c *cli.Context) {
 		count += influxdb.PointsCount()
 
 		fmt.Printf("\nFile %s imported : %d points !\n", nmon_file, count)
+		if params.BuildDashboard {
+			NmonDashboardFile(params, nmon_file)
+		}
 	}
 }

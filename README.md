@@ -50,7 +50,7 @@ nmon2influxdb -s 192.168.99.100 import test.nmon test2.nmon
 
 For dashboard, you will need to specify the grafana url too :
 ~~~
-nmon2influxdb dashboard file --gurl "http://192.168.99.100:3000" test.nmon
+nmon2influxdb dashboard --gurl "http://192.168.99.100:3000" test.nmon
 ~~~
 
 
@@ -111,64 +111,21 @@ OPTIONS:
 
 ## dashboard
 
-The **dashboard** command has two subcommands to create dashboards in Grafana.
+The **dashboard** command can create a dashboard from a nmon file or a toml template.
 ~~~
-nmon2influxdb dashboard -h
 NAME:
    nmon2influxdb dashboard - generate a dashboard from a nmon file or template
 
 USAGE:
-   nmon2influxdb dashboard command [command options] [arguments...]
-
-COMMANDS:
-   file   generate a dashboard from a nmon file
-   template generate a dashboard from a TOML template
-   help, h  Shows a list of commands or help for one command
+   nmon2influxdb dashboard [command options] [arguments...]
 
 OPTIONS:
-   --help, -h show help
-~~~
-
-### dashboard file
-
-The **dashboard file** subcommand will create and upload a dashboard from a NMON file.
-
-It's great as a starting point with Grafana.
-
-~~~
-NAME:
-   file - generate a dashboard from a nmon file
-
-USAGE:
-   command file [command options] [arguments...]
-
-OPTIONS:
-   --template, -t       optional json template file to use
-   --file, -f       generate Grafana dashboard file
-   --guser "admin"      grafana user
-   --gpassword, --gpass "admin"   grafana password
-   --gurl "http://localhost:3000" grafana url
-   --datasource "nmon2influxdb"   grafana datasource
-~~~
-
-### dashboard template
-
-The **dashboard template** subcommand will create and upload a dashboard from a TOML template file.
-
-~~~
-NAME:
-   template - generate a dashboard from a TOML template
-
-USAGE:
-   command template [command options] [arguments...]
-
-OPTIONS:
-   --template, -t       optional json template file to use
-   --file, -f       generate Grafana dashboard file
-   --guser "admin"      grafana user
-   --gpassword, --gpass "admin"   grafana password
-   --gurl "http://localhost:3000" grafana url
-   --datasource "nmon2influxdb"   grafana datasource
+   --template, -t     optional json template file to use
+   --file, -f     generate Grafana dashboard file [$DASHBOARD_TO_FILE]
+   --guser "admin"    grafana user
+   --gpassword, --gpass "admin" grafana password
+   --gurl "http://uby:3000" grafana url
+   --datasource "nmon2influxdb" grafana datasource
 ~~~
 
 ## stats
@@ -193,6 +150,38 @@ OPTIONS:
    --filter     specify a filter on fields
 ~~~
 
+configuration file
+==================
+
+nmon2influxdb will generate a configuration file named **$HOME/.nmon2influxdb.cfg**.
+
+It will allow to change default configuration value in command line. Command line parameters will always have precedence over the configuration file parameters.
+
+~~~
+# general
+debug = true
+timezone = "Europe/Paris"
+
+# influxdb
+influxdb_user = "root"
+influxdb_password = "root"
+influxdb_server = "uby"
+influxdb_port = "8086"
+influxdb_database = "nmon_reports"
+
+# grafana
+grafana_user = "admin"
+grafana_password = "admin"
+grafana_url = "http://uby:3000"
+grafana_datasource = "nmon2influxdb"
+
+# import
+import_skip_disks = false
+import_all_cpus = false
+
+# dashboard
+dashboard_write_file = false
+~~~
 
 
 TOML dashboard templates
@@ -282,13 +271,13 @@ Each '#' character in the output means 10 000 points was inserted in InfluxDB.
 
 Upload a dashboard to Grafana based on a NMON file :
 ~~~
-nmon2influxdb dashboard file testsrv_141114_0000.nmon
+nmon2influxdb dashboard testsrv_141114_0000.nmon
 Dashboard uploaded to grafana
 ~~~
 
 Generate a dashboard file from the NMON file :
 ~~~
-nmon2influxdb dashboard file -f testsrv_141114_0000.nmon
+nmon2influxdb dashboard -f testsrv_141114_0000.nmon
 Writing GRAFANA dashboard: testsrv_dashboard
 ~~~
 

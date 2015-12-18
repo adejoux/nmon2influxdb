@@ -12,9 +12,12 @@ import (
 	"github.com/adejoux/grafanaclient"
 	"github.com/codegangsta/cli"
 	"os"
+	"regexp"
 )
 
-func NmonDashboardFile(c *cli.Context) {
+var nmonFileRegexp = regexp.MustCompile(`\.(nmon|nmon.gz|nmon.bz2)$`)
+
+func NmonDashboard(c *cli.Context) {
 
 	if len(c.Args()) < 1 {
 		fmt.Printf("file name needs to be provided\n")
@@ -23,7 +26,19 @@ func NmonDashboardFile(c *cli.Context) {
 	// parsing parameters
 	params := ParseParameters(c)
 
-	nmon := InitNmon(params, c.Args().First())
+	file := c.Args().First()
+
+	if nmonFileRegexp.MatchString(file) {
+		NmonDashboardFile(params, file)
+		return
+	}
+
+	NmonDashboardTemplate(params, file)
+
+}
+
+func NmonDashboardFile(params *Params, file string) {
+	nmon := InitNmon(params, file)
 	if params.File {
 		nmon.WriteDashboard()
 		return
@@ -47,15 +62,9 @@ func NmonDashboardFile(c *cli.Context) {
 	return
 }
 
-func NmonDashboardTemplate(c *cli.Context) {
-	if len(c.Args()) < 1 {
-		fmt.Printf("file name needs to be provided\n")
-		os.Exit(1)
-	}
-	// parsing parameters
-	params := ParseParameters(c)
+func NmonDashboardTemplate(params *Params, file string) {
 	nmon := InitNmonTemplate(params)
-	dashboard, err := grafanaclient.ConvertTemplate(c.Args().First())
+	dashboard, err := grafanaclient.ConvertTemplate(file)
 	if err != nil {
 		fmt.Printf("Cannot convert template !\n")
 		check(err)
