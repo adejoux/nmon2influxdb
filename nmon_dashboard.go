@@ -394,11 +394,13 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 
 	if len(np.Group) > 0 {
 		target.GroupByTags = np.Group
+		target.GroupBy = grafanaclient.NewGroupBy()
 		target.Alias = ""
 	}
 
 	for _, field := range np.Group {
 		target.Alias += "$tag_" + field + " "
+		target.GroupBy = append(target.GroupBy, grafanaclient.GroupBy{Type: "tag", Params: []string{field}})
 	}
 
 	panel.Targets = append(panel.Targets, target)
