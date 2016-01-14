@@ -126,7 +126,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		Measurement: "CPU_ALL",
 		Filters:     NameFilter("^User%|^Sys%|^Wait%|^Idle%"),
 		Group:       []string{"name"},
-		Stack:       false})
+		Stack:       true})
 
 	panels.AddPanel(&NmonPanel{Host: host,
 		Title:       "LPAR",
@@ -183,6 +183,42 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		Group:       []string{"name", "command"},
 		Stack:       true})
 	row = BuildGrafanaRow("TOP", panels)
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "DISK READ KB/s",
+		Measurement: "DISKREAD",
+		Group:       []string{"name"},
+		Stack:       false})
+
+	if len(nmon.DataSeries["DISKREADSERV"].Columns) > 0 {
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:       "DISK READ SERVICE TIME ms",
+			Measurement: "DISKREADSERV",
+			Group:       []string{"name"},
+			Stack:       false})
+	}
+	row = BuildGrafanaRow("DISK READ", panels)
+	row.Collapse = true
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "DISK WRITE KB/s",
+		Measurement: "DISKWRITE",
+		Group:       []string{"name"},
+		Stack:       false})
+
+	if len(nmon.DataSeries["DISKREADSERV"].Columns) > 0 {
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:       "DISK WRITE SERVICE TIME ms",
+			Measurement: "DISKWRITESERV",
+			Group:       []string{"name"},
+			Stack:       false})
+	}
+	row = BuildGrafanaRow("DISK WRITE", panels)
+	row.Collapse = true
 	db.Rows = append(db.Rows, row)
 
 	db.GTime = grafanaclient.GTime{From: nmon.StartTime(), To: nmon.StopTime()}
