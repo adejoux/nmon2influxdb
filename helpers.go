@@ -40,6 +40,7 @@ type Params struct {
 	Guser          string
 	Gpass          string
 	Gurl           string
+	Gaccess        string
 	Db             string
 	DS             string
 	Password       string
@@ -72,6 +73,7 @@ func ParseParameters(c *cli.Context) (params *Params) {
 		Host:           c.String("host"),
 		Guser:          c.String("guser"),
 		Gpass:          c.String("gpassword"),
+		Gaccess:        c.String("gaccess"),
 		Gurl:           c.String("gurl"),
 		DS:             c.String("datasource"),
 		Debug:          c.GlobalBool("debug"),

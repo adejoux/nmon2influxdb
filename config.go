@@ -27,6 +27,7 @@ type Config struct {
 	GrafanaUser          string
 	GrafanaPassword      string
 	GrafanaUrl           string
+	GrafanaAccess        string
 	GrafanaDatasource    string
 	ImportSkipDisks      bool
 	ImportAllCpus        bool
@@ -51,6 +52,7 @@ func InitConfig() Config {
 		GrafanaUser:          "admin",
 		GrafanaPassword:      "admin",
 		GrafanaUrl:           "http://localhost:3000",
+		GrafanaAccess:        "direct",
 		GrafanaDatasource:    "nmon2influxdb",
 		ImportSkipDisks:      false,
 		ImportAllCpus:        false,

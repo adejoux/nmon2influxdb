@@ -48,6 +48,7 @@ func NmonImport(c *cli.Context) {
 		params.Gurl = config.GrafanaUrl
 		params.Guser = config.GrafanaUser
 		params.Gpass = config.GrafanaPassword
+		params.Gaccess = config.GrafanaAccess
 		params.DS = config.GrafanaDatasource
 	}
 

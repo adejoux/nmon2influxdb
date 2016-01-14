@@ -84,6 +84,11 @@ func main() {
 					Value: config.GrafanaPassword,
 				},
 				cli.StringFlag{
+					Name:  "gaccess",
+					Usage: "grafana datasource access mode : direct or proxy",
+					Value: config.GrafanaAccess,
+				},
+				cli.StringFlag{
 					Name:  "gurl",
 					Usage: "grafana url",
 					Value: config.GrafanaUrl,

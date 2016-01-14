@@ -124,6 +124,7 @@ OPTIONS:
    --file, -f     generate Grafana dashboard file [$DASHBOARD_TO_FILE]
    --guser "admin"    grafana user
    --gpassword, --gpass "admin" grafana password
+   --gaccess "direct"   grafana datasource access mode : direct or proxy
    --gurl "http://uby:3000" grafana url
    --datasource "nmon2influxdb" grafana datasource
 ~~~
@@ -172,6 +173,7 @@ influxdb_database = "nmon_reports"
 # grafana
 grafana_user = "admin"
 grafana_password = "admin"
+grafana_access = "direct"
 grafana_url = "http://uby:3000"
 grafana_datasource = "nmon2influxdb"
 
