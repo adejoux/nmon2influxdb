@@ -68,7 +68,7 @@ USAGE:
    nmon2influxdb [global options] command [command options] [arguments...]
 
 VERSION:
-   0.8.0
+   0.8.1
 
 AUTHOR(S):
    Alain Dejoux <adejoux@djouxtech.net>
