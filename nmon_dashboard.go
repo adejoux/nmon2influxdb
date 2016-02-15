@@ -158,6 +158,18 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 
 	panels = new(NmonPanels)
 	panels.AddPanel(&NmonPanel{Host: host,
+		Title:       "I/O Adapters transfers",
+		Measurement: "IOADAPT",
+		Filters:     NameFilter("xfer"),
+		Group:       []string{"name"},
+		Table:       true})
+
+	row = BuildGrafanaRow("IO ADAPTER table", panels)
+	row.Height = "450px"
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(&NmonPanel{Host: host,
 		Title:       "Network",
 		Measurement: "NET",
 		Filters:     NameFilter("KB"),
@@ -183,6 +195,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		Group:       []string{"name", "command"},
 		Stack:       true})
 	row = BuildGrafanaRow("TOP", panels)
+	row.Collapse = true
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
@@ -379,6 +392,7 @@ type NmonPanel struct {
 	Filters     []grafanaclient.Tag
 	Group       []string
 	Stack       bool
+	Table       bool
 }
 
 type NmonPanels []NmonPanel
@@ -392,7 +406,11 @@ func BuildGrafanaRow(title string, panels *NmonPanels) grafanaclient.Row {
 	row.Title = title
 
 	for _, panel := range *panels {
-		row.Panels = append(row.Panels, BuildGrafanaGraphPanel(panel))
+		if panel.Table {
+			row.Panels = append(row.Panels, BuildGrafanaTablePanel(panel))
+		} else {
+			row.Panels = append(row.Panels, BuildGrafanaGraphPanel(panel))
+		}
 	}
 
 	return row
@@ -436,6 +454,37 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 
 	for _, field := range np.Group {
 		target.Alias += "$tag_" + field + " "
+		target.GroupBy = append(target.GroupBy, grafanaclient.GroupBy{Type: "tag", Params: []string{field}})
+	}
+
+	panel.Targets = append(panel.Targets, target)
+
+	return panel
+}
+
+func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
+	panel := grafanaclient.NewPanel()
+	panel.Type = "table"
+	panel.Title = np.Title
+	target := grafanaclient.NewTarget()
+	target.Measurement = np.Measurement
+	hostTag := grafanaclient.Tag{Key: "host", Value: np.Host}
+	target.Tags = append(target.Tags, hostTag)
+	panel.PageSize = 20
+	target.Transform = "timeseries_to_columns"
+
+	for _, filt := range np.Filters {
+		target.Tags = append(target.Tags, filt)
+	}
+
+	if len(np.Group) > 0 {
+		target.GroupByTags = np.Group
+		target.Alias = ""
+	}
+
+	for _, field := range np.Group {
+		target.Alias += "$tag_" + field + " "
+		target.GroupBy = append(target.GroupBy, grafanaclient.GroupBy{Type: "time", Params: []string{"15m"}})
 		target.GroupBy = append(target.GroupBy, grafanaclient.GroupBy{Type: "tag", Params: []string{field}})
 	}
 
