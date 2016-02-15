@@ -82,6 +82,13 @@ func NmonImport(c *cli.Context) {
 
 		sort.Strings(lines)
 
+		var userSkipRegexp *regexp.Regexp
+
+		if len(params.SkipMetrics) > 0 {
+			skipped := strings.Replace(params.SkipMetrics, ",", "|", -1)
+			userSkipRegexp = regexp.MustCompile(skipped)
+		}
+
 		for _, line := range lines {
 
 			if cpuallRegexp.MatchString(line) && !params.CpuAll {
@@ -100,6 +107,15 @@ func NmonImport(c *cli.Context) {
 				matched := statsRegexp.FindStringSubmatch(line)
 				elems := strings.Split(line, ",")
 				name := elems[0]
+
+				if len(params.SkipMetrics) > 0 {
+					if userSkipRegexp.MatchString(name) {
+						if nmon.Debug {
+							fmt.Printf("metric skipped : %s\n", name)
+						}
+						continue
+					}
+				}
 
 				timeStr, err := nmon.GetTimeStamp(matched[1])
 				check(err)

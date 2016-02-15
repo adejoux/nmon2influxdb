@@ -48,6 +48,7 @@ type Params struct {
 	Metric         string
 	StatsHost      string
 	Sort           string
+	SkipMetrics    string
 	Limit          int
 	Host           string
 	Filter         string
@@ -84,6 +85,7 @@ func ParseParameters(c *cli.Context) (params *Params) {
 		Password:       c.GlobalString("pass"),
 		TZ:             c.GlobalString("tz"),
 		Template:       c.String("template"),
+		SkipMetrics:    c.String("skip_metrics"),
 	}
 }
 

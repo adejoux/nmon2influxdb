@@ -33,15 +33,23 @@ func main() {
 		os.Setenv("NMON2INFLUXDB_BUILD_DASHBOARD", "true")
 	}
 
+	if len(config.ImportSkipMetrics) > 0 {
+		os.Setenv("NMON2INFLUXDB_SKIP_METRICS", config.ImportSkipMetrics)
+	}
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "0.8.1"
+	app.Version = "0.8.2"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
 			Usage: "import nmon files",
 			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   "skip_metrics",
+					Usage:  "skip metrics",
+					EnvVar: "NMON2INFLUXDB_SKIP_METRICS",
+				},
 				cli.BoolFlag{
 					Name:   "nodisks,nd",
 					Usage:  "skip disk metrics",

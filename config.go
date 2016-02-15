@@ -32,6 +32,7 @@ type Config struct {
 	ImportSkipDisks      bool
 	ImportAllCpus        bool
 	ImportBuildDashboard bool
+	ImportSkipMetrics    string
 	DashboardWriteFile   bool
 	StatsLimit           int
 	StatsSort            string
@@ -58,6 +59,7 @@ func InitConfig() Config {
 		ImportAllCpus:        false,
 		ImportBuildDashboard: false,
 		DashboardWriteFile:   false,
+		ImportSkipMetrics:    "JFSINODE",
 		StatsLimit:           20,
 		StatsSort:            "mean",
 		StatsFilter:          "",

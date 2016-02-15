@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -94,6 +95,13 @@ func InitNmon(params *Params, nmon_file string) (nmon *Nmon) {
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
 
+	var userSkipRegexp *regexp.Regexp
+
+	if len(params.SkipMetrics) > 0 {
+		skipped := strings.Replace(params.SkipMetrics, ",", "|", -1)
+		userSkipRegexp = regexp.MustCompile(skipped)
+	}
+
 	for scanner.Scan() {
 
 		if cpuallRegexp.MatchString(scanner.Text()) && !params.CpuAll {
@@ -145,6 +153,12 @@ func InitNmon(params *Params, nmon_file string) (nmon *Nmon) {
 				continue
 			}
 			name := elems[0]
+			if len(params.SkipMetrics) > 0 {
+				if userSkipRegexp.MatchString(name) {
+					continue
+				}
+			}
+
 			if params.Debug == true {
 				fmt.Printf("ADDING serie %s\n", name)
 			}
