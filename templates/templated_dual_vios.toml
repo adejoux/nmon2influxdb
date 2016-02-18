@@ -8,7 +8,7 @@ title = "templated dual vio"
     # query used to retrieve values in InfluxDB
     query =  "SHOW TAG VALUES FROM CPU_ALL WITH KEY = host"
     # Regular expression used to filter the query result
-    regex = "vios"
+    regex = "/vios/"
 [[row]]
 title = "LPAR"
     [[row.panel]]

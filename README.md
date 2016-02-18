@@ -5,6 +5,14 @@ This application take a nmon file and upload it in a [InfluxDB](influxdb.com) da
 It generates also a dashboard to allow data visualization in [Grafana](http://grafana.org/).
 It's working on linux only for now.
 
+# Demo
+
+A live demo is available at : [demo.nmon2influxdb.org](http://demo.nmon2influxdb.org)
+
+user/password: demo/demo
+
+It's read only editor user. You can change anything but cannot save it.
+
 # Download
 
 Go to my [github repository Releases section](https://github.com/adejoux/nmon2influxdb/releases)
