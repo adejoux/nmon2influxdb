@@ -11,7 +11,7 @@ A live demo is available at : [demo.nmon2influxdb.org](http://demo.nmon2influxdb
 
 user/password: demo/demo
 
-It's read only editor user. You can change anything but cannot save it.
+It's a read only editor user. You can change anything but cannot save it.
 
 # Download
 
