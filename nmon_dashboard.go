@@ -139,8 +139,44 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "cores"})
 
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:          "Run queue",
+		Measurement:    "PROC",
+		Filters:        NameFilter("Runnable"),
+		Group:          []string{"name"},
+		Stack:          false,
+		TableLegend:    true,
+		LeftYAxisLabel: "# threads"})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:          "Asynchronous I/O",
+		Measurement:    "PROCAIO",
+		Group:          []string{"name"},
+		Stack:          false,
+		TableLegend:    true,
+		LeftYAxisLabel: "count"})
+
 	row := BuildGrafanaRow("CPU", panels)
 	row.Height = "300px"
+	db.Rows = append(db.Rows, row)
+
+	panels = new(NmonPanels)
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:          "Physical Memory",
+		Measurement:    "MEM",
+		Filters:        NameFilter("MB"),
+		Group:          []string{"name"},
+		Stack:          false,
+		LeftYAxisLabel: "MB"})
+
+	panels.AddPanel(&NmonPanel{Host: host,
+		Title:          "Memory Usage",
+		Measurement:    "MEMUSE",
+		Filters:        NameFilter("%"),
+		Group:          []string{"name"},
+		Stack:          false,
+		LeftYAxisLabel: "%"})
+	row = BuildGrafanaRow("Memory", panels)
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
