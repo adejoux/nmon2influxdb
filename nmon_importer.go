@@ -165,6 +165,16 @@ func NmonImport(c *cli.Context) {
 			if topRegexp.MatchString(line) {
 				matched := topRegexp.FindStringSubmatch(line)
 				elems := strings.Split(line, ",")
+				name := elems[0]
+				if len(params.SkipMetrics) > 0 {
+					if userSkipRegexp.MatchString(name) {
+						if nmon.Debug {
+							fmt.Printf("metric skipped : %s\n", name)
+						}
+						continue
+					}
+				}
+
 				timeStr, err := nmon.GetTimeStamp(matched[1])
 				check(err)
 				timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
