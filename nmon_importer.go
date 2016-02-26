@@ -41,31 +41,31 @@ func NmonImport(c *cli.Context) {
 	}
 
 	// parsing parameters
-	params := ParseParameters(c)
+	config := ParseParameters(c)
 
-	if params.BuildDashboard {
-		// TODO: really not clean config loading .... Should be fixed
-		config := InitConfig()
-		config.LoadCfgFile()
-		params.Gurl = config.GrafanaUrl
-		params.Guser = config.GrafanaUser
-		params.Gpass = config.GrafanaPassword
-		params.Gaccess = config.GrafanaAccess
-		params.DS = config.GrafanaDatasource
+	if config.ImportBuildDashboard {
+		dfltConfig := InitConfig()
+		dfltConfig.LoadCfgFile()
+
+		config.GrafanaAccess = dfltConfig.GrafanaAccess
+		config.GrafanaUrl = dfltConfig.GrafanaUrl
+		config.GrafanaDatasource = dfltConfig.GrafanaDatasource
+		config.GrafanaUser = dfltConfig.GrafanaUser
+		config.GrafanaPassword = dfltConfig.GrafanaPassword
 	}
 
-	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
-	influxdb.SetDebug(params.Debug)
+	influxdb := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
+	influxdb.SetDebug(config.Debug)
 	err := influxdb.Connect()
 	check(err)
 
-	if exist, _ := influxdb.ExistDB(params.Db); exist != true {
-		_, err := influxdb.CreateDB(params.Db)
+	if exist, _ := influxdb.ExistDB(config.InfluxdbDatabase); exist != true {
+		_, err := influxdb.CreateDB(config.InfluxdbDatabase)
 		check(err)
 	}
 
-	influxdbLog := influxdbclient.NewInfluxDB(params.Server, params.Port, "import_log", params.User, params.Password)
-	influxdbLog.SetDebug(params.Debug)
+	influxdbLog := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, "import_log", config.InfluxdbUser, config.InfluxdbPassword)
+	influxdbLog.SetDebug(config.Debug)
 	err = influxdbLog.Connect()
 	check(err)
 
@@ -79,7 +79,7 @@ func NmonImport(c *cli.Context) {
 	for _, nmon_file := range c.Args() {
 		var count int64
 		count = 0
-		nmon := InitNmon(params, nmon_file)
+		nmon := InitNmon(config, nmon_file)
 		file, err := os.Open(nmon_file)
 		check(err)
 
@@ -98,8 +98,8 @@ func NmonImport(c *cli.Context) {
 
 		var userSkipRegexp *regexp.Regexp
 
-		if len(params.SkipMetrics) > 0 {
-			skipped := strings.Replace(params.SkipMetrics, ",", "|", -1)
+		if len(config.ImportSkipMetrics) > 0 {
+			skipped := strings.Replace(config.ImportSkipMetrics, ",", "|", -1)
 			userSkipRegexp = regexp.MustCompile(skipped)
 		}
 
@@ -112,19 +112,19 @@ func NmonImport(c *cli.Context) {
 
 		var lastTime time.Time
 		if len(result) > 0 {
-			lastTime, err = ConvertTimeStamp(result[1].(string), nmon.Params.TZ)
+			lastTime, err = ConvertTimeStamp(result[1].(string), nmon.Config.Timezone)
 		} else {
-			lastTime, err = ConvertTimeStamp("00:00:00,01-JAN-1900", nmon.Params.TZ)
+			lastTime, err = ConvertTimeStamp("00:00:00,01-JAN-1900", nmon.Config.Timezone)
 		}
 		check(err)
 
 		for _, line := range lines {
 
-			if cpuallRegexp.MatchString(line) && !params.CpuAll {
+			if cpuallRegexp.MatchString(line) && !config.ImportAllCpus {
 				continue
 			}
 
-			if diskallRegexp.MatchString(line) && params.NoDisks {
+			if diskallRegexp.MatchString(line) && config.ImportSkipDisks {
 				continue
 			}
 
@@ -137,7 +137,7 @@ func NmonImport(c *cli.Context) {
 				elems := strings.Split(line, ",")
 				name := elems[0]
 
-				if len(params.SkipMetrics) > 0 {
+				if len(config.ImportSkipMetrics) > 0 {
 					if userSkipRegexp.MatchString(name) {
 						if nmon.Debug {
 							fmt.Printf("metric skipped : %s\n", name)
@@ -149,8 +149,8 @@ func NmonImport(c *cli.Context) {
 				timeStr, err := nmon.GetTimeStamp(matched[1])
 				check(err)
 				last = timeStr
-				timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
-				if timestamp.Before(lastTime) && !nmon.Params.Force {
+				timestamp, err := ConvertTimeStamp(timeStr, nmon.Config.Timezone)
+				if timestamp.Before(lastTime) && !nmon.Config.ImportForce {
 					continue
 				}
 
@@ -198,7 +198,7 @@ func NmonImport(c *cli.Context) {
 				matched := topRegexp.FindStringSubmatch(line)
 				elems := strings.Split(line, ",")
 				name := elems[0]
-				if len(params.SkipMetrics) > 0 {
+				if len(config.ImportSkipMetrics) > 0 {
 					if userSkipRegexp.MatchString(name) {
 						if nmon.Debug {
 							fmt.Printf("metric skipped : %s\n", name)
@@ -209,7 +209,7 @@ func NmonImport(c *cli.Context) {
 
 				timeStr, err := nmon.GetTimeStamp(matched[1])
 				check(err)
-				timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
+				timestamp, err := ConvertTimeStamp(timeStr, nmon.Config.Timezone)
 
 				if len(elems) < 14 {
 					fmt.Printf("error TOP import:")
@@ -255,14 +255,14 @@ func NmonImport(c *cli.Context) {
 		influxdb.WritePoints()
 		count += influxdb.PointsCount()
 		fmt.Printf("\nFile %s imported : %d points !\n", nmon_file, count)
-		if params.BuildDashboard {
-			NmonDashboardFile(params, nmon_file)
+		if config.ImportBuildDashboard {
+			NmonDashboardFile(config, nmon_file)
 		}
 
 		if len(last) > 0 {
 			field := map[string]interface{}{"value": last}
 			tag := map[string]string{"file": path.Base(nmon_file)}
-			lasttime, _ := ConvertTimeStamp("00:00:00,01-JAN-2000", nmon.Params.TZ)
+			lasttime, _ := ConvertTimeStamp("00:00:00,01-JAN-2000", nmon.Config.Timezone)
 			influxdbLog.AddPoint("timestamp", lasttime, field, tag)
 			err = influxdbLog.WritePoints()
 			check(err)

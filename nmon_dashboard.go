@@ -24,22 +24,22 @@ func NmonDashboard(c *cli.Context) {
 		os.Exit(1)
 	}
 	// parsing parameters
-	params := ParseParameters(c)
+	config := ParseParameters(c)
 
 	file := c.Args().First()
 
 	if nmonFileRegexp.MatchString(file) {
-		NmonDashboardFile(params, file)
+		NmonDashboardFile(config, file)
 		return
 	}
 
-	NmonDashboardTemplate(params, file)
+	NmonDashboardTemplate(config, file)
 
 }
 
-func NmonDashboardFile(params *Params, file string) {
-	nmon := InitNmon(params, file)
-	if params.File {
+func NmonDashboardFile(config *Config, file string) {
+	nmon := InitNmon(config, file)
+	if config.DashboardWriteFile {
 		nmon.WriteDashboard()
 		return
 	}
@@ -62,8 +62,8 @@ func NmonDashboardFile(params *Params, file string) {
 	return
 }
 
-func NmonDashboardTemplate(params *Params, file string) {
-	nmon := InitNmonTemplate(params)
+func NmonDashboardTemplate(config *Config, file string) {
+	nmon := InitNmonTemplate(config)
 	dashboard, err := grafanaclient.ConvertTemplate(file)
 	if err != nil {
 		fmt.Printf("Cannot convert template !\n")
@@ -690,11 +690,11 @@ func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
 
 func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 	//check if datasource for nmon2influxdb exist
-	grafana := grafanaclient.NewSession(nmon.Params.Guser, nmon.Params.Gpass, nmon.Params.Gurl)
+	grafana := grafanaclient.NewSession(nmon.Config.GrafanaUser, nmon.Config.GrafanaPassword, nmon.Config.GrafanaUrl)
 	err := grafana.DoLogon()
 	check(err)
 
-	resDs, err := grafana.GetDataSource(nmon.Params.DS)
+	resDs, err := grafana.GetDataSource(nmon.Config.GrafanaDatasource)
 	if resDs.Name == "" {
 		plugins, err := grafana.GetDataSourcePlugins()
 		check(err)
@@ -703,18 +703,18 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 			os.Exit(1)
 		}
 
-		var ds = grafanaclient.DataSource{Name: nmon.Params.DS,
+		var ds = grafanaclient.DataSource{Name: nmon.Config.GrafanaDatasource,
 			Type:      plugins["influxdb"].Type,
-			Access:    nmon.Params.Gaccess,
+			Access:    nmon.Config.GrafanaAccess,
 			URL:       nmon.DbURL(),
-			User:      nmon.Params.User,
-			Password:  nmon.Params.Password,
-			Database:  nmon.Params.Db,
+			User:      nmon.Config.GrafanaUser,
+			Password:  nmon.Config.GrafanaPassword,
+			Database:  nmon.Config.InfluxdbDatabase,
 			IsDefault: true,
 		}
 		err = grafana.CreateDataSource(ds)
 		check(err)
-		fmt.Printf("Grafana %s DataSource created.\n", nmon.Params.DS)
+		fmt.Printf("Grafana %s DataSource created.\n", nmon.Config.GrafanaDatasource)
 	}
 
 	return grafana

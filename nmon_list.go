@@ -13,28 +13,28 @@ import (
 
 func NmonListMeasurement(c *cli.Context) {
 	// parsing parameters
-	params := ParseParameters(c)
+	config := ParseParameters(c)
 
-	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
-	influxdb.SetDebug(params.Debug)
+	influxdb := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
+	influxdb.SetDebug(config.Debug)
 	err := influxdb.Connect()
 	check(err)
 
 	filters := new(influxdbclient.Filters)
 
-	if len(params.Host) > 0 {
-		filters.Add("host", params.Host, "text")
+	if len(config.ListHost) > 0 {
+		filters.Add("host", config.ListHost, "text")
 	}
 
 	measurements, _ := influxdb.ListMeasurement(filters)
 	if measurements != nil {
 		fmt.Printf("%s\n", measurements.Name)
 		for _, value := range measurements.Datas {
-			if len(params.Filter) == 0 {
+			if len(config.ListFilter) == 0 {
 				fmt.Printf("%s\n", value)
 				continue
 			}
-			matched, _ := regexp.MatchString(params.Filter, value)
+			matched, _ := regexp.MatchString(config.ListFilter, value)
 			if matched {
 				fmt.Printf("%s\n", value)
 			}

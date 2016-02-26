@@ -1,6 +1,6 @@
 // nmon2influxdb
 // import nmon data in InfluxDB
-// author: adejoux@djouxtech.net
+// author = adejoux@djouxtech.net
 
 package main
 
@@ -29,85 +29,36 @@ func ReplaceComma(s string) string {
 	return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
 }
 
-type Params struct {
-	NoDisks        bool
-	CpuAll         bool
-	BuildDashboard bool
-	Server         string
-	User           string
-	Port           string
-	File           bool
-	Force          bool
-	Guser          string
-	Gpass          string
-	Gurl           string
-	Gaccess        string
-	Db             string
-	DS             string
-	Password       string
-	Template       string
-	Metric         string
-	StatsHost      string
-	Sort           string
-	SkipMetrics    string
-	Limit          int
-	Host           string
-	Filter         string
-	From           string
-	To             string
-	TZ             string
-	Aggregate      string
-	Debug          bool
-}
+func ParseParameters(c *cli.Context) (config *Config) {
+	config = new(Config)
+	*config = InitConfig()
+	config.LoadCfgFile()
 
-func ParseParameters(c *cli.Context) (params *Params) {
+	config.Metric = c.String("metric")
+	config.StatsHost = c.String("statshost")
+	config.StatsFrom = c.String("from")
+	config.StatsTo = c.String("to")
+	config.ImportSkipDisks = c.Bool("nodisks")
+	config.ImportAllCpus = c.Bool("cpus")
+	config.ImportBuildDashboard = c.Bool("build")
+	config.ImportSkipMetrics = c.String("skip_metrics")
+	config.DashboardWriteFile = c.Bool("file")
+	config.ListFilter = c.String("filter")
+	config.ImportForce = c.Bool("force")
+	config.ListHost = c.String("host")
+	config.GrafanaUser = c.String("guser")
+	config.GrafanaPassword = c.String("gpassword")
+	config.GrafanaAccess = c.String("gaccess")
+	config.GrafanaUrl = c.String("gurl")
+	config.GrafanaDatasource = c.String("datasource")
+	config.Debug = c.GlobalBool("debug")
+	config.InfluxdbServer = c.GlobalString("server")
+	config.InfluxdbUser = c.GlobalString("user")
+	config.InfluxdbPort = c.GlobalString("port")
+	config.InfluxdbDatabase = c.GlobalString("db")
+	config.InfluxdbPassword = c.GlobalString("pass")
+	config.Timezone = c.GlobalString("tz")
+	config.DashboardTemplate = c.String("template")
+	return
 
-	return &Params{Metric: c.String("metric"),
-		StatsHost:      c.String("statshost"),
-		From:           c.String("from"),
-		To:             c.String("to"),
-		Aggregate:      c.String("aggregate"),
-		NoDisks:        c.Bool("nodisks"),
-		CpuAll:         c.Bool("cpus"),
-		BuildDashboard: c.Bool("build"),
-		File:           c.Bool("file"),
-		Filter:         c.String("filter"),
-		Force:          c.Bool("force"),
-		Host:           c.String("host"),
-		Guser:          c.String("guser"),
-		Gpass:          c.String("gpassword"),
-		Gaccess:        c.String("gaccess"),
-		Gurl:           c.String("gurl"),
-		DS:             c.String("datasource"),
-		Debug:          c.GlobalBool("debug"),
-		Server:         c.GlobalString("server"),
-		User:           c.GlobalString("user"),
-		Port:           c.GlobalString("port"),
-		Db:             c.GlobalString("db"),
-		Password:       c.GlobalString("pass"),
-		TZ:             c.GlobalString("tz"),
-		Template:       c.String("template"),
-		SkipMetrics:    c.String("skip_metrics"),
-	}
-}
-
-func ParseStatsParameters(c *cli.Context) (params *Params) {
-	return &Params{
-		Metric:    c.String("metric"),
-		StatsHost: c.String("statshost"),
-		From:      c.String("from"),
-		To:        c.String("to"),
-		Sort:      c.String("sort"),
-		Limit:     c.Int("limit"),
-		Filter:    c.String("filter"),
-		Host:      c.String("host"),
-		Aggregate: c.String("aggregate"),
-		Debug:     c.GlobalBool("debug"),
-		Server:    c.GlobalString("server"),
-		User:      c.GlobalString("user"),
-		Port:      c.GlobalString("port"),
-		Db:        c.GlobalString("db"),
-		Password:  c.GlobalString("pass"),
-		TZ:        c.GlobalString("tz"),
-	}
 }

@@ -14,29 +14,29 @@ const querytimeformat = "2006-01-02 15:04:05"
 
 func NmonStat(c *cli.Context) {
 	// parsing parameters
-	params := ParseStatsParameters(c)
+	config := ParseParameters(c)
 
-	if len(params.Metric) == 0 {
+	if len(config.Metric) == 0 {
 		fmt.Printf("No metric specified ! Use -h option for help !\n")
 		os.Exit(1)
 	}
 
-	influxdb := influxdbclient.NewInfluxDB(params.Server, params.Port, params.Db, params.User, params.Password)
-	influxdb.SetDebug(params.Debug)
+	influxdb := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
+	influxdb.SetDebug(config.Debug)
 	err := influxdb.Connect()
 	check(err)
-	metric := params.Metric
+	metric := config.Metric
 
 	filters := new(influxdbclient.Filters)
 
-	filters.Add("host", params.StatsHost, "text")
+	filters.Add("host", config.StatsHost, "text")
 
-	if len(params.Filter) > 0 {
-		filters.Add("name", params.Filter, "regexp")
+	if len(config.StatsFilter) > 0 {
+		filters.Add("name", config.StatsFilter, "regexp")
 	}
-	fromUnix, _ := ConvertTimeStamp(params.From, params.TZ)
+	fromUnix, _ := ConvertTimeStamp(config.StatsFrom, config.Timezone)
 	fromTime := fromUnix.Format(querytimeformat)
-	toUnix, _ := ConvertTimeStamp(params.To, params.TZ)
+	toUnix, _ := ConvertTimeStamp(config.StatsTo, config.Timezone)
 	toTime := toUnix.Format(querytimeformat)
 	result, err := influxdb.ReadPoints("value", filters, "name", metric, fromTime, toTime, "")
 	if err != nil {
@@ -46,7 +46,7 @@ func NmonStat(c *cli.Context) {
 	//generate stats
 	stats := influxdbclient.BuildStats(result)
 
-	DisplayStats(&stats, params.Sort, params.Limit)
+	DisplayStats(&stats, config.StatsSort, config.StatsLimit)
 }
 
 func DisplayStats(stats *influxdbclient.DataStats, sort string, limit int) {

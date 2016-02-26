@@ -23,7 +23,7 @@ type Nmon struct {
 	TextContent string
 	DataSeries  map[string]DataSerie
 	Debug       bool
-	Params      *Params
+	Config      *Config
 	starttime   time.Time
 	stoptime    time.Time
 }
@@ -77,16 +77,16 @@ func (nmon *Nmon) GetTimeStamp(label string) (t string, err error) {
 	return t, err
 }
 
-func InitNmonTemplate(params *Params) (nmon *Nmon) {
+func InitNmonTemplate(config *Config) (nmon *Nmon) {
 	nmon = NewNmon()
-	nmon.Params = params
+	nmon.Config = config
 	return
 }
 
-func InitNmon(params *Params, nmon_file string) (nmon *Nmon) {
+func InitNmon(config *Config, nmon_file string) (nmon *Nmon) {
 	nmon = NewNmon()
-	nmon.Params = params
-	nmon.Debug = params.Debug
+	nmon.Config = config
+	nmon.Debug = config.Debug
 	file, err := os.Open(nmon_file)
 	check(err)
 
@@ -97,18 +97,18 @@ func InitNmon(params *Params, nmon_file string) (nmon *Nmon) {
 
 	var userSkipRegexp *regexp.Regexp
 
-	if len(params.SkipMetrics) > 0 {
-		skipped := strings.Replace(params.SkipMetrics, ",", "|", -1)
+	if len(config.ImportSkipMetrics) > 0 {
+		skipped := strings.Replace(config.ImportSkipMetrics, ",", "|", -1)
 		userSkipRegexp = regexp.MustCompile(skipped)
 	}
 
 	for scanner.Scan() {
 
-		if cpuallRegexp.MatchString(scanner.Text()) && !params.CpuAll {
+		if cpuallRegexp.MatchString(scanner.Text()) && !config.ImportAllCpus {
 			continue
 		}
 
-		if diskallRegexp.MatchString(scanner.Text()) && params.NoDisks {
+		if diskallRegexp.MatchString(scanner.Text()) && config.ImportSkipDisks {
 			continue
 		}
 
@@ -147,19 +147,19 @@ func InitNmon(params *Params, nmon_file string) (nmon *Nmon) {
 			elems := strings.Split(scanner.Text(), ",")
 
 			if len(elems) < 3 {
-				if params.Debug == true {
+				if config.Debug == true {
 					fmt.Printf("ERROR: parsing the following line : %s\n", scanner.Text())
 				}
 				continue
 			}
 			name := elems[0]
-			if len(params.SkipMetrics) > 0 {
+			if len(config.ImportSkipMetrics) > 0 {
 				if userSkipRegexp.MatchString(name) {
 					continue
 				}
 			}
 
-			if params.Debug == true {
+			if config.Debug == true {
 				fmt.Printf("ADDING serie %s\n", name)
 			}
 
@@ -177,8 +177,8 @@ func (nmon *Nmon) SetTimeFrame() {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	nmon.starttime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[0]], nmon.Params.TZ)
-	nmon.stoptime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[len(keys)-1]], nmon.Params.TZ)
+	nmon.starttime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[0]], nmon.Config.Timezone)
+	nmon.stoptime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[len(keys)-1]], nmon.Config.Timezone)
 }
 
 func (nmon *Nmon) StartTime() string {
@@ -218,9 +218,9 @@ func ConvertTimeStamp(s string, tz string) (time.Time, error) {
 }
 
 func (nmon *Nmon) DataSource() string {
-	return nmon.Params.DS
+	return nmon.Config.GrafanaDatasource
 }
 
 func (nmon *Nmon) DbURL() string {
-	return "http://" + nmon.Params.Server + ":" + nmon.Params.Port
+	return "http://" + nmon.Config.InfluxdbServer + ":" + nmon.Config.InfluxdbPort
 }

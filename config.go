@@ -41,6 +41,10 @@ type Config struct {
 	StatsFrom            string
 	StatsTo              string
 	StatsHost            string
+	Metric               string `toml:"metric,omitempty"`
+	ListFilter           string `toml:",omitempty"`
+	ListHost             string `toml:",omitempty"`
+	DashboardTemplate    string `toml:",omitempty"`
 }
 
 func InitConfig() Config {
