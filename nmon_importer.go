@@ -10,10 +10,12 @@ import (
 	"github.com/adejoux/influxdbclient"
 	"github.com/codegangsta/cli"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
@@ -62,6 +64,18 @@ func NmonImport(c *cli.Context) {
 		check(err)
 	}
 
+	influxdbLog := influxdbclient.NewInfluxDB(params.Server, params.Port, "import_log", params.User, params.Password)
+	influxdbLog.SetDebug(params.Debug)
+	err = influxdbLog.Connect()
+	check(err)
+
+	if exist, _ := influxdbLog.ExistDB("import_log"); exist != true {
+		_, err := influxdbLog.CreateDB("import_log")
+		check(err)
+		influxdbLog.SetRetentionPolicy("log_retention", "1d", true)
+
+	}
+
 	for _, nmon_file := range c.Args() {
 		var count int64
 		count = 0
@@ -88,6 +102,21 @@ func NmonImport(c *cli.Context) {
 			skipped := strings.Replace(params.SkipMetrics, ",", "|", -1)
 			userSkipRegexp = regexp.MustCompile(skipped)
 		}
+
+		var last string
+		filters := new(influxdbclient.Filters)
+		filters.Add("file", path.Base(nmon_file), "text")
+
+		result, err := influxdbLog.ReadFirstPoint("value", filters, "timestamp")
+		check(err)
+
+		var lastTime time.Time
+		if len(result) > 0 {
+			lastTime, err = ConvertTimeStamp(result[1].(string), nmon.Params.TZ)
+		} else {
+			lastTime, err = ConvertTimeStamp("00:00:00,01-JAN-1900", nmon.Params.TZ)
+		}
+		check(err)
 
 		for _, line := range lines {
 
@@ -119,8 +148,11 @@ func NmonImport(c *cli.Context) {
 
 				timeStr, err := nmon.GetTimeStamp(matched[1])
 				check(err)
-
+				last = timeStr
 				timestamp, err := ConvertTimeStamp(timeStr, nmon.Params.TZ)
+				if timestamp.Before(lastTime) && !nmon.Params.Force {
+					continue
+				}
 
 				for i, value := range elems[2:] {
 					if len(nmon.DataSeries[name].Columns) < i+1 {
@@ -222,10 +254,18 @@ func NmonImport(c *cli.Context) {
 		// flushing remaining data
 		influxdb.WritePoints()
 		count += influxdb.PointsCount()
-
 		fmt.Printf("\nFile %s imported : %d points !\n", nmon_file, count)
 		if params.BuildDashboard {
 			NmonDashboardFile(params, nmon_file)
+		}
+
+		if len(last) > 0 {
+			field := map[string]interface{}{"value": last}
+			tag := map[string]string{"file": path.Base(nmon_file)}
+			lasttime, _ := ConvertTimeStamp("00:00:00,01-JAN-2000", nmon.Params.TZ)
+			influxdbLog.AddPoint("timestamp", lasttime, field, tag)
+			err = influxdbLog.WritePoints()
+			check(err)
 		}
 	}
 }

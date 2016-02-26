@@ -33,6 +33,10 @@ func main() {
 		os.Setenv("NMON2INFLUXDB_BUILD_DASHBOARD", "true")
 	}
 
+	if config.ImportForce {
+		os.Setenv("NMON2INFLUXDB_FORCE", "true")
+	}
+
 	if len(config.ImportSkipMetrics) > 0 {
 		os.Setenv("NMON2INFLUXDB_SKIP_METRICS", config.ImportSkipMetrics)
 	}
@@ -64,6 +68,11 @@ func main() {
 					Name:   "build,b",
 					Usage:  "build dashboard",
 					EnvVar: "NMON2INFLUXDB_BUILD_DASHBOARD",
+				},
+				cli.BoolFlag{
+					Name:   "force,f",
+					Usage:  "force import",
+					EnvVar: "NMON2INFLUXDB_FORCE",
 				},
 			},
 			Action: NmonImport,

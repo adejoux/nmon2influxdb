@@ -37,6 +37,7 @@ type Params struct {
 	User           string
 	Port           string
 	File           bool
+	Force          bool
 	Guser          string
 	Gpass          string
 	Gurl           string
@@ -71,6 +72,7 @@ func ParseParameters(c *cli.Context) (params *Params) {
 		BuildDashboard: c.Bool("build"),
 		File:           c.Bool("file"),
 		Filter:         c.String("filter"),
+		Force:          c.Bool("force"),
 		Host:           c.String("host"),
 		Guser:          c.String("guser"),
 		Gpass:          c.String("gpassword"),
