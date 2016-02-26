@@ -1,0 +1,84 @@
+title = "individual disk"
+[templates]
+  [[templates.template]]
+    # name of the template variable
+    name = "host"
+    # the default nmon2influxdb database in InfluxDB
+    datasource = "nmon2influxdb"
+    # query used to retrieve values in InfluxDB
+    query =  'SHOW TAG VALUES FROM "CPU_ALL" WITH KEY = "host"'
+  [[templates.template]]
+    # name of the template variable
+    name = "disk"
+    # the default nmon2influxdb database in InfluxDB
+    datasource = "nmon2influxdb"
+    # query used to retrieve values in InfluxDB
+    query =  'SHOW TAG VALUES FROM "DISKREAD" WITH KEY = "name"'
+[[row]]
+title = "DISK"
+    [[row.panel]]
+    title = "Disk read throughput"
+        [[row.panel.metric]]
+            measurement = "DISKREAD"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+        [[row.panel]]
+    title = "Disk write throughput"
+        [[row.panel.metric]]
+            measurement = "DISKREAD"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+    [[row.panel]]
+        title = "Disk read response time"
+        [[row.panel.metric]]
+            measurement = "DISKREADSERV"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+    [[row.panel]]
+        title = "Disk write response time"
+        [[row.panel.metric]]
+            measurement = "DISKWRITESERV"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+    [[row.panel]]
+        title = "Disk read IOPS"
+        [[row.panel.metric]]
+            measurement = "DISKAVGRIO"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+    [[row.panel]]
+        title = "Disk write IOPS"
+        [[row.panel.metric]]
+            measurement = "DISKAVGWIO"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+    [[row.panel]]
+        title = "Disk wait"
+        [[row.panel.metric]]
+            measurement = "DISKWAIT"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+    [[row.panel]]
+        title = "Disk busy"
+        [[row.panel.metric]]
+            measurement = "DISKBUSY"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+    [[row.panel]]
+        title = "Disk block size"
+        [[row.panel.metric]]
+            measurement = "DISKBSIZE"
+            # use template variable
+            hosts = ["$host$"]
+            fields = ["$disk$"]
+[time]
+  from = "2015-07-06T13:03:56.000Z"
+  to = "2016-07-07T14:23:44.000Z"
