@@ -74,6 +74,16 @@ func main() {
 					Usage:  "force import",
 					EnvVar: "NMON2INFLUXDB_FORCE",
 				},
+				cli.StringFlag{
+					Name:  "log_database",
+					Usage: "influxdb database used to log imports",
+					Value: config.ImportLogDatabase,
+				},
+				cli.StringFlag{
+					Name:  "log_retention",
+					Usage: "import log retention",
+					Value: config.ImportLogRetention,
+				},
 			},
 			Action: NmonImport,
 		},

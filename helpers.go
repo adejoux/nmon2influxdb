@@ -42,6 +42,8 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.ImportAllCpus = c.Bool("cpus")
 	config.ImportBuildDashboard = c.Bool("build")
 	config.ImportSkipMetrics = c.String("skip_metrics")
+	config.ImportLogDatabase = c.String("log_database")
+	config.ImportLogRetention = c.String("log_retention")
 	config.DashboardWriteFile = c.Bool("file")
 	config.ListFilter = c.String("filter")
 	config.ImportForce = c.Bool("force")

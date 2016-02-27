@@ -64,16 +64,18 @@ func NmonImport(c *cli.Context) {
 		check(err)
 	}
 
-	influxdbLog := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, "import_log", config.InfluxdbUser, config.InfluxdbPassword)
+	influxdbLog := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.ImportLogDatabase, config.InfluxdbUser, config.InfluxdbPassword)
 	influxdbLog.SetDebug(config.Debug)
 	err = influxdbLog.Connect()
 	check(err)
 
-	if exist, _ := influxdbLog.ExistDB("import_log"); exist != true {
-		_, err := influxdbLog.CreateDB("import_log")
+	if exist, _ := influxdbLog.ExistDB(config.ImportLogDatabase); exist != true {
+		_, err := influxdbLog.CreateDB(config.ImportLogDatabase)
 		check(err)
-		influxdbLog.SetRetentionPolicy("log_retention", "1d", true)
+		influxdbLog.SetRetentionPolicy("log_retention", config.ImportLogRetention, true)
 
+	} else {
+		influxdbLog.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
 	}
 
 	for _, nmon_file := range c.Args() {

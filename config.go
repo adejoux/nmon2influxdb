@@ -34,6 +34,8 @@ type Config struct {
 	ImportBuildDashboard bool
 	ImportForce          bool
 	ImportSkipMetrics    string
+	ImportLogDatabase    string
+	ImportLogRetention   string
 	DashboardWriteFile   bool
 	StatsLimit           int
 	StatsSort            string
@@ -64,6 +66,8 @@ func InitConfig() Config {
 		ImportAllCpus:        false,
 		ImportBuildDashboard: false,
 		ImportForce:          false,
+		ImportLogDatabase:    "nmon2influxdb_log",
+		ImportLogRetention:   "1d",
 		DashboardWriteFile:   false,
 		ImportSkipMetrics:    "JFSINODE",
 		StatsLimit:           20,
