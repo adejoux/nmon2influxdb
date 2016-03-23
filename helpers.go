@@ -38,6 +38,8 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.StatsHost = c.String("statshost")
 	config.StatsFrom = c.String("from")
 	config.StatsTo = c.String("to")
+	config.StatsLimit = c.Int("limit")
+	config.StatsFilter = c.String("filter")
 	config.ImportSkipDisks = c.Bool("nodisks")
 	config.ImportAllCpus = c.Bool("cpus")
 	config.ImportBuildDashboard = c.Bool("build")
