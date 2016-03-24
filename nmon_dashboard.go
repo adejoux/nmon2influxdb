@@ -639,7 +639,6 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 	}
 
 	if len(np.Group) > 0 {
-		target.GroupByTags = np.Group
 		target.GroupBy = grafanaclient.NewGroupBy()
 		target.Alias = ""
 	}
