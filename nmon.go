@@ -224,3 +224,23 @@ func (nmon *Nmon) DataSource() string {
 func (nmon *Nmon) DbURL() string {
 	return "http://" + nmon.Config.InfluxdbServer + ":" + nmon.Config.InfluxdbPort
 }
+
+type NmonFile struct {
+	Name     string
+	FileType string
+}
+
+type NmonFiles []NmonFile
+
+func (nmonFiles *NmonFiles) Add(file string, fileType string) {
+	*nmonFiles = append(*nmonFiles, NmonFile{Name: file, FileType: fileType})
+}
+
+func (nmonFiles *NmonFiles) Valid() (validFiles NmonFiles) {
+	for _, v := range *nmonFiles {
+		if v.FileType == ".nmon" {
+			validFiles = append(validFiles, v)
+		}
+	}
+	return validFiles
+}

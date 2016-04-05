@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/adejoux/influxdbclient"
 	"github.com/codegangsta/cli"
+	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -36,7 +37,7 @@ var nameRegexp = regexp.MustCompile(`(\d+)$`)
 func NmonImport(c *cli.Context) {
 
 	if len(c.Args()) < 1 {
-		fmt.Printf("file name needs to be provided\n")
+		fmt.Printf("file name or directory needs to be provided\n")
 		os.Exit(1)
 	}
 
@@ -78,11 +79,36 @@ func NmonImport(c *cli.Context) {
 		influxdbLog.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
 	}
 
-	for _, nmon_file := range c.Args() {
+	nmonFiles := new(NmonFiles)
+
+	for _, param := range c.Args() {
+		paraminfo, err := os.Stat(param)
+		if err != nil {
+			if os.IsNotExist(err) {
+				fmt.Printf("%s doesn't exist ! skipped.\n", param)
+			}
+			continue
+		}
+
+		if paraminfo.IsDir() {
+			entries, err := ioutil.ReadDir(param)
+			check(err)
+			for _, entry := range entries {
+				if !entry.IsDir() {
+					file := path.Join(param, entry.Name())
+					nmonFiles.Add(file, path.Ext(file))
+				}
+			}
+			continue
+		}
+		nmonFiles.Add(param, path.Ext(param))
+	}
+
+	for _, nmon_file := range nmonFiles.Valid() {
 		var count int64
 		count = 0
-		nmon := InitNmon(config, nmon_file)
-		file, err := os.Open(nmon_file)
+		nmon := InitNmon(config, nmon_file.Name)
+		file, err := os.Open(nmon_file.Name)
 		check(err)
 
 		defer file.Close()
@@ -107,7 +133,7 @@ func NmonImport(c *cli.Context) {
 
 		var last string
 		filters := new(influxdbclient.Filters)
-		filters.Add("file", path.Base(nmon_file), "text")
+		filters.Add("file", path.Base(nmon_file.Name), "text")
 
 		result, err := influxdbLog.ReadFirstPoint("value", filters, "timestamp")
 		check(err)
@@ -256,14 +282,14 @@ func NmonImport(c *cli.Context) {
 		// flushing remaining data
 		influxdb.WritePoints()
 		count += influxdb.PointsCount()
-		fmt.Printf("\nFile %s imported : %d points !\n", nmon_file, count)
+		fmt.Printf("\nFile %s imported : %d points !\n", nmon_file.Name, count)
 		if config.ImportBuildDashboard {
-			NmonDashboardFile(config, nmon_file)
+			NmonDashboardFile(config, nmon_file.Name)
 		}
 
 		if len(last) > 0 {
 			field := map[string]interface{}{"value": last}
-			tag := map[string]string{"file": path.Base(nmon_file)}
+			tag := map[string]string{"file": path.Base(nmon_file.Name)}
 			lasttime, _ := ConvertTimeStamp("00:00:00,01-JAN-2000", nmon.Config.Timezone)
 			influxdbLog.AddPoint("timestamp", lasttime, field, tag)
 			err = influxdbLog.WritePoints()
