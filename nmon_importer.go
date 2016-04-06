@@ -146,6 +146,19 @@ func NmonImport(c *cli.Context) {
 		}
 		check(err)
 
+		orig_checksum, err := influxdbLog.ReadFirstPoint("value", filters, "checksum")
+		check(err)
+
+		checksum, err := Checksum(nmon_file.Name)
+		check(err)
+		ckfield := map[string]interface{}{"value": checksum}
+		if len(orig_checksum) > 0 {
+
+			if orig_checksum[1].(string) == checksum {
+				fmt.Printf("file not changed since last import: %s\n", nmon_file.Name)
+				continue
+			}
+		}
 		for _, line := range lines {
 
 			if cpuallRegexp.MatchString(line) && !config.ImportAllCpus {
@@ -292,6 +305,8 @@ func NmonImport(c *cli.Context) {
 			tag := map[string]string{"file": path.Base(nmon_file.Name)}
 			lasttime, _ := ConvertTimeStamp("00:00:00,01-JAN-2000", nmon.Config.Timezone)
 			influxdbLog.AddPoint("timestamp", lasttime, field, tag)
+
+			influxdbLog.AddPoint("checksum", lasttime, ckfield, tag)
 			err = influxdbLog.WritePoints()
 			check(err)
 		}

@@ -5,8 +5,12 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"github.com/codegangsta/cli"
+	"io"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -65,4 +69,21 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.DashboardTemplate = c.String("template")
 	return
 
+}
+
+func Checksum(filePath string) (myhash string, err error) {
+	var result []byte
+	file, err := os.Open(filePath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	hash := sha1.New()
+	if _, err = io.Copy(hash, file); err != nil {
+		return
+	}
+	myhash = hex.EncodeToString(hash.Sum(result))
+
+	return
 }
