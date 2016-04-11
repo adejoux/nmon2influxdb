@@ -6,8 +6,9 @@
 package main
 
 import (
-	"github.com/codegangsta/cli"
 	"os"
+
+	"github.com/codegangsta/cli"
 )
 
 func main() {
@@ -118,7 +119,7 @@ func main() {
 				cli.StringFlag{
 					Name:  "gurl",
 					Usage: "grafana url",
-					Value: config.GrafanaUrl,
+					Value: config.GrafanaURL,
 				},
 				cli.StringFlag{
 					Name:  "datasource",

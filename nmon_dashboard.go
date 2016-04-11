@@ -9,14 +9,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/adejoux/grafanaclient"
-	"github.com/codegangsta/cli"
 	"os"
 	"regexp"
+
+	"github.com/adejoux/grafanaclient"
+	"github.com/codegangsta/cli"
 )
 
 var nmonFileRegexp = regexp.MustCompile(`\.(nmon|nmon.gz|nmon.bz2)$`)
 
+const panelSize = "300px"
+const linux = "linux"
+const aix = "aix"
+
+// NmonDashboard entry point for nmon dashboard sub command
 func NmonDashboard(c *cli.Context) {
 
 	if len(c.Args()) < 1 {
@@ -37,6 +43,7 @@ func NmonDashboard(c *cli.Context) {
 
 }
 
+//NmonDashboardFile export dashboard to file
 func NmonDashboardFile(config *Config, file string) {
 	nmon := InitNmon(config, file)
 	if config.DashboardWriteFile {
@@ -44,17 +51,17 @@ func NmonDashboardFile(config *Config, file string) {
 		return
 	}
 
-	if nmon.OS != "linux" && nmon.OS != "aix" {
+	if nmon.OS != linux && nmon.OS != aix {
 		fmt.Printf("Error: unable to find if it's a Linux or AIX nmon file !\n")
 		os.Exit(1)
 	}
 
 	var dashboard grafanaclient.Dashboard
-	if nmon.OS == "linux" {
+	if nmon.OS == linux {
 		dashboard = nmon.GenerateLinuxDashboard()
 	}
 
-	if nmon.OS == "aix" {
+	if nmon.OS == aix {
 		dashboard = nmon.GenerateAixDashboard()
 	}
 	err := nmon.UploadDashboard(dashboard)
@@ -62,6 +69,7 @@ func NmonDashboardFile(config *Config, file string) {
 	return
 }
 
+// NmonDashboardTemplate generates dashboard from toml template
 func NmonDashboardTemplate(config *Config, file string) {
 	nmon := InitNmonTemplate(config)
 	dashboard, err := grafanaclient.ConvertTemplate(file)
@@ -75,11 +83,12 @@ func NmonDashboardTemplate(config *Config, file string) {
 
 }
 
+// WriteDashboard to file
 func (nmon *Nmon) WriteDashboard() {
 
 	var dashboard grafanaclient.Dashboard
 
-	if nmon.OS == "linux" {
+	if nmon.OS == linux {
 		dashboard = nmon.GenerateLinuxDashboard()
 	}
 	if nmon.OS == "aix" {
@@ -103,6 +112,7 @@ func (nmon *Nmon) WriteDashboard() {
 
 }
 
+//GenerateAixDashboard custom minimal dashboard for AIX
 func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 
 	db := grafanaclient.Dashboard{Editable: true}
@@ -157,7 +167,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		LeftYAxisLabel: "count"})
 
 	row := BuildGrafanaRow("CPU", panels)
-	row.Height = "300px"
+	row.Height = panelSize
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
@@ -387,6 +397,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 
 }
 
+//GenerateLinuxDashboard custom minimal dashboard for Linux
 func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 
 	db := grafanaclient.Dashboard{Editable: true}
@@ -436,7 +447,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		Stack:       false})
 
 	row := BuildGrafanaRow("CPU", panels)
-	row.Height = "300px"
+	row.Height = panelSize
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
@@ -531,7 +542,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		LeftYAxisLabel: "KB/s"})
 
 	row = BuildGrafanaRow("NET", panels)
-	row.Height = "300px"
+	row.Height = panelSize
 	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
@@ -550,6 +561,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 
 }
 
+// NmonPanel custom Panel fro Grafana
 type NmonPanel struct {
 	Host            string
 	Title           string
@@ -565,12 +577,15 @@ type NmonPanel struct {
 	Span            int
 }
 
+//NmonPanels array of NmonPanel
 type NmonPanels []NmonPanel
 
+//AddPanel append NmonPanel
 func (panels *NmonPanels) AddPanel(npanel *NmonPanel) {
 	*panels = append(*panels, *npanel)
 }
 
+//BuildGrafanaRow generate a row composed of panels
 func BuildGrafanaRow(title string, panels *NmonPanels) grafanaclient.Row {
 	row := grafanaclient.NewRow()
 	row.Title = title
@@ -586,11 +601,13 @@ func BuildGrafanaRow(title string, panels *NmonPanels) grafanaclient.Row {
 	return row
 }
 
+//NameFilter add a Grafana filter on name tag
 func NameFilter(filter string) (tags []grafanaclient.Tag) {
 	tags = append(tags, grafanaclient.Tag{Key: "name", Value: "/" + filter + "/", Condition: "AND"})
 	return
 }
 
+//TagsFilter add a standard grafana filter
 func TagsFilter(filters map[string]string) (tags []grafanaclient.Tag) {
 	for _, key := range filters {
 		tags = append(tags, grafanaclient.Tag{Key: key, Value: "/" + filters[key] + "/", Condition: "AND"})
@@ -598,6 +615,7 @@ func TagsFilter(filters map[string]string) (tags []grafanaclient.Tag) {
 	return
 }
 
+//BuildGrafanaGraphPanel generates a grafana graph panel
 func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 	panel := grafanaclient.NewPanel()
 	panel.Title = np.Title
@@ -653,6 +671,7 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 	return panel
 }
 
+//BuildGrafanaTablePanel generates a grafana graph panel
 func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
 	panel := grafanaclient.NewPanel()
 	panel.Type = "table"
@@ -687,13 +706,15 @@ func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
 	return panel
 }
 
+//InitGrafanaSession connects to grafana instance and setup influxdb datasource
 func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 	//check if datasource for nmon2influxdb exist
-	grafana := grafanaclient.NewSession(nmon.Config.GrafanaUser, nmon.Config.GrafanaPassword, nmon.Config.GrafanaUrl)
+	grafana := grafanaclient.NewSession(nmon.Config.GrafanaUser, nmon.Config.GrafanaPassword, nmon.Config.GrafanaURL)
 	err := grafana.DoLogon()
 	check(err)
 
 	resDs, err := grafana.GetDataSource(nmon.Config.GrafanaDatasource)
+	check(err)
 	if resDs.Name == "" {
 		plugins, err := grafana.GetDataSourcePlugins()
 		check(err)
@@ -719,6 +740,7 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 	return grafana
 }
 
+//UploadDashboard upload dashboard to current grafana instance
 func (nmon *Nmon) UploadDashboard(dashboard grafanaclient.Dashboard) (err error) {
 	grafana := nmon.InitGrafanaSession()
 

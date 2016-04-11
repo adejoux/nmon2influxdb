@@ -7,11 +7,12 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/codegangsta/cli"
 	"io"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/codegangsta/cli"
 )
 
 //
@@ -23,16 +24,18 @@ func check(e error) {
 	}
 }
 
-func check_info(e error) {
+func checkInfo(e error) {
 	if e != nil {
 		log.Printf("info: %s", e)
 	}
 }
 
+//ReplaceComma replaces comma by html tabs tag
 func ReplaceComma(s string) string {
 	return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
 }
 
+// ParseParameters parse parameter from command line in Config struct
 func ParseParameters(c *cli.Context) (config *Config) {
 	config = new(Config)
 	*config = InitConfig()
@@ -57,7 +60,7 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.GrafanaUser = c.String("guser")
 	config.GrafanaPassword = c.String("gpassword")
 	config.GrafanaAccess = c.String("gaccess")
-	config.GrafanaUrl = c.String("gurl")
+	config.GrafanaURL = c.String("gurl")
 	config.GrafanaDatasource = c.String("datasource")
 	config.Debug = c.GlobalBool("debug")
 	config.InfluxdbServer = c.GlobalString("server")
@@ -71,6 +74,7 @@ func ParseParameters(c *cli.Context) (config *Config) {
 
 }
 
+//Checksum generates SHA1 file checksum
 func Checksum(filePath string) (myhash string, err error) {
 	var result []byte
 	file, err := os.Open(filePath)

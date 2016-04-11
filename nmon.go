@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+// Nmon structure used to manage nmon files
 type Nmon struct {
 	Hostname    string
 	OS          string
@@ -26,27 +27,26 @@ type Nmon struct {
 	Config      *Config
 	starttime   time.Time
 	stoptime    time.Time
+	Location    *time.Location
 }
 
-//
-// DataSerie structure
-// contains the columns and points to insert in InfluxDB
-//
-
+// DataSerie structure contains the columns and points to insert in InfluxDB
 type DataSerie struct {
 	Columns []string
 }
 
+// AppendText add text section to dashboard
 func (nmon *Nmon) AppendText(text string) {
 	nmon.TextContent += ReplaceComma(text)
 }
 
-// initialize a Nmon structure
+// NewNmon initialize a Nmon structure
 func NewNmon() *Nmon {
 	return &Nmon{DataSeries: make(map[string]DataSerie), TimeStamps: make(map[string]string)}
 
 }
 
+// BuildPoint create a point and convert string value to float when possible
 func (nmon *Nmon) BuildPoint(serie string, values []string) map[string]interface{} {
 	columns := nmon.DataSeries[serie].Columns
 	//TODO check output
@@ -67,27 +67,32 @@ func (nmon *Nmon) BuildPoint(serie string, values []string) map[string]interface
 	return point
 }
 
-func (nmon *Nmon) GetTimeStamp(label string) (t string, err error) {
+//GetTimeStamp retrieves the TimeStamp corresponding to the entry
+func (nmon *Nmon) GetTimeStamp(label string) (timeStamp string, err error) {
 	if t, ok := nmon.TimeStamps[label]; ok {
-		return t, err
+		timeStamp = t
 	} else {
-		error_message := fmt.Sprintf("TimeStamp %s not found", label)
-		err = errors.New(error_message)
+		errorMessage := fmt.Sprintf("TimeStamp %s not found", label)
+		err = errors.New(errorMessage)
 	}
-	return t, err
-}
-
-func InitNmonTemplate(config *Config) (nmon *Nmon) {
-	nmon = NewNmon()
-	nmon.Config = config
 	return
 }
 
-func InitNmon(config *Config, nmon_file string) (nmon *Nmon) {
+//InitNmonTemplate init nmon structure when creating dashboard
+func InitNmonTemplate(config *Config) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Config = config
+	nmon.SetLocation(config.Timezone)
+	return
+}
+
+//InitNmon init nmon structure for nmon file import
+func InitNmon(config *Config, nmonFile string) (nmon *Nmon) {
+	nmon = NewNmon()
+	nmon.Config = config
+	nmon.SetLocation(config.Timezone)
 	nmon.Debug = config.Debug
-	file, err := os.Open(nmon_file)
+	file, err := os.Open(nmonFile)
 	check(err)
 
 	defer file.Close()
@@ -171,16 +176,18 @@ func InitNmon(config *Config, nmon_file string) (nmon *Nmon) {
 	return
 }
 
+//SetTimeFrame set the current timeframe for the dashboard
 func (nmon *Nmon) SetTimeFrame() {
 	keys := make([]string, 0, len(nmon.TimeStamps))
 	for k := range nmon.TimeStamps {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	nmon.starttime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[0]], nmon.Config.Timezone)
-	nmon.stoptime, _ = ConvertTimeStamp(nmon.TimeStamps[keys[len(keys)-1]], nmon.Config.Timezone)
+	nmon.starttime, _ = nmon.ConvertTimeStamp(nmon.TimeStamps[keys[0]])
+	nmon.stoptime, _ = nmon.ConvertTimeStamp(nmon.TimeStamps[keys[len(keys)-1]])
 }
 
+// StartTime returns the starting timestamp for dashboard
 func (nmon *Nmon) StartTime() string {
 	if nmon.starttime == (time.Time{}) {
 		nmon.SetTimeFrame()
@@ -188,6 +195,7 @@ func (nmon *Nmon) StartTime() string {
 	return nmon.starttime.UTC().Format(time.RFC3339)
 }
 
+// StopTime returns the ending timestamp for dashboard
 func (nmon *Nmon) StopTime() string {
 	if nmon.stoptime == (time.Time{}) {
 		nmon.SetTimeFrame()
@@ -197,8 +205,8 @@ func (nmon *Nmon) StopTime() string {
 
 const timeformat = "15:04:05,02-Jan-2006"
 
-func ConvertTimeStamp(s string, tz string) (time.Time, error) {
-	var err error
+//SetLocation set the timezone used to input metrics in InfluxDB
+func (nmon *Nmon) SetLocation(tz string) (err error) {
 	var loc *time.Location
 	if len(tz) > 0 {
 		loc, err = time.LoadLocation(tz)
@@ -213,29 +221,37 @@ func ConvertTimeStamp(s string, tz string) (time.Time, error) {
 		}
 	}
 
-	t, err := time.ParseInLocation(timeformat, s, loc)
+	nmon.Location = loc
+	return
+}
+
+//ConvertTimeStamp convert the string timestamp in time.Time structure
+func (nmon *Nmon) ConvertTimeStamp(s string) (time.Time, error) {
+	var err error
+	t, err := time.ParseInLocation(timeformat, s, nmon.Location)
 	return t, err
 }
 
-func (nmon *Nmon) DataSource() string {
-	return nmon.Config.GrafanaDatasource
-}
-
+//DbURL generates InfluxDB server url
 func (nmon *Nmon) DbURL() string {
 	return "http://" + nmon.Config.InfluxdbServer + ":" + nmon.Config.InfluxdbPort
 }
 
+// NmonFile structure used to select nmon files to import
 type NmonFile struct {
 	Name     string
 	FileType string
 }
 
+// NmonFiles array of NmonFile
 type NmonFiles []NmonFile
 
+//Add a file in the NmonFIles structure
 func (nmonFiles *NmonFiles) Add(file string, fileType string) {
 	*nmonFiles = append(*nmonFiles, NmonFile{Name: file, FileType: fileType})
 }
 
+//Valid returns only valid fiels for nmon import
 func (nmonFiles *NmonFiles) Valid() (validFiles NmonFiles) {
 	for _, v := range *nmonFiles {
 		if v.FileType == ".nmon" {

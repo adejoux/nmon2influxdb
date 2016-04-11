@@ -9,13 +9,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/naoina/toml"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
+
+	"github.com/naoina/toml"
 )
 
+// Config is the configuration structure used by nmon2influxdb
 type Config struct {
 	Debug                bool
 	Timezone             string
@@ -26,7 +28,7 @@ type Config struct {
 	InfluxdbDatabase     string
 	GrafanaUser          string
 	GrafanaPassword      string
-	GrafanaUrl           string
+	GrafanaURL           string
 	GrafanaAccess        string
 	GrafanaDatasource    string
 	ImportSkipDisks      bool
@@ -49,6 +51,7 @@ type Config struct {
 	DashboardTemplate    string `toml:",omitempty"`
 }
 
+// InitConfig setup initial configuration with sane values
 func InitConfig() Config {
 	return Config{Debug: false,
 		Timezone:             "Europe/Paris",
@@ -59,7 +62,7 @@ func InitConfig() Config {
 		InfluxdbDatabase:     "nmon_reports",
 		GrafanaUser:          "admin",
 		GrafanaPassword:      "admin",
-		GrafanaUrl:           "http://localhost:3000",
+		GrafanaURL:           "http://localhost:3000",
 		GrafanaAccess:        "direct",
 		GrafanaDatasource:    "nmon2influxdb",
 		ImportSkipDisks:      false,
@@ -79,6 +82,7 @@ func InitConfig() Config {
 	}
 }
 
+//GetCfgFile returns the current configuration file path
 func GetCfgFile() (cfgfile string) {
 	currUser, _ := user.Current()
 	home := currUser.HomeDir
@@ -86,6 +90,7 @@ func GetCfgFile() (cfgfile string) {
 	return
 }
 
+//IsNotFile returns true if the file doesn't exist
 func IsNotFile(file string) bool {
 	stat, err := os.Stat(file)
 	if err != nil {
@@ -93,11 +98,12 @@ func IsNotFile(file string) bool {
 	}
 	if stat.Mode().IsRegular() {
 		return false
-	} else {
-		return true
 	}
+
+	return true
 }
 
+//BuildCfgFile creates a default configuration file
 func (config *Config) BuildCfgFile(cfgfile string) {
 	file, err := os.Create(cfgfile)
 	check(err)
@@ -111,6 +117,7 @@ func (config *Config) BuildCfgFile(cfgfile string) {
 	fmt.Printf("Generating default configuration file : %s\n", cfgfile)
 }
 
+// LoadCfgFile loads current configuration file settings
 func (config *Config) LoadCfgFile() {
 
 	cfgfile := GetCfgFile()

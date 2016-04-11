@@ -7,8 +7,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/adejoux/influxdbclient"
-	"github.com/codegangsta/cli"
 	"io/ioutil"
 	"os"
 	"path"
@@ -17,6 +15,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/adejoux/influxdbclient"
+	"github.com/codegangsta/cli"
 )
 
 var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
@@ -34,6 +35,7 @@ var topRegexp = regexp.MustCompile(`^TOP,\d+,(T\d+)`)
 var nfsRegexp = regexp.MustCompile(`^NFS`)
 var nameRegexp = regexp.MustCompile(`(\d+)$`)
 
+//NmonImport is the entry point for subcommand nmon import
 func NmonImport(c *cli.Context) {
 
 	if len(c.Args()) < 1 {
@@ -49,7 +51,7 @@ func NmonImport(c *cli.Context) {
 		dfltConfig.LoadCfgFile()
 
 		config.GrafanaAccess = dfltConfig.GrafanaAccess
-		config.GrafanaUrl = dfltConfig.GrafanaUrl
+		config.GrafanaURL = dfltConfig.GrafanaURL
 		config.GrafanaDatasource = dfltConfig.GrafanaDatasource
 		config.GrafanaUser = dfltConfig.GrafanaUser
 		config.GrafanaPassword = dfltConfig.GrafanaPassword
@@ -61,8 +63,8 @@ func NmonImport(c *cli.Context) {
 	check(err)
 
 	if exist, _ := influxdb.ExistDB(config.InfluxdbDatabase); exist != true {
-		_, err := influxdb.CreateDB(config.InfluxdbDatabase)
-		check(err)
+		_, createErr := influxdb.CreateDB(config.InfluxdbDatabase)
+		check(createErr)
 	}
 
 	influxdbLog := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.ImportLogDatabase, config.InfluxdbUser, config.InfluxdbPassword)
@@ -104,11 +106,11 @@ func NmonImport(c *cli.Context) {
 		nmonFiles.Add(param, path.Ext(param))
 	}
 
-	for _, nmon_file := range nmonFiles.Valid() {
+	for _, nmonFile := range nmonFiles.Valid() {
 		var count int64
 		count = 0
-		nmon := InitNmon(config, nmon_file.Name)
-		file, err := os.Open(nmon_file.Name)
+		nmon := InitNmon(config, nmonFile.Name)
+		file, err := os.Open(nmonFile.Name)
 		check(err)
 
 		defer file.Close()
@@ -133,29 +135,29 @@ func NmonImport(c *cli.Context) {
 
 		var last string
 		filters := new(influxdbclient.Filters)
-		filters.Add("file", path.Base(nmon_file.Name), "text")
+		filters.Add("file", path.Base(nmonFile.Name), "text")
 
 		result, err := influxdbLog.ReadFirstPoint("value", filters, "timestamp")
 		check(err)
 
 		var lastTime time.Time
 		if len(result) > 0 {
-			lastTime, err = ConvertTimeStamp(result[1].(string), nmon.Config.Timezone)
+			lastTime, err = nmon.ConvertTimeStamp(result[1].(string))
 		} else {
-			lastTime, err = ConvertTimeStamp("00:00:00,01-JAN-1900", nmon.Config.Timezone)
+			lastTime, err = nmon.ConvertTimeStamp("00:00:00,01-JAN-1900")
 		}
 		check(err)
 
-		orig_checksum, err := influxdbLog.ReadFirstPoint("value", filters, "checksum")
+		origChecksum, err := influxdbLog.ReadFirstPoint("value", filters, "checksum")
 		check(err)
 
-		checksum, err := Checksum(nmon_file.Name)
+		checksum, err := Checksum(nmonFile.Name)
 		check(err)
 		ckfield := map[string]interface{}{"value": checksum}
-		if len(orig_checksum) > 0 {
+		if len(origChecksum) > 0 {
 
-			if orig_checksum[1].(string) == checksum {
-				fmt.Printf("file not changed since last import: %s\n", nmon_file.Name)
+			if origChecksum[1].(string) == checksum {
+				fmt.Printf("file not changed since last import: %s\n", nmonFile.Name)
 				continue
 			}
 		}
@@ -187,10 +189,11 @@ func NmonImport(c *cli.Context) {
 					}
 				}
 
-				timeStr, err := nmon.GetTimeStamp(matched[1])
-				check(err)
+				timeStr, getErr := nmon.GetTimeStamp(matched[1])
+				check(getErr)
 				last = timeStr
-				timestamp, err := ConvertTimeStamp(timeStr, nmon.Config.Timezone)
+				timestamp, convErr := nmon.ConvertTimeStamp(timeStr)
+				check(convErr)
 				if timestamp.Before(lastTime) && !nmon.Config.ImportForce {
 					continue
 				}
@@ -207,8 +210,8 @@ func NmonImport(c *cli.Context) {
 					tags := map[string]string{"host": nmon.Hostname, "name": column}
 
 					// try to convert string to integer
-					converted, err := strconv.ParseFloat(value, 64)
-					if err != nil {
+					converted, parseErr := strconv.ParseFloat(value, 64)
+					if parseErr != nil {
 						//if not working, skip to next value. We don't want text values in InfluxDB.
 						continue
 					}
@@ -248,9 +251,10 @@ func NmonImport(c *cli.Context) {
 					}
 				}
 
-				timeStr, err := nmon.GetTimeStamp(matched[1])
-				check(err)
-				timestamp, err := ConvertTimeStamp(timeStr, nmon.Config.Timezone)
+				timeStr, getErr := nmon.GetTimeStamp(matched[1])
+				check(getErr)
+				timestamp, convErr := nmon.ConvertTimeStamp(timeStr)
+				check(convErr)
 
 				if len(elems) < 14 {
 					fmt.Printf("error TOP import:")
@@ -271,8 +275,8 @@ func NmonImport(c *cli.Context) {
 					tags := map[string]string{"host": nmon.Hostname, "name": column, "pid": elems[1], "command": elems[13], "wlm": wlmclass}
 
 					// try to convert string to integer
-					converted, err := strconv.ParseFloat(value, 64)
-					if err != nil {
+					converted, parseErr := strconv.ParseFloat(value, 64)
+					if parseErr != nil {
 						//if not working, skip to next value. We don't want text values in InfluxDB.
 						continue
 					}
@@ -295,15 +299,15 @@ func NmonImport(c *cli.Context) {
 		// flushing remaining data
 		influxdb.WritePoints()
 		count += influxdb.PointsCount()
-		fmt.Printf("\nFile %s imported : %d points !\n", nmon_file.Name, count)
+		fmt.Printf("\nFile %s imported : %d points !\n", nmonFile.Name, count)
 		if config.ImportBuildDashboard {
-			NmonDashboardFile(config, nmon_file.Name)
+			NmonDashboardFile(config, nmonFile.Name)
 		}
 
 		if len(last) > 0 {
 			field := map[string]interface{}{"value": last}
-			tag := map[string]string{"file": path.Base(nmon_file.Name)}
-			lasttime, _ := ConvertTimeStamp("00:00:00,01-JAN-2000", nmon.Config.Timezone)
+			tag := map[string]string{"file": path.Base(nmonFile.Name)}
+			lasttime, _ := nmon.ConvertTimeStamp("00:00:00,01-JAN-2000")
 			influxdbLog.AddPoint("timestamp", lasttime, field, tag)
 
 			influxdbLog.AddPoint("checksum", lasttime, ckfield, tag)

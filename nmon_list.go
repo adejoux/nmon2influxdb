@@ -5,12 +5,14 @@ package main
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/adejoux/influxdbclient"
 	"github.com/codegangsta/cli"
-	"regexp"
 	//	"os"
 )
 
+//NmonListMeasurement list all measurements in INFLUXDB database
 func NmonListMeasurement(c *cli.Context) {
 	// parsing parameters
 	config := ParseParameters(c)
