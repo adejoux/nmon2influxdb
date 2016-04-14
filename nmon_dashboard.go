@@ -717,14 +717,33 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 	check(err)
 	if resDs.Name == "" {
 		plugins, err := grafana.GetDataSourcePlugins()
-		check(err)
-		if _, present := plugins["influxdb"]; !present {
-			fmt.Printf("No plugin for influxDB in Grafana !\n")
-			os.Exit(1)
+
+		//grafana 3.0 new plugin architecture
+		if err.Error() == "HTTP 404: Data source not found" {
+			plugins, pluginErr := grafana.GetPlugins("datasource")
+			check(pluginErr)
+
+			status := ""
+			for _, plugin := range plugins {
+				if plugin.ID == "influxdb" {
+					status = "ok"
+				}
+			}
+
+			if status != "ok" {
+				fmt.Printf("No plugin for influxDB in Grafana !\n")
+				os.Exit(1)
+			}
+		} else {
+			check(err)
+			if _, present := plugins["influxdb"]; !present {
+				fmt.Printf("No plugin for influxDB in Grafana !\n")
+				os.Exit(1)
+			}
 		}
 
 		var ds = grafanaclient.DataSource{Name: nmon.Config.GrafanaDatasource,
-			Type:      plugins["influxdb"].Type,
+			Type:      "influxdb",
 			Access:    nmon.Config.GrafanaAccess,
 			URL:       nmon.DbURL(),
 			User:      nmon.Config.GrafanaUser,
