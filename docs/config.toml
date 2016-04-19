@@ -1,0 +1,60 @@
+baseurl = "http://nmon2influxdb.org/"
+title = "nmon2influxdb"
+theme = "darkdoc"
+metadataformat = "yaml"
+canonifyurls = true
+pygmentsUseClasses = true
+
+[params]
+	# General information
+	author = "Alain Dejoux"
+	description = "Make NMON data dynamic with InfluxDB"
+	copyright = "Released under the AGPLv3 license"
+
+  #demo website
+  demo_site = "http://demo.nmon2influxdb.org"
+
+	# Repository
+	provider = "GitHub"
+	repo_url = "https://github.com/adejoux/nmon2influxdb"
+	repo_id = "nmon2influxdb"
+
+	version = "1.0.0"
+	logo = "images/logo.png"
+	favicon = ""
+
+	permalink = "#"
+
+[social]
+	github  = "adejoux"
+
+[[menu.main]]
+	name   = "Demo"
+	url    = "demo/"
+	weight = 0
+
+[[menu.main]]
+	name   = "Getting started"
+	url    = "getting-started/"
+	weight = 10
+
+[[menu.main]]
+	name   = "Usage"
+	url    = "usage/"
+	weight = 20
+
+[[menu.main]]
+	name   = "Configuration"
+	url    = "configuration/"
+	weight = 30
+
+[[menu.main]]
+	name   = "Templates"
+	url    = "templates/"
+	weight = 40
+
+[blackfriday]
+	smartypants	= true
+	fractions = true
+	smartDashes = true
+	plainIDAnchors = true
