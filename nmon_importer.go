@@ -75,10 +75,17 @@ func NmonImport(c *cli.Context) {
 	if exist, _ := influxdbLog.ExistDB(config.ImportLogDatabase); exist != true {
 		_, err := influxdbLog.CreateDB(config.ImportLogDatabase)
 		check(err)
-		influxdbLog.SetRetentionPolicy("log_retention", config.ImportLogRetention, true)
-
+		_, err = influxdbLog.SetRetentionPolicy("log_retention", config.ImportLogRetention, true)
+		check(err)
 	} else {
-		influxdbLog.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
+		_, err := influxdbLog.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
+		check(err)
+	}
+
+	// update default retention policy if ImportDataRetention is set
+	if len(config.ImportDataRetention) > 0 {
+		_, err := influxdb.UpdateRetentionPolicy("default", config.ImportDataRetention, true)
+		check(err)
 	}
 
 	nmonFiles := new(NmonFiles)

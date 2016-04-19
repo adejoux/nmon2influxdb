@@ -38,6 +38,7 @@ type Config struct {
 	ImportSkipMetrics    string
 	ImportLogDatabase    string
 	ImportLogRetention   string
+	ImportDataRetention  string
 	DashboardWriteFile   bool
 	StatsLimit           int
 	StatsSort            string
