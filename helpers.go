@@ -69,7 +69,6 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.InfluxdbDatabase = c.GlobalString("db")
 	config.InfluxdbPassword = c.GlobalString("pass")
 	config.Timezone = c.GlobalString("tz")
-	config.DashboardTemplate = c.String("template")
 	return
 
 }

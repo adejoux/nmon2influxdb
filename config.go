@@ -28,7 +28,7 @@ type Config struct {
 	InfluxdbDatabase     string
 	GrafanaUser          string
 	GrafanaPassword      string
-	GrafanaURL           string
+	GrafanaURL           string `toml:"grafana_URL"`
 	GrafanaAccess        string
 	GrafanaDatasource    string
 	ImportSkipDisks      bool
@@ -48,7 +48,6 @@ type Config struct {
 	Metric               string `toml:"metric,omitempty"`
 	ListFilter           string `toml:",omitempty"`
 	ListHost             string `toml:",omitempty"`
-	DashboardTemplate    string `toml:",omitempty"`
 }
 
 // InitConfig setup initial configuration with sane values
@@ -72,7 +71,7 @@ func InitConfig() Config {
 		ImportLogDatabase:    "nmon2influxdb_log",
 		ImportLogRetention:   "1d",
 		DashboardWriteFile:   false,
-		ImportSkipMetrics:    "JFSINODE",
+		ImportSkipMetrics:    "JFSINODE|TOP",
 		StatsLimit:           20,
 		StatsSort:            "mean",
 		StatsFilter:          "",

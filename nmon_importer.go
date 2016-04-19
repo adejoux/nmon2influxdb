@@ -141,7 +141,7 @@ func NmonImport(c *cli.Context) {
 		check(err)
 
 		var lastTime time.Time
-		if len(result) > 0 {
+		if !nmon.Config.ImportForce && len(result) > 0 {
 			lastTime, err = nmon.ConvertTimeStamp(result[1].(string))
 		} else {
 			lastTime, err = nmon.ConvertTimeStamp("00:00:00,01-JAN-1900")
@@ -154,7 +154,7 @@ func NmonImport(c *cli.Context) {
 		checksum, err := Checksum(nmonFile.Name)
 		check(err)
 		ckfield := map[string]interface{}{"value": checksum}
-		if len(origChecksum) > 0 {
+		if !nmon.Config.ImportForce && len(origChecksum) > 0 {
 
 			if origChecksum[1].(string) == checksum {
 				fmt.Printf("file not changed since last import: %s\n", nmonFile.Name)

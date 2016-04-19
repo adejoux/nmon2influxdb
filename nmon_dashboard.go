@@ -29,6 +29,7 @@ func NmonDashboard(c *cli.Context) {
 		fmt.Printf("file name needs to be provided\n")
 		os.Exit(1)
 	}
+
 	// parsing parameters
 	config := ParseParameters(c)
 
@@ -765,7 +766,8 @@ func (nmon *Nmon) UploadDashboard(dashboard grafanaclient.Dashboard) (err error)
 
 	err = grafana.UploadDashboard(dashboard, true)
 	if err != nil {
-		fmt.Printf("Unable to upload Grafana dashboard ! \n")
+		fmt.Printf("Unable to upload Grafana dashboard: %s ! \n", err.Error())
+		return
 	}
 
 	fmt.Printf("Dashboard uploaded to grafana\n")

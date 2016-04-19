@@ -92,10 +92,6 @@ func main() {
 			Name:  "dashboard",
 			Usage: "generate a dashboard from a nmon file or template",
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "template,t",
-					Usage: "optional json template file to use",
-				},
 				cli.BoolFlag{
 					Name:   "file,f",
 					Usage:  "generate Grafana dashboard file",
