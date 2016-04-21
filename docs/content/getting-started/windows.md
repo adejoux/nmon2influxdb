@@ -59,11 +59,11 @@ By clicking on web preview, you will access Grafana login page. Default account 
 It's only performed at the container's creation and it will not change during the container's life.
 Else in the boot2docker VM in VirtualBox named **default**, use docker command line to delete the container and start a new container with the new port mappings :
 
-```` nsh
+{{< highlight batch >}}
 docker ps
 docker rm -f docker-influxdb-grafana
 docker run -d -p 3000:3000 -p 8083:8083 -p 8086:8086 --name="nmon_reports" -t adejoux/docker-influxdb-grafana
-````
+{{< /highlight >}}
 
 {{< gallery image="docker_cli.png" >}}
 

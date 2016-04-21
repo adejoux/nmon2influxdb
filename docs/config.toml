@@ -2,7 +2,6 @@ baseurl = "http://nmon2influxdb.org/"
 title = "nmon2influxdb"
 theme = "darkdoc"
 metadataformat = "yaml"
-canonifyurls = true
 pygmentsUseClasses = true
 
 [params]
