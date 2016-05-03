@@ -314,9 +314,8 @@ func NmonImport(c *cli.Context) {
 		if len(last) > 0 {
 			field := map[string]interface{}{"value": last}
 			tag := map[string]string{"file": path.Base(nmonFile.Name)}
-			lasttime, _ := nmon.ConvertTimeStamp("00:00:00,01-JAN-2000")
+			lasttime, _ := nmon.ConvertTimeStamp("now")
 			influxdbLog.AddPoint("timestamp", lasttime, field, tag)
-
 			influxdbLog.AddPoint("checksum", lasttime, ckfield, tag)
 			err = influxdbLog.WritePoints()
 			check(err)

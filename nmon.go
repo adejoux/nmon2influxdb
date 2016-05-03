@@ -228,6 +228,10 @@ func (nmon *Nmon) SetLocation(tz string) (err error) {
 //ConvertTimeStamp convert the string timestamp in time.Time structure
 func (nmon *Nmon) ConvertTimeStamp(s string) (time.Time, error) {
 	var err error
+	if s == "now" {
+		return time.Now().Truncate(24 * time.Hour), err
+	}
+
 	t, err := time.ParseInLocation(timeformat, s, nmon.Location)
 	return t, err
 }
