@@ -46,7 +46,8 @@ func NmonDashboard(c *cli.Context) {
 
 //NmonDashboardFile export dashboard to file
 func NmonDashboardFile(config *Config, file string) {
-	nmon := InitNmon(config, file)
+	nmonFile := NmonFile{Name: file, FileType: ".nmon"}
+	nmon := InitNmon(config, nmonFile)
 	if config.DashboardWriteFile {
 		nmon.WriteDashboard()
 		return

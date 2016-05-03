@@ -6,15 +6,20 @@ package main
 
 import (
 	"bufio"
+	"compress/gzip"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
+
+const gzipfile = ".gz"
 
 // Nmon structure used to manage nmon files
 type Nmon struct {
@@ -87,17 +92,16 @@ func InitNmonTemplate(config *Config) (nmon *Nmon) {
 }
 
 //InitNmon init nmon structure for nmon file import
-func InitNmon(config *Config, nmonFile string) (nmon *Nmon) {
+func InitNmon(config *Config, nmonFile NmonFile) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Config = config
 	nmon.SetLocation(config.Timezone)
 	nmon.Debug = config.Debug
-	file, err := os.Open(nmonFile)
-	check(err)
 
-	defer file.Close()
-	reader := bufio.NewReader(file)
-	scanner := bufio.NewScanner(reader)
+	scanner, err := nmonFile.GetScanner()
+	check(err)
+	defer scanner.Close()
+
 	scanner.Split(bufio.ScanLines)
 
 	var userSkipRegexp *regexp.Regexp
@@ -258,9 +262,63 @@ func (nmonFiles *NmonFiles) Add(file string, fileType string) {
 //Valid returns only valid fiels for nmon import
 func (nmonFiles *NmonFiles) Valid() (validFiles NmonFiles) {
 	for _, v := range *nmonFiles {
-		if v.FileType == ".nmon" {
+		if v.FileType == ".nmon" || v.FileType == gzipfile {
 			validFiles = append(validFiles, v)
 		}
 	}
 	return validFiles
+}
+
+// fileScanner struct to manage
+type fileScanner struct {
+	*os.File
+	*bufio.Scanner
+}
+
+// GetScanner open an nmon file based on file extension and provides a bufio Scanner
+func (nmonFile *NmonFile) GetScanner() (*fileScanner, error) {
+	file, err := os.Open(nmonFile.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if nmonFile.FileType == gzipfile {
+		gr, err := gzip.NewReader(file)
+		if err != nil {
+			return nil, err
+		}
+		reader := bufio.NewReader(gr)
+		return &fileScanner{file, bufio.NewScanner(reader)}, nil
+	}
+
+	reader := bufio.NewReader(file)
+	return &fileScanner{file, bufio.NewScanner(reader)}, nil
+}
+
+// NewNmonFiles return a nmonfiles struct
+func NewNmonFiles(args []string) *NmonFiles {
+	nmonFiles := new(NmonFiles)
+	for _, param := range args {
+		paraminfo, err := os.Stat(param)
+		if err != nil {
+			if os.IsNotExist(err) {
+				fmt.Printf("%s doesn't exist ! skipped.\n", param)
+			}
+			continue
+		}
+
+		if paraminfo.IsDir() {
+			entries, err := ioutil.ReadDir(param)
+			check(err)
+			for _, entry := range entries {
+				if !entry.IsDir() {
+					file := path.Join(param, entry.Name())
+					nmonFiles.Add(file, path.Ext(file))
+				}
+			}
+			continue
+		}
+		nmonFiles.Add(param, path.Ext(param))
+	}
+	return nmonFiles
 }

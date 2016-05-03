@@ -7,7 +7,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -88,41 +87,17 @@ func NmonImport(c *cli.Context) {
 		check(err)
 	}
 
-	nmonFiles := new(NmonFiles)
-
-	for _, param := range c.Args() {
-		paraminfo, err := os.Stat(param)
-		if err != nil {
-			if os.IsNotExist(err) {
-				fmt.Printf("%s doesn't exist ! skipped.\n", param)
-			}
-			continue
-		}
-
-		if paraminfo.IsDir() {
-			entries, err := ioutil.ReadDir(param)
-			check(err)
-			for _, entry := range entries {
-				if !entry.IsDir() {
-					file := path.Join(param, entry.Name())
-					nmonFiles.Add(file, path.Ext(file))
-				}
-			}
-			continue
-		}
-		nmonFiles.Add(param, path.Ext(param))
-	}
+	nmonFiles := NewNmonFiles(c.Args())
 
 	for _, nmonFile := range nmonFiles.Valid() {
 		var count int64
 		count = 0
-		nmon := InitNmon(config, nmonFile.Name)
-		file, err := os.Open(nmonFile.Name)
-		check(err)
+		nmon := InitNmon(config, nmonFile)
 
-		defer file.Close()
-		reader := bufio.NewReader(file)
-		scanner := bufio.NewScanner(reader)
+		scanner, err := nmonFile.GetScanner()
+		check(err)
+		defer scanner.Close()
+
 		scanner.Split(bufio.ScanLines)
 
 		var lines []string
