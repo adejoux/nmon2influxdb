@@ -70,7 +70,7 @@ func InitConfig() Config {
 		ImportBuildDashboard: false,
 		ImportForce:          false,
 		ImportLogDatabase:    "nmon2influxdb_log",
-		ImportLogRetention:   "1d",
+		ImportLogRetention:   "2d",
 		DashboardWriteFile:   false,
 		ImportSkipMetrics:    "JFSINODE|TOP",
 		StatsLimit:           20,

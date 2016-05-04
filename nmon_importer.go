@@ -119,7 +119,7 @@ func NmonImport(c *cli.Context) {
 		filters := new(influxdbclient.Filters)
 		filters.Add("file", path.Base(nmonFile.Name), "text")
 
-		result, err := influxdbLog.ReadFirstPoint("value", filters, "timestamp")
+		result, err := influxdbLog.ReadLastPoint("value", filters, "timestamp")
 		check(err)
 
 		var lastTime time.Time
@@ -130,7 +130,7 @@ func NmonImport(c *cli.Context) {
 		}
 		check(err)
 
-		origChecksum, err := influxdbLog.ReadFirstPoint("value", filters, "checksum")
+		origChecksum, err := influxdbLog.ReadLastPoint("value", filters, "checksum")
 		check(err)
 
 		checksum, err := Checksum(nmonFile.Name)

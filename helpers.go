@@ -81,6 +81,8 @@ func Checksum(filePath string) (myhash string, err error) {
 		return
 	}
 	defer file.Close()
+	// don't want to read the whole file. Position at en of file - 1024
+	file.Seek(-1024, 2)
 
 	hash := sha1.New()
 	if _, err = io.Copy(hash, file); err != nil {
