@@ -14,6 +14,8 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/adejoux/influxdbclient"
+	"github.com/codegangsta/cli"
 	"github.com/naoina/toml"
 )
 
@@ -39,6 +41,8 @@ type Config struct {
 	ImportLogDatabase    string
 	ImportLogRetention   string
 	ImportDataRetention  string
+	ImportSSHUser        string `toml:"import_ssh_user"`
+	ImportSSHKey         string `toml:"import_ssh_key"`
 	DashboardWriteFile   bool
 	StatsLimit           int
 	StatsSort            string
@@ -53,6 +57,10 @@ type Config struct {
 
 // InitConfig setup initial configuration with sane values
 func InitConfig() Config {
+	currUser, _ := user.Current()
+	home := currUser.HomeDir
+	sshKey := filepath.Join(home, "/.ssh/id_rsa")
+
 	return Config{Debug: false,
 		Timezone:             "Europe/Paris",
 		InfluxdbUser:         "root",
@@ -71,6 +79,8 @@ func InitConfig() Config {
 		ImportForce:          false,
 		ImportLogDatabase:    "nmon2influxdb_log",
 		ImportLogRetention:   "2d",
+		ImportSSHUser:        currUser.Username,
+		ImportSSHKey:         sshKey,
 		DashboardWriteFile:   false,
 		ImportSkipMetrics:    "JFSINODE|TOP",
 		StatsLimit:           20,
@@ -141,4 +151,98 @@ func (config *Config) LoadCfgFile() {
 		check(err)
 	}
 
+}
+
+// AddDashboardParams initialize default parameters for dashboard
+func (config *Config) AddDashboardParams() {
+	dfltConfig := InitConfig()
+	dfltConfig.LoadCfgFile()
+
+	config.GrafanaAccess = dfltConfig.GrafanaAccess
+	config.GrafanaURL = dfltConfig.GrafanaURL
+	config.GrafanaDatasource = dfltConfig.GrafanaDatasource
+	config.GrafanaUser = dfltConfig.GrafanaUser
+	config.GrafanaPassword = dfltConfig.GrafanaPassword
+}
+
+// ParseParameters parse parameter from command line in Config struct
+func ParseParameters(c *cli.Context) (config *Config) {
+	config = new(Config)
+	*config = InitConfig()
+	config.LoadCfgFile()
+
+	config.Metric = c.String("metric")
+	config.StatsHost = c.String("statshost")
+	config.StatsFrom = c.String("from")
+	config.StatsTo = c.String("to")
+	config.StatsLimit = c.Int("limit")
+	config.StatsFilter = c.String("filter")
+	config.ImportSkipDisks = c.Bool("nodisks")
+	config.ImportAllCpus = c.Bool("cpus")
+	config.ImportBuildDashboard = c.Bool("build")
+	config.ImportSkipMetrics = c.String("skip_metrics")
+	config.ImportLogDatabase = c.String("log_database")
+	config.ImportLogRetention = c.String("log_retention")
+	config.DashboardWriteFile = c.Bool("file")
+	config.ListFilter = c.String("filter")
+	config.ImportForce = c.Bool("force")
+	config.ListHost = c.String("host")
+	config.GrafanaUser = c.String("guser")
+	config.GrafanaPassword = c.String("gpassword")
+	config.GrafanaAccess = c.String("gaccess")
+	config.GrafanaURL = c.String("gurl")
+	config.GrafanaDatasource = c.String("datasource")
+	config.Debug = c.GlobalBool("debug")
+	config.InfluxdbServer = c.GlobalString("server")
+	config.InfluxdbUser = c.GlobalString("user")
+	config.InfluxdbPort = c.GlobalString("port")
+	config.InfluxdbDatabase = c.GlobalString("db")
+	config.InfluxdbPassword = c.GlobalString("pass")
+	config.Timezone = c.GlobalString("tz")
+
+	if config.ImportBuildDashboard {
+		config.AddDashboardParams()
+	}
+
+	return
+
+}
+
+// GetDataDB create or get the influxdb database like defined in config
+func (config *Config) GetDataDB() (influxdb *influxdbclient.InfluxDB) {
+	influxdb = influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
+	influxdb.SetDebug(config.Debug)
+	err := influxdb.Connect()
+	check(err)
+
+	if exist, _ := influxdb.ExistDB(config.InfluxdbDatabase); exist != true {
+		_, createErr := influxdb.CreateDB(config.InfluxdbDatabase)
+		check(createErr)
+	}
+	// update default retention policy if ImportDataRetention is set
+	if len(config.ImportDataRetention) > 0 {
+		_, err := influxdb.UpdateRetentionPolicy("default", config.ImportDataRetention, true)
+		check(err)
+	}
+	return
+}
+
+// GetLogDB create or get the influxdb database like defined in config
+func (config *Config) GetLogDB() (influxdb *influxdbclient.InfluxDB) {
+
+	influxdb = influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.ImportLogDatabase, config.InfluxdbUser, config.InfluxdbPassword)
+	influxdb.SetDebug(config.Debug)
+	err := influxdb.Connect()
+	check(err)
+
+	if exist, _ := influxdb.ExistDB(config.ImportLogDatabase); exist != true {
+		_, err := influxdb.CreateDB(config.ImportLogDatabase)
+		check(err)
+		_, err = influxdb.SetRetentionPolicy("log_retention", config.ImportLogRetention, true)
+		check(err)
+	} else {
+		_, err := influxdb.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
+		check(err)
+	}
+	return
 }

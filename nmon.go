@@ -6,20 +6,14 @@ package main
 
 import (
 	"bufio"
-	"compress/gzip"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
-
-const gzipfile = ".gz"
 
 // Nmon structure used to manage nmon files
 type Nmon struct {
@@ -98,11 +92,24 @@ func InitNmon(config *Config, nmonFile NmonFile) (nmon *Nmon) {
 	nmon.SetLocation(config.Timezone)
 	nmon.Debug = config.Debug
 
-	scanner, err := nmonFile.GetScanner()
-	check(err)
-	defer scanner.Close()
-
-	scanner.Split(bufio.ScanLines)
+	var lines []string
+	if len(nmonFile.Host) > 0 {
+		scanner, err := nmonFile.GetRemoteScanner()
+		check(err)
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text())
+		}
+		scanner.Close()
+	} else {
+		scanner, err := nmonFile.GetScanner()
+		check(err)
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text())
+		}
+		scanner.Close()
+	}
 
 	var userSkipRegexp *regexp.Regexp
 
@@ -111,53 +118,53 @@ func InitNmon(config *Config, nmonFile NmonFile) (nmon *Nmon) {
 		userSkipRegexp = regexp.MustCompile(skipped)
 	}
 
-	for scanner.Scan() {
+	for _, line := range lines {
 
-		if cpuallRegexp.MatchString(scanner.Text()) && !config.ImportAllCpus {
+		if cpuallRegexp.MatchString(line) && !config.ImportAllCpus {
 			continue
 		}
 
-		if diskallRegexp.MatchString(scanner.Text()) && config.ImportSkipDisks {
+		if diskallRegexp.MatchString(line) && config.ImportSkipDisks {
 			continue
 		}
 
-		if timeRegexp.MatchString(scanner.Text()) {
-			matched := timeRegexp.FindStringSubmatch(scanner.Text())
+		if timeRegexp.MatchString(line) {
+			matched := timeRegexp.FindStringSubmatch(line)
 			nmon.TimeStamps[matched[1]] = matched[2]
 			continue
 		}
 
-		if hostRegexp.MatchString(scanner.Text()) {
-			matched := hostRegexp.FindStringSubmatch(scanner.Text())
+		if hostRegexp.MatchString(line) {
+			matched := hostRegexp.FindStringSubmatch(line)
 			nmon.Hostname = strings.ToLower(matched[1])
 			continue
 		}
 
-		if osRegexp.MatchString(scanner.Text()) {
-			matched := osRegexp.FindStringSubmatch(scanner.Text())
+		if osRegexp.MatchString(line) {
+			matched := osRegexp.FindStringSubmatch(line)
 			nmon.OS = strings.ToLower(matched[1])
 			continue
 		}
 
-		if infoRegexp.MatchString(scanner.Text()) {
-			matched := infoRegexp.FindStringSubmatch(scanner.Text())
+		if infoRegexp.MatchString(line) {
+			matched := infoRegexp.FindStringSubmatch(line)
 			nmon.AppendText(matched[1])
 			continue
 		}
 
-		if !headerRegexp.MatchString(scanner.Text()) {
-			if len(scanner.Text()) == 0 {
+		if !headerRegexp.MatchString(line) {
+			if len(line) == 0 {
 				continue
 			}
 
-			if badRegexp.MatchString(scanner.Text()) {
+			if badRegexp.MatchString(line) {
 				continue
 			}
-			elems := strings.Split(scanner.Text(), ",")
+			elems := strings.Split(line, ",")
 
 			if len(elems) < 3 {
 				if config.Debug == true {
-					fmt.Printf("ERROR: parsing the following line : %s\n", scanner.Text())
+					fmt.Printf("ERROR: parsing the following line : %s\n", line)
 				}
 				continue
 			}
@@ -243,82 +250,4 @@ func (nmon *Nmon) ConvertTimeStamp(s string) (time.Time, error) {
 //DbURL generates InfluxDB server url
 func (nmon *Nmon) DbURL() string {
 	return "http://" + nmon.Config.InfluxdbServer + ":" + nmon.Config.InfluxdbPort
-}
-
-// NmonFile structure used to select nmon files to import
-type NmonFile struct {
-	Name     string
-	FileType string
-}
-
-// NmonFiles array of NmonFile
-type NmonFiles []NmonFile
-
-//Add a file in the NmonFIles structure
-func (nmonFiles *NmonFiles) Add(file string, fileType string) {
-	*nmonFiles = append(*nmonFiles, NmonFile{Name: file, FileType: fileType})
-}
-
-//Valid returns only valid fiels for nmon import
-func (nmonFiles *NmonFiles) Valid() (validFiles NmonFiles) {
-	for _, v := range *nmonFiles {
-		if v.FileType == ".nmon" || v.FileType == gzipfile {
-			validFiles = append(validFiles, v)
-		}
-	}
-	return validFiles
-}
-
-// fileScanner struct to manage
-type fileScanner struct {
-	*os.File
-	*bufio.Scanner
-}
-
-// GetScanner open an nmon file based on file extension and provides a bufio Scanner
-func (nmonFile *NmonFile) GetScanner() (*fileScanner, error) {
-	file, err := os.Open(nmonFile.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	if nmonFile.FileType == gzipfile {
-		gr, err := gzip.NewReader(file)
-		if err != nil {
-			return nil, err
-		}
-		reader := bufio.NewReader(gr)
-		return &fileScanner{file, bufio.NewScanner(reader)}, nil
-	}
-
-	reader := bufio.NewReader(file)
-	return &fileScanner{file, bufio.NewScanner(reader)}, nil
-}
-
-// NewNmonFiles return a nmonfiles struct
-func NewNmonFiles(args []string) *NmonFiles {
-	nmonFiles := new(NmonFiles)
-	for _, param := range args {
-		paraminfo, err := os.Stat(param)
-		if err != nil {
-			if os.IsNotExist(err) {
-				fmt.Printf("%s doesn't exist ! skipped.\n", param)
-			}
-			continue
-		}
-
-		if paraminfo.IsDir() {
-			entries, err := ioutil.ReadDir(param)
-			check(err)
-			for _, entry := range entries {
-				if !entry.IsDir() {
-					file := path.Join(param, entry.Name())
-					nmonFiles.Add(file, path.Ext(file))
-				}
-			}
-			continue
-		}
-		nmonFiles.Add(param, path.Ext(param))
-	}
-	return nmonFiles
 }

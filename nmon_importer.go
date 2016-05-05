@@ -5,12 +5,10 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -45,68 +43,19 @@ func NmonImport(c *cli.Context) {
 	// parsing parameters
 	config := ParseParameters(c)
 
-	if config.ImportBuildDashboard {
-		dfltConfig := InitConfig()
-		dfltConfig.LoadCfgFile()
+	//getting databases connections
+	influxdb := config.GetDataDB()
+	influxdbLog := config.GetLogDB()
 
-		config.GrafanaAccess = dfltConfig.GrafanaAccess
-		config.GrafanaURL = dfltConfig.GrafanaURL
-		config.GrafanaDatasource = dfltConfig.GrafanaDatasource
-		config.GrafanaUser = dfltConfig.GrafanaUser
-		config.GrafanaPassword = dfltConfig.GrafanaPassword
-	}
-
-	influxdb := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
-	influxdb.SetDebug(config.Debug)
-	err := influxdb.Connect()
-	check(err)
-
-	if exist, _ := influxdb.ExistDB(config.InfluxdbDatabase); exist != true {
-		_, createErr := influxdb.CreateDB(config.InfluxdbDatabase)
-		check(createErr)
-	}
-
-	influxdbLog := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.ImportLogDatabase, config.InfluxdbUser, config.InfluxdbPassword)
-	influxdbLog.SetDebug(config.Debug)
-	err = influxdbLog.Connect()
-	check(err)
-
-	if exist, _ := influxdbLog.ExistDB(config.ImportLogDatabase); exist != true {
-		_, err := influxdbLog.CreateDB(config.ImportLogDatabase)
-		check(err)
-		_, err = influxdbLog.SetRetentionPolicy("log_retention", config.ImportLogRetention, true)
-		check(err)
-	} else {
-		_, err := influxdbLog.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
-		check(err)
-	}
-
-	// update default retention policy if ImportDataRetention is set
-	if len(config.ImportDataRetention) > 0 {
-		_, err := influxdb.UpdateRetentionPolicy("default", config.ImportDataRetention, true)
-		check(err)
-	}
-
-	nmonFiles := NewNmonFiles(c.Args())
+	nmonFiles := new(NmonFiles)
+	nmonFiles.Parse(c.Args(), config.ImportSSHUser, config.ImportSSHKey)
 
 	for _, nmonFile := range nmonFiles.Valid() {
 		var count int64
 		count = 0
 		nmon := InitNmon(config, nmonFile)
 
-		scanner, err := nmonFile.GetScanner()
-		check(err)
-		defer scanner.Close()
-
-		scanner.Split(bufio.ScanLines)
-
-		var lines []string
-
-		for scanner.Scan() {
-			lines = append(lines, scanner.Text())
-		}
-
-		sort.Strings(lines)
+		lines := nmonFile.Content()
 
 		var userSkipRegexp *regexp.Regexp
 
@@ -133,12 +82,10 @@ func NmonImport(c *cli.Context) {
 		origChecksum, err := influxdbLog.ReadLastPoint("value", filters, "checksum")
 		check(err)
 
-		checksum, err := Checksum(nmonFile.Name)
-		check(err)
-		ckfield := map[string]interface{}{"value": checksum}
+		ckfield := map[string]interface{}{"value": nmonFile.Checksum()}
 		if !nmon.Config.ImportForce && len(origChecksum) > 0 {
 
-			if origChecksum[1].(string) == checksum {
+			if origChecksum[1].(string) == nmonFile.Checksum() {
 				fmt.Printf("file not changed since last import: %s\n", nmonFile.Name)
 				continue
 			}
