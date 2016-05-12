@@ -37,6 +37,8 @@ import_all_cpus = false
 import_build_dashboard=false
 import_force=false
 import_skip_metrics="JFSINODE|TOP"
+import_ssh_user = "batchuser"
+import_ssh_key = "/home/user/.ssh/id_rsa"
 
 # import log database
 import_log_database="nmon2influxdb_log"
@@ -60,7 +62,7 @@ stats_to=""
 stats_host=""
 {{< /highlight >}}
 
-If you are always queryin the same host or applying the same timframe to your queries you can setup here this values.
+If you are always querying the same host or applying the same timeframe to your queries you can setup here this values.
 
 ##data retention
 
@@ -74,4 +76,4 @@ This value is updated each time a import is done.
 
 All data older than what are specified in the retention policy are not kept.
 
-**Note:** it's the timestamp associated with data which matters. If you load data from one year ago and you have a retention policy of 30 days, you will not see the data. 
+**Note:** it's the timestamp associated with data which matters. If you load data from one year ago and you have a retention policy of 30 days, you will not see the data.

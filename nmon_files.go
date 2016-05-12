@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"path"
 	"regexp"
@@ -21,9 +22,11 @@ import (
 	"github.com/pkg/sftp"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
 var remoteFileRegexp = regexp.MustCompile(`(\S+):(\S+)`)
+var remoteUserRegexp = regexp.MustCompile(`(\S+)@(\S+)`)
 
 const gzipfile = ".gz"
 const size = 64000
@@ -147,14 +150,20 @@ func (nmonFile *NmonFile) GetScanner() (*FileScanner, error) {
 }
 
 // Parse parameters
-func (nmonFiles *NmonFiles) Parse(args []string, user string, key string) {
+func (nmonFiles *NmonFiles) Parse(args []string, sshUser string, key string) {
 	for _, param := range args {
 		if remoteFileRegexp.MatchString(param) {
 			matched := remoteFileRegexp.FindStringSubmatch(param)
 			host := matched[1]
+
+			if remoteUserRegexp.MatchString(host) {
+				hostMatched := remoteUserRegexp.FindStringSubmatch(host)
+				sshUser = hostMatched[1]
+				host = hostMatched[2]
+			}
 			matchedParam := matched[2]
 
-			sftpConn := InitSFTP(user, host, key)
+			sftpConn := InitSFTP(sshUser, host, key)
 			paraminfo, err := sftpConn.Stat(matchedParam)
 			check(err)
 			if err != nil {
@@ -169,13 +178,13 @@ func (nmonFiles *NmonFiles) Parse(args []string, user string, key string) {
 				for _, entry := range entries {
 					if !entry.IsDir() {
 						file := path.Join(matchedParam, entry.Name())
-						nmonFiles.AddRemote(file, path.Ext(file), host, user, key)
+						nmonFiles.AddRemote(file, path.Ext(file), host, sshUser, key)
 					}
 				}
 				sftpConn.Close()
 				continue
 			}
-			nmonFiles.AddRemote(matchedParam, path.Ext(matchedParam), host, user, key)
+			nmonFiles.AddRemote(matchedParam, path.Ext(matchedParam), host, sshUser, key)
 			sftpConn.Close()
 			continue
 		}
@@ -210,8 +219,9 @@ type SSHConfig struct {
 }
 
 //InitSFTP init sftp session
-func InitSFTP(user string, host string, key string) *sftp.Client {
+func InitSFTP(sshUser string, host string, key string) *sftp.Client {
 	var auths []ssh.AuthMethod
+
 	if !IsNotFile(key) {
 		pemBytes, err := ioutil.ReadFile(key)
 		if err != nil {
@@ -225,8 +235,13 @@ func InitSFTP(user string, host string, key string) *sftp.Client {
 		auths = append(auths, ssh.PublicKeys(signer))
 	}
 
+	// ssh agent support
+	if aconn, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
+		auths = append(auths, ssh.PublicKeysCallback(agent.NewClient(aconn).Signers))
+	}
+
 	config := &ssh.ClientConfig{
-		User: user,
+		User: sshUser,
 		Auth: auths,
 	}
 	sshhost := fmt.Sprintf("%s:22", host)

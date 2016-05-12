@@ -75,3 +75,20 @@ Importing a nmon file without the disk data :
 {{< highlight batch >}}
 # nmon2influx import --nodisks testsrv_141114_0000.nmon
 {{< /highlight >}}
+
+Importing a remote nmon file:
+{{< highlight batch >}}
+nmon2influxdb import adxlpar1:/log/nmon/lpar02_151104_1204.nmon
+###############################
+File /log/nmon/lpar02_151104_1204.nmon imported : 316320 points !
+{{< /highlight >}}
+
+Importing nmon files from a remote directory using the remote user **batch**:
+{{< highlight batch >}}
+nmon2influxdb import adxlpar1:/log/nmon
+###############################
+File /log/nmon/lpar02_151104_1204.nmon imported : 316320 points !
+file not changed since last import: /log/nmon/lpar01_151104_1116.nmon
+file not changed since last import: /log/nmon/lpar01_151104_1200.nmon
+file not changed since last import: /log/nmon/lpar02_110415.nmon
+{{< /highlight >}}

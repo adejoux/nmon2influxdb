@@ -9,7 +9,7 @@ pygmentsUseClasses = true
 	author = "Alain Dejoux"
 	description = "Make NMON data dynamic with InfluxDB"
 	copyright = "Released under the AGPLv3 license"
-
+  DateForm = "Mon, Jan 2, 2006"
   #demo website
   demo_site = "http://demo.nmon2influxdb.org"
 
@@ -18,7 +18,7 @@ pygmentsUseClasses = true
 	repo_url = "https://github.com/adejoux/nmon2influxdb"
 	repo_id = "nmon2influxdb"
 
-	version = "1.0.0"
+	version = "1.1.0"
 	logo = "images/logo.png"
 	favicon = ""
 
