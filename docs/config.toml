@@ -9,6 +9,8 @@ pygmentsUseClasses = true
 	author = "Alain Dejoux"
 	description = "Make NMON data dynamic with InfluxDB"
 	copyright = "Released under the AGPLv3 license"
+	Piwik = "stats.krystalia.net"
+	PiwikID = "2"
   DateForm = "Mon, Jan 2, 2006"
   #demo website
   demo_site = "http://demo.nmon2influxdb.org"

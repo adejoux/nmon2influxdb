@@ -28,7 +28,8 @@ func NmonListMeasurement(c *cli.Context) {
 		filters.Add("host", config.ListHost, "text")
 	}
 
-	measurements, _ := influxdb.ListMeasurement(filters)
+	measurements, err := influxdb.ListMeasurement(filters)
+	check(err)
 	if measurements != nil {
 		fmt.Printf("%s\n", measurements.Name)
 		for _, value := range measurements.Datas {

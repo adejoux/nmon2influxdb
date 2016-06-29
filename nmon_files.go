@@ -108,7 +108,7 @@ func (nmonFile *NmonFile) Checksum() (fileHash string) {
 	if len(nmonFile.Host) > 0 {
 		scanner, err := nmonFile.GetRemoteScanner()
 		check(err)
-		scanner.Seek(1024, 2)
+		scanner.Seek(-1024, 2)
 		hash := sha1.New()
 		if _, err = io.Copy(hash, scanner); err != nil {
 			return
@@ -117,7 +117,7 @@ func (nmonFile *NmonFile) Checksum() (fileHash string) {
 	} else {
 		scanner, err := nmonFile.GetScanner()
 		check(err)
-		scanner.Seek(1024, 2)
+		scanner.Seek(-1024, 2)
 		hash := sha1.New()
 		if _, err = io.Copy(hash, scanner); err != nil {
 			return

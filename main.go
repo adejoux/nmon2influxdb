@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-
 	config := InitConfig()
 
 	config.LoadCfgFile()
