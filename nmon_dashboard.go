@@ -276,7 +276,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		Measurement:    "TOP",
 		Filters:        NameFilter("%CPU"),
 		Group:          []string{"name", "command"},
-		Stack:          true,
+		Function:       "sum",
 		LeftYAxisLabel: "%"})
 	row = BuildGrafanaRow("TOP", panels)
 	row.Collapse = true
@@ -553,7 +553,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		Measurement:    "TOP",
 		Filters:        NameFilter("%CPU"),
 		Group:          []string{"name", "command"},
-		Stack:          true,
+		Function:       "sum",
 		LeftYAxisLabel: "KB/s"})
 	row = BuildGrafanaRow("TOP", panels)
 	db.Rows = append(db.Rows, row)
@@ -568,6 +568,7 @@ type NmonPanel struct {
 	Host            string
 	Title           string
 	Measurement     string
+	Function        string
 	Filters         []grafanaclient.Tag
 	Group           []string
 	Stack           bool
@@ -625,6 +626,14 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 		panel.Span = np.Span
 	}
 	target := grafanaclient.NewTarget()
+	if len(np.Function) > 0 {
+		var selects grafanaclient.Selects
+		fieldFunction := grafanaclient.Select{Type: "field", Params: []string{"value"}}
+		selects = append(selects, fieldFunction)
+		function := grafanaclient.Select{Type: np.Function, Params: []string{}}
+		selects = append(selects, function)
+		target.Select = []grafanaclient.Selects{selects}
+	}
 	target.Measurement = np.Measurement
 	hostTag := grafanaclient.Tag{Key: "host", Value: np.Host}
 	target.Tags = append(target.Tags, hostTag)
@@ -682,6 +691,7 @@ func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
 		panel.Span = np.Span
 	}
 	target := grafanaclient.NewTarget()
+
 	target.Measurement = np.Measurement
 	hostTag := grafanaclient.Tag{Key: "host", Value: np.Host}
 	target.Tags = append(target.Tags, hostTag)
@@ -693,7 +703,6 @@ func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
 	}
 
 	if len(np.Group) > 0 {
-		target.GroupByTags = np.Group
 		target.Alias = ""
 	}
 
