@@ -211,6 +211,36 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row = BuildGrafanaRow("IO ADAPTER", panels)
 	db.Rows = append(db.Rows, row)
 
+	if len(nmon.DataSeries["FCREAD"].Columns) > 0 {
+		panels = new(NmonPanels)
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:          "Fibre Channel Read KB/s",
+			Measurement:    "FCREAD",
+			Group:          []string{"name"},
+			Stack:          true,
+			LeftYAxisLabel: "KB/s"})
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:          "Fibre Channel Write KB/s",
+			Measurement:    "FCWRITE",
+			Group:          []string{"name"},
+			Stack:          true,
+			LeftYAxisLabel: "KB/s"})
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:          "Fibre Channel Tranfers In/s",
+			Measurement:    "FCXFERIN",
+			Group:          []string{"name"},
+			Stack:          true,
+			LeftYAxisLabel: "tps"})
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:          "Fibre Channel Tranfers Out/s",
+			Measurement:    "FCXFEROUT",
+			Group:          []string{"name"},
+			Stack:          true,
+			LeftYAxisLabel: "tps"})
+	}
+	row = BuildGrafanaRow("Fibre Channel statistics", panels)
+	db.Rows = append(db.Rows, row)
+
 	panels = new(NmonPanels)
 	panels.AddPanel(&NmonPanel{Host: host,
 		Title:       "Disk Adapter transfers",
