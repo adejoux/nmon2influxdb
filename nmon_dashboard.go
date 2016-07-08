@@ -11,12 +11,14 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 
 	"github.com/adejoux/grafanaclient"
 	"github.com/codegangsta/cli"
 )
 
 var nmonFileRegexp = regexp.MustCompile(`\.(nmon|nmon.gz|nmon.bz2)$`)
+var cpuRegexp = regexp.MustCompile(`^CPU\d+`)
 
 const panelSize = "300px"
 const linux = "linux"
@@ -198,6 +200,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		Filters:        NameFilter("KB"),
 		Group:          []string{"name"},
 		Stack:          true,
+		TableLegend:    true,
 		LeftYAxisLabel: "KB/s"})
 
 	panels.AddPanel(&NmonPanel{Host: host,
@@ -218,28 +221,32 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 			Measurement:    "FCREAD",
 			Group:          []string{"name"},
 			Stack:          true,
+			TableLegend:    true,
 			LeftYAxisLabel: "KB/s"})
 		panels.AddPanel(&NmonPanel{Host: host,
 			Title:          "Fibre Channel Write KB/s",
 			Measurement:    "FCWRITE",
 			Group:          []string{"name"},
 			Stack:          true,
+			TableLegend:    true,
 			LeftYAxisLabel: "KB/s"})
 		panels.AddPanel(&NmonPanel{Host: host,
 			Title:          "Fibre Channel Tranfers In/s",
 			Measurement:    "FCXFERIN",
 			Group:          []string{"name"},
 			Stack:          true,
+			TableLegend:    true,
 			LeftYAxisLabel: "tps"})
 		panels.AddPanel(&NmonPanel{Host: host,
 			Title:          "Fibre Channel Tranfers Out/s",
 			Measurement:    "FCXFEROUT",
 			Group:          []string{"name"},
 			Stack:          true,
+			TableLegend:    true,
 			LeftYAxisLabel: "tps"})
+		row = BuildGrafanaRow("Fibre Channel statistics", panels)
+		db.Rows = append(db.Rows, row)
 	}
-	row = BuildGrafanaRow("Fibre Channel statistics", panels)
-	db.Rows = append(db.Rows, row)
 
 	panels = new(NmonPanels)
 	panels.AddPanel(&NmonPanel{Host: host,
@@ -269,6 +276,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		Title:       "Network Packets",
 		Measurement: "NETPACKET",
 		Group:       []string{"name"},
+		TableLegend: true,
 		Stack:       true})
 	panels.AddPanel(&NmonPanel{Host: host,
 		Title:       "Network Errors",
@@ -286,6 +294,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 			Filters:        NameFilter("KB"),
 			Group:          []string{"name"},
 			Stack:          true,
+			TableLegend:    true,
 			LeftYAxisLabel: "KB/s"})
 		if len(nmon.DataSeries["SEACHPHY"].Columns) > 0 {
 			panels.AddPanel(&NmonPanel{Host: host,
@@ -294,6 +303,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 				Filters:        NameFilter("KB"),
 				Group:          []string{"name"},
 				Stack:          true,
+				TableLegend:    true,
 				LeftYAxisLabel: "KB/s"})
 		}
 		row = BuildGrafanaRow("Shared Ethernet Adapter", panels)
@@ -423,6 +433,44 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row = BuildGrafanaRow("Disk Busy/Wait queue activity", panels)
 	row.Collapse = true
 	db.Rows = append(db.Rows, row)
+
+	var cpuList []string
+
+	for key := range nmon.DataSeries {
+		if cpuRegexp.MatchString(key) {
+			cpuList = append(cpuList, key)
+		}
+	}
+
+	if len(cpuList) > 0 {
+		panels = new(NmonPanels)
+	}
+
+	sortedCPUList := make([]string, len(cpuList))
+	i := 0
+
+	for _, key := range cpuList {
+		sortedCPUList[i] = key
+		i++
+	}
+
+	sort.Strings(sortedCPUList)
+
+	for _, measurement := range sortedCPUList {
+		panels.AddPanel(&NmonPanel{Host: host,
+			Title:          measurement,
+			Measurement:    measurement,
+			Filters:        NameFilter("^User%|^Sys%|^Wait%|^Idle%"),
+			Group:          []string{"name"},
+			Stack:          true,
+			TableLegend:    true,
+			LeftYAxisLabel: "%"})
+	}
+	if len(cpuList) > 0 {
+		row = BuildGrafanaRow("Individual CPU statistics", panels)
+		row.Collapse = true
+		db.Rows = append(db.Rows, row)
+	}
 
 	db.GTime = grafanaclient.GTime{From: nmon.StartTime(), To: nmon.StopTime()}
 	return db

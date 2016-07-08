@@ -82,7 +82,7 @@ func InitConfig() Config {
 		ImportSSHUser:        currUser.Username,
 		ImportSSHKey:         sshKey,
 		DashboardWriteFile:   false,
-		ImportSkipMetrics:    "JFSINODE|TOP",
+		ImportSkipMetrics:    "JFSINODE|TOP|PCPU",
 		StatsLimit:           20,
 		StatsSort:            "mean",
 		StatsFilter:          "",
@@ -178,7 +178,9 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.StatsLimit = c.Int("limit")
 	config.StatsFilter = c.String("filter")
 	config.ImportSkipDisks = c.Bool("nodisks")
-	config.ImportAllCpus = c.Bool("cpus")
+	if c.IsSet("cpus") {
+		config.ImportAllCpus = c.Bool("cpus")
+	}
 	config.ImportBuildDashboard = c.Bool("build")
 	config.ImportSkipMetrics = c.String("skip_metrics")
 	config.ImportLogDatabase = c.String("log_database")

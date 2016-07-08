@@ -149,7 +149,7 @@ func NmonImport(c *cli.Context) {
 					field := map[string]interface{}{"value": converted}
 
 					measurement := ""
-					if nfsRegexp.MatchString(name) {
+					if nfsRegexp.MatchString(name) || cpuallRegexp.MatchString(name) {
 						measurement = name
 					} else {
 						measurement = nameRegexp.ReplaceAllString(name, "")
