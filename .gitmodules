@@ -1,0 +1,3 @@
+[submodule "docs/themes/darkdoc"]
+    path = docs/themes/darkdoc
+    url = git://github.com/adejoux/hugo-darkdoc-theme.git
