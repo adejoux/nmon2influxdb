@@ -699,6 +699,7 @@ func TagsFilter(filters map[string]string) (tags []grafanaclient.Tag) {
 //BuildGrafanaGraphPanel generates a grafana graph panel
 func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 	panel := grafanaclient.NewPanel()
+        panel.DataSource = "nmon2influxdb"
 	panel.Title = np.Title
 	if np.Span > 0 {
 		panel.Span = np.Span
@@ -763,6 +764,7 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 //BuildGrafanaTablePanel generates a grafana graph panel
 func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
 	panel := grafanaclient.NewPanel()
+        panel.DataSource = "nmon2influxdb"
 	panel.Type = "table"
 	panel.Title = np.Title
 	if np.Span > 0 {

@@ -221,9 +221,12 @@ func (config *Config) GetDataDB() (influxdb *influxdbclient.InfluxDB) {
 		_, createErr := influxdb.CreateDB(config.InfluxdbDatabase)
 		check(createErr)
 	}
+        // Get default retention policy name
+        policyName, policyErr := influxdb.GetDefaultRetentionPolicy()
+        check(policyErr)
 	// update default retention policy if ImportDataRetention is set
 	if len(config.ImportDataRetention) > 0 {
-		_, err := influxdb.UpdateRetentionPolicy("default", config.ImportDataRetention, true)
+		_, err := influxdb.UpdateRetentionPolicy(policyName, config.ImportDataRetention, true)
 		check(err)
 	}
 	return
