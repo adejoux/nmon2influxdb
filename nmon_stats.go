@@ -24,10 +24,7 @@ func NmonStat(c *cli.Context) {
 		os.Exit(1)
 	}
 
-	influxdb := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
-	influxdb.SetDebug(config.Debug)
-	err := influxdb.Connect()
-	check(err)
+	influxdb := config.connectDB(config.InfluxdbDatabase)
 	metric := config.Metric
 
 	filters := new(influxdbclient.Filters)

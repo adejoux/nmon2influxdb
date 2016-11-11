@@ -17,11 +17,7 @@ func NmonListMeasurement(c *cli.Context) {
 	// parsing parameters
 	config := ParseParameters(c)
 
-	influxdb := influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
-	influxdb.SetDebug(config.Debug)
-	err := influxdb.Connect()
-	check(err)
-
+	influxdb := config.connectDB(config.InfluxdbDatabase)
 	filters := new(influxdbclient.Filters)
 
 	if len(config.ListHost) > 0 {

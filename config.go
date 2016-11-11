@@ -210,35 +210,47 @@ func ParseParameters(c *cli.Context) (config *Config) {
 
 }
 
-// GetDataDB create or get the influxdb database like defined in config
-func (config *Config) GetDataDB() (influxdb *influxdbclient.InfluxDB) {
-	influxdb = influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.InfluxdbDatabase, config.InfluxdbUser, config.InfluxdbPassword)
-	influxdb.SetDebug(config.Debug)
-	err := influxdb.Connect()
+// connect connect to the specified influxdb database
+func (config *Config) connectDB(db string) *influxdbclient.InfluxDB {
+	influxdbConfig := influxdbclient.InfluxDBConfig{
+		Host:     config.InfluxdbServer,
+		Port:     config.InfluxdbPort,
+		Database: db,
+		User:     config.InfluxdbUser,
+		Pass:     config.InfluxdbPassword,
+		Debug:    config.Debug,
+	}
+
+	influxdb, err := influxdbclient.NewInfluxDB(influxdbConfig)
 	check(err)
+
+	return &influxdb
+}
+
+// GetDataDB create or get the influxdb database like defined in config
+func (config *Config) GetDataDB() *influxdbclient.InfluxDB {
+
+	influxdb := config.connectDB(config.InfluxdbDatabase)
 
 	if exist, _ := influxdb.ExistDB(config.InfluxdbDatabase); exist != true {
 		_, createErr := influxdb.CreateDB(config.InfluxdbDatabase)
 		check(createErr)
 	}
-        // Get default retention policy name
-        policyName, policyErr := influxdb.GetDefaultRetentionPolicy()
-        check(policyErr)
+	// Get default retention policy name
+	policyName, policyErr := influxdb.GetDefaultRetentionPolicy()
+	check(policyErr)
 	// update default retention policy if ImportDataRetention is set
 	if len(config.ImportDataRetention) > 0 {
 		_, err := influxdb.UpdateRetentionPolicy(policyName, config.ImportDataRetention, true)
 		check(err)
 	}
-	return
+	return influxdb
 }
 
 // GetLogDB create or get the influxdb database like defined in config
-func (config *Config) GetLogDB() (influxdb *influxdbclient.InfluxDB) {
+func (config *Config) GetLogDB() *influxdbclient.InfluxDB {
 
-	influxdb = influxdbclient.NewInfluxDB(config.InfluxdbServer, config.InfluxdbPort, config.ImportLogDatabase, config.InfluxdbUser, config.InfluxdbPassword)
-	influxdb.SetDebug(config.Debug)
-	err := influxdb.Connect()
-	check(err)
+	influxdb := config.connectDB(config.ImportLogDatabase)
 
 	if exist, _ := influxdb.ExistDB(config.ImportLogDatabase); exist != true {
 		_, err := influxdb.CreateDB(config.ImportLogDatabase)
@@ -249,5 +261,5 @@ func (config *Config) GetLogDB() (influxdb *influxdbclient.InfluxDB) {
 		_, err := influxdb.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
 		check(err)
 	}
-	return
+	return influxdb
 }
