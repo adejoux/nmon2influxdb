@@ -2,7 +2,7 @@
 // import nmon report in InfluxDB
 // author: adejoux@djouxtech.net
 
-package main
+package nmon
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/adejoux/influxdbclient"
+	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
 	"github.com/codegangsta/cli"
 )
 
@@ -32,8 +33,8 @@ var topRegexp = regexp.MustCompile(`^TOP,\d+,(T\d+)`)
 var nfsRegexp = regexp.MustCompile(`^NFS`)
 var nameRegexp = regexp.MustCompile(`(\d+)$`)
 
-//NmonImport is the entry point for subcommand nmon import
-func NmonImport(c *cli.Context) {
+//Import is the entry point for subcommand nmon import
+func Import(c *cli.Context) {
 
 	if len(c.Args()) < 1 {
 		fmt.Printf("file name or directory needs to be provided\n")
@@ -41,13 +42,13 @@ func NmonImport(c *cli.Context) {
 	}
 
 	// parsing parameters
-	config := ParseParameters(c)
+	config := nmon2influxdblib.ParseParameters(c)
 
 	//getting databases connections
-	influxdb := config.GetDataDB()
+	influxdb := config.GetDB("nmon")
 	influxdbLog := config.GetLogDB()
 
-	nmonFiles := new(NmonFiles)
+	nmonFiles := new(nmon2influxdblib.Files)
 	nmonFiles.Parse(c.Args(), config.ImportSSHUser, config.ImportSSHKey)
 
 	for _, nmonFile := range nmonFiles.Valid() {
@@ -69,7 +70,7 @@ func NmonImport(c *cli.Context) {
 		filters.Add("file", path.Base(nmonFile.Name), "text")
 
 		result, err := influxdbLog.ReadLastPoint("value", filters, "timestamp")
-		check(err)
+		nmon2influxdblib.CheckError(err)
 
 		var lastTime time.Time
 		if !nmon.Config.ImportForce && len(result) > 0 {
@@ -77,10 +78,10 @@ func NmonImport(c *cli.Context) {
 		} else {
 			lastTime, err = nmon.ConvertTimeStamp("00:00:00,01-JAN-1900")
 		}
-		check(err)
+		nmon2influxdblib.CheckError(err)
 
-		origChecksum, err := influxdbLog.ReadLastPoint("value", filters, "checksum")
-		check(err)
+		origChecksum, err := influxdbLog.ReadLastPoint("value", filters, "nmon2influxdblib.CheckErrorsum")
+		nmon2influxdblib.CheckError(err)
 
 		ckfield := map[string]interface{}{"value": nmonFile.Checksum()}
 		if !nmon.Config.ImportForce && len(origChecksum) > 0 {
@@ -119,10 +120,10 @@ func NmonImport(c *cli.Context) {
 				}
 
 				timeStr, getErr := nmon.GetTimeStamp(matched[1])
-				check(getErr)
+				nmon2influxdblib.CheckError(getErr)
 				last = timeStr
 				timestamp, convErr := nmon.ConvertTimeStamp(timeStr)
-				check(convErr)
+				nmon2influxdblib.CheckError(convErr)
 				if timestamp.Before(lastTime) && !nmon.Config.ImportForce {
 					continue
 				}
@@ -159,7 +160,7 @@ func NmonImport(c *cli.Context) {
 
 					if influxdb.PointsCount() == 10000 {
 						err = influxdb.WritePoints()
-						check(err)
+						nmon2influxdblib.CheckError(err)
 						count += influxdb.PointsCount()
 						influxdb.ClearPoints()
 						fmt.Printf("#")
@@ -181,9 +182,9 @@ func NmonImport(c *cli.Context) {
 				}
 
 				timeStr, getErr := nmon.GetTimeStamp(matched[1])
-				check(getErr)
+				nmon2influxdblib.CheckError(getErr)
 				timestamp, convErr := nmon.ConvertTimeStamp(timeStr)
-				check(convErr)
+				nmon2influxdblib.CheckError(convErr)
 
 				if len(elems) < 14 {
 					fmt.Printf("error TOP import:")
@@ -217,7 +218,7 @@ func NmonImport(c *cli.Context) {
 
 					if influxdb.PointsCount() == 10000 {
 						err = influxdb.WritePoints()
-						check(err)
+						nmon2influxdblib.CheckError(err)
 						count += influxdb.PointsCount()
 						influxdb.ClearPoints()
 						fmt.Printf("#")
@@ -230,7 +231,7 @@ func NmonImport(c *cli.Context) {
 		count += influxdb.PointsCount()
 		fmt.Printf("\nFile %s imported : %d points !\n", nmonFile.Name, count)
 		if config.ImportBuildDashboard {
-			NmonDashboardFile(config, nmonFile.Name)
+			DashboardFile(config, nmonFile.Name)
 		}
 
 		if len(last) > 0 {
@@ -240,7 +241,7 @@ func NmonImport(c *cli.Context) {
 			influxdbLog.AddPoint("timestamp", lasttime, field, tag)
 			influxdbLog.AddPoint("checksum", lasttime, ckfield, tag)
 			err = influxdbLog.WritePoints()
-			check(err)
+			nmon2influxdblib.CheckError(err)
 		}
 	}
 }

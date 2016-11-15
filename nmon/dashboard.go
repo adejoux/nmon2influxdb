@@ -2,7 +2,7 @@
 // import nmon report in InfluxDB
 // author: adejoux@djouxtech.net
 
-package main
+package nmon
 
 import (
 	"bufio"
@@ -14,6 +14,7 @@ import (
 	"sort"
 
 	"github.com/adejoux/grafanaclient"
+	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
 	"github.com/codegangsta/cli"
 )
 
@@ -23,9 +24,10 @@ var cpuRegexp = regexp.MustCompile(`^CPU\d+`)
 const panelSize = "300px"
 const linux = "linux"
 const aix = "aix"
+const dataSource = "nmon2influxdb"
 
-// NmonDashboard entry point for nmon dashboard sub command
-func NmonDashboard(c *cli.Context) {
+// Dashboard entry point for nmon dashboard sub command
+func Dashboard(c *cli.Context) {
 
 	if len(c.Args()) < 1 {
 		fmt.Printf("file name needs to be provided\n")
@@ -33,22 +35,22 @@ func NmonDashboard(c *cli.Context) {
 	}
 
 	// parsing parameters
-	config := ParseParameters(c)
+	config := nmon2influxdblib.ParseParameters(c)
 
 	file := c.Args().First()
 
 	if nmonFileRegexp.MatchString(file) {
-		NmonDashboardFile(config, file)
+		DashboardFile(config, file)
 		return
 	}
 
-	NmonDashboardTemplate(config, file)
+	DashboardTemplate(config, file)
 
 }
 
-//NmonDashboardFile export dashboard to file
-func NmonDashboardFile(config *Config, file string) {
-	nmonFile := NmonFile{Name: file, FileType: ".nmon"}
+//DashboardFile export dashboard to file
+func DashboardFile(config *nmon2influxdblib.Config, file string) {
+	nmonFile := nmon2influxdblib.File{Name: file, FileType: ".nmon"}
 	nmon := InitNmon(config, nmonFile)
 	if config.DashboardWriteFile {
 		nmon.WriteDashboard()
@@ -69,20 +71,20 @@ func NmonDashboardFile(config *Config, file string) {
 		dashboard = nmon.GenerateAixDashboard()
 	}
 	err := nmon.UploadDashboard(dashboard)
-	check(err)
+	nmon2influxdblib.CheckError(err)
 	return
 }
 
-// NmonDashboardTemplate generates dashboard from toml template
-func NmonDashboardTemplate(config *Config, file string) {
+// DashboardTemplate generates dashboard from toml template
+func DashboardTemplate(config *nmon2influxdblib.Config, file string) {
 	nmon := InitNmonTemplate(config)
 	dashboard, err := grafanaclient.ConvertTemplate(file)
 	if err != nil {
 		fmt.Printf("Cannot convert template !\n")
-		check(err)
+		nmon2influxdblib.CheckError(err)
 	}
 	err = nmon.UploadDashboard(dashboard)
-	check(err)
+	nmon2influxdblib.CheckError(err)
 	return
 
 }
@@ -102,7 +104,7 @@ func (nmon *Nmon) WriteDashboard() {
 	// open output file
 	filename := nmon.Hostname + "_dashboard"
 	file, err := os.Create(filename)
-	check(err)
+	nmon2influxdblib.CheckError(err)
 	defer file.Close()
 
 	// make a write buffer
@@ -131,11 +133,11 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	infoRow.Panels = append(infoRow.Panels, panel)
 	db.Rows = append(db.Rows, infoRow)
 
-	panels := new(NmonPanels)
+	panels := new(Panels)
 
 	host := nmon.Hostname
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "CPU Total",
 		Measurement:    "CPU_ALL",
 		Filters:        NameFilter("^User%|^Sys%|^Wait%|^Idle%"),
@@ -144,7 +146,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "%"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Logical Partition",
 		Measurement:    "LPAR",
 		Filters:        NameFilter("PhysicalC|entitled|virtualC"),
@@ -153,7 +155,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "cores"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Run queue",
 		Measurement:    "PROC",
 		Filters:        NameFilter("Runnable"),
@@ -162,7 +164,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "# threads"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Asynchronous I/O",
 		Measurement:    "PROCAIO",
 		Group:          []string{"name"},
@@ -174,8 +176,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Height = panelSize
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Physical Memory",
 		Measurement:    "MEM",
 		Filters:        NameFilter("MB"),
@@ -183,7 +185,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		Stack:          false,
 		LeftYAxisLabel: "MB"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Memory Usage",
 		Measurement:    "MEMUSE",
 		Filters:        NameFilter("%"),
@@ -193,8 +195,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row = BuildGrafanaRow("Memory", panels)
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk Adapter throughput KB/s",
 		Measurement:    "IOADAPT",
 		Filters:        NameFilter("KB"),
@@ -203,7 +205,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "KB/s"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Paging",
 		Measurement:    "PAGE",
 		Filters:        NameFilter("pgs"),
@@ -215,29 +217,29 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	db.Rows = append(db.Rows, row)
 
 	if len(nmon.DataSeries["FCREAD"].Columns) > 0 {
-		panels = new(NmonPanels)
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels = new(Panels)
+		panels.Add(&Panel{Host: host,
 			Title:          "Fibre Channel Read KB/s",
 			Measurement:    "FCREAD",
 			Group:          []string{"name"},
 			Stack:          true,
 			TableLegend:    true,
 			LeftYAxisLabel: "KB/s"})
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels.Add(&Panel{Host: host,
 			Title:          "Fibre Channel Write KB/s",
 			Measurement:    "FCWRITE",
 			Group:          []string{"name"},
 			Stack:          true,
 			TableLegend:    true,
 			LeftYAxisLabel: "KB/s"})
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels.Add(&Panel{Host: host,
 			Title:          "Fibre Channel Tranfers In/s",
 			Measurement:    "FCXFERIN",
 			Group:          []string{"name"},
 			Stack:          true,
 			TableLegend:    true,
 			LeftYAxisLabel: "tps"})
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels.Add(&Panel{Host: host,
 			Title:          "Fibre Channel Tranfers Out/s",
 			Measurement:    "FCXFEROUT",
 			Group:          []string{"name"},
@@ -248,8 +250,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		db.Rows = append(db.Rows, row)
 	}
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:       "Disk Adapter transfers",
 		Measurement: "IOADAPT",
 		Filters:     NameFilter("xfer"),
@@ -261,8 +263,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Height = "450px"
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Network I/O",
 		Measurement:    "NET",
 		Filters:        NameFilter("KB"),
@@ -272,13 +274,13 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		LeftYAxisLabel: "KB/s",
 		NegativeY:      "/read/",
 	})
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:       "Network Packets",
 		Measurement: "NETPACKET",
 		Group:       []string{"name"},
 		TableLegend: true,
 		Stack:       true})
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:       "Network Errors",
 		Measurement: "NETERROR",
 		Group:       []string{"name"},
@@ -287,8 +289,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	db.Rows = append(db.Rows, row)
 
 	if len(nmon.DataSeries["SEA"].Columns) > 0 {
-		panels = new(NmonPanels)
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels = new(Panels)
+		panels.Add(&Panel{Host: host,
 			Title:          "SEA",
 			Measurement:    "SEA",
 			Filters:        NameFilter("KB"),
@@ -297,7 +299,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 			TableLegend:    true,
 			LeftYAxisLabel: "KB/s"})
 		if len(nmon.DataSeries["SEACHPHY"].Columns) > 0 {
-			panels.AddPanel(&NmonPanel{Host: host,
+			panels.Add(&Panel{Host: host,
 				Title:          "SEA Physical Adapter Traffic Stats",
 				Measurement:    "SEACHPHY",
 				Filters:        NameFilter("KB"),
@@ -310,8 +312,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		db.Rows = append(db.Rows, row)
 	}
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "TOP",
 		Measurement:    "TOP",
 		Filters:        NameFilter("%CPU"),
@@ -322,8 +324,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Collapse = true
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Filespace %Used",
 		Measurement:    "JFSFILE",
 		Group:          []string{"name"},
@@ -335,8 +337,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Height = "450px"
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk Read KB/s",
 		Measurement:    "DISKREAD",
 		Group:          []string{"name"},
@@ -344,7 +346,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		LeftYAxisLabel: "KB/s"})
 
 	if len(nmon.DataSeries["DISKREADSERV"].Columns) > 0 {
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels.Add(&Panel{Host: host,
 			Title:          "Disk Read Service Time msec/xfer",
 			Measurement:    "DISKREADSERV",
 			Group:          []string{"name"},
@@ -356,8 +358,8 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Collapse = true
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk Write KB/s",
 		Measurement:    "DISKWRITE",
 		Group:          []string{"name"},
@@ -365,7 +367,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 		LeftYAxisLabel: "KB/s"})
 
 	if len(nmon.DataSeries["DISKREADSERV"].Columns) > 0 {
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels.Add(&Panel{Host: host,
 			Title:          "Disk Write Service Time msec/xfer",
 			Measurement:    "DISKWRITESERV",
 			Group:          []string{"name"},
@@ -377,15 +379,15 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Collapse = true
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Transfers from disk (reads) per second",
 		Measurement:    "DISKRXFER",
 		Group:          []string{"name"},
 		Stack:          false,
 		LeftYAxisLabel: "xfers/s"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk transfers per second",
 		Measurement:    "DISKXFER",
 		Group:          []string{"name"},
@@ -396,15 +398,15 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Collapse = true
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk IO Reads per second",
 		Measurement:    "DISKRIO",
 		Group:          []string{"name"},
 		Stack:          false,
 		LeftYAxisLabel: "IOPs"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk IO Writes per second",
 		Measurement:    "DISKWIO",
 		Group:          []string{"name"},
@@ -415,15 +417,15 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	row.Collapse = true
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk %Busy",
 		Measurement:    "DISKRIO",
 		Group:          []string{"name"},
 		Stack:          false,
 		LeftYAxisLabel: "%"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Disk Wait Queue Time msec/xfer",
 		Measurement:    "DISKWAIT",
 		Group:          []string{"name"},
@@ -443,7 +445,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	}
 
 	if len(cpuList) > 0 {
-		panels = new(NmonPanels)
+		panels = new(Panels)
 	}
 
 	sortedCPUList := make([]string, len(cpuList))
@@ -457,7 +459,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	sort.Strings(sortedCPUList)
 
 	for _, measurement := range sortedCPUList {
-		panels.AddPanel(&NmonPanel{Host: host,
+		panels.Add(&Panel{Host: host,
 			Title:          measurement,
 			Measurement:    measurement,
 			Filters:        NameFilter("^User%|^Sys%|^Wait%|^Idle%"),
@@ -492,10 +494,10 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 	infoRow.Panels = append(infoRow.Panels, panel)
 	db.Rows = append(db.Rows, infoRow)
 
-	panels := new(NmonPanels)
+	panels := new(Panels)
 
 	host := nmon.Hostname
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "CPU Total",
 		Measurement:    "CPU_ALL",
 		Filters:        NameFilter("%"),
@@ -504,7 +506,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "%"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:       "SCAN",
 		Measurement: "VM",
 		Filters:     NameFilter("scan"),
@@ -512,14 +514,14 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		Stack:       false,
 		TableLegend: true})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:       "STEAL",
 		Measurement: "VM",
 		Filters:     NameFilter("steal"),
 		Group:       []string{"name"},
 		Stack:       false})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:       "COUNTERS",
 		Measurement: "VM",
 		Filters:     NameFilter("nr"),
@@ -530,8 +532,8 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 	row.Height = panelSize
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:       "Memory MB",
 		Measurement: "MEM",
 		Filters:     NameFilter("^active|memtotal|cached|inactive"),
@@ -541,8 +543,8 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 	row = BuildGrafanaRow("MEM", panels)
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Filespace %Used",
 		Measurement:    "JFSFILE",
 		Filters:        NameFilter(""),
@@ -553,8 +555,8 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 	row = BuildGrafanaRow("FS", panels)
 
 	db.Rows = append(db.Rows, row)
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "sdX Disk Write KB/s",
 		Measurement:    "DISKWRITE",
 		Filters:        NameFilter("sd"),
@@ -562,7 +564,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		Stack:          true,
 		LeftYAxisLabel: "KB/s"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "dm Disk Write KB/s",
 		Measurement:    "DISKWRITE",
 		Filters:        NameFilter("dm"),
@@ -573,8 +575,8 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 	row = BuildGrafanaRow("DISK WRITE", panels)
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "sdX Disk Read KB/s",
 		Measurement:    "DISKREAD",
 		Filters:        NameFilter("sd"),
@@ -582,7 +584,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		Stack:          true,
 		LeftYAxisLabel: "KB/s"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "dm Disk Read KB/s",
 		Measurement:    "DISKREAD",
 		Filters:        NameFilter("dm"),
@@ -593,8 +595,8 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 	row = BuildGrafanaRow("DISK READ", panels)
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "Network",
 		Measurement:    "NET",
 		Filters:        NameFilter("eth|em|en"),
@@ -603,7 +605,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "KB/s"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "Docker Network",
 		Measurement:    "NET",
 		Filters:        NameFilter("docker"),
@@ -612,7 +614,7 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 		TableLegend:    true,
 		LeftYAxisLabel: "KB/s"})
 
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels.Add(&Panel{Host: host,
 		Title:          "KVM Network",
 		Measurement:    "NET",
 		Filters:        NameFilter("virbr"),
@@ -625,8 +627,8 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 	row.Height = panelSize
 	db.Rows = append(db.Rows, row)
 
-	panels = new(NmonPanels)
-	panels.AddPanel(&NmonPanel{Host: host,
+	panels = new(Panels)
+	panels.Add(&Panel{Host: host,
 		Title:          "TOP",
 		Measurement:    "TOP",
 		Filters:        NameFilter("%CPU"),
@@ -641,8 +643,8 @@ func (nmon *Nmon) GenerateLinuxDashboard() grafanaclient.Dashboard {
 
 }
 
-// NmonPanel custom Panel fro Grafana
-type NmonPanel struct {
+// Panel custom Panel fro Grafana
+type Panel struct {
 	Host            string
 	Title           string
 	Measurement     string
@@ -658,16 +660,16 @@ type NmonPanel struct {
 	Span            int
 }
 
-//NmonPanels array of NmonPanel
-type NmonPanels []NmonPanel
+//Panels array of Panel
+type Panels []Panel
 
-//AddPanel append NmonPanel
-func (panels *NmonPanels) AddPanel(npanel *NmonPanel) {
+//Add append Panel
+func (panels *Panels) Add(npanel *Panel) {
 	*panels = append(*panels, *npanel)
 }
 
 //BuildGrafanaRow generate a row composed of panels
-func BuildGrafanaRow(title string, panels *NmonPanels) grafanaclient.Row {
+func BuildGrafanaRow(title string, panels *Panels) grafanaclient.Row {
 	row := grafanaclient.NewRow()
 	row.Title = title
 
@@ -697,9 +699,9 @@ func TagsFilter(filters map[string]string) (tags []grafanaclient.Tag) {
 }
 
 //BuildGrafanaGraphPanel generates a grafana graph panel
-func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
+func BuildGrafanaGraphPanel(np Panel) grafanaclient.Panel {
 	panel := grafanaclient.NewPanel()
-        panel.DataSource = "nmon2influxdb"
+	panel.DataSource = dataSource
 	panel.Title = np.Title
 	if np.Span > 0 {
 		panel.Span = np.Span
@@ -762,9 +764,9 @@ func BuildGrafanaGraphPanel(np NmonPanel) grafanaclient.Panel {
 }
 
 //BuildGrafanaTablePanel generates a grafana graph panel
-func BuildGrafanaTablePanel(np NmonPanel) grafanaclient.Panel {
+func BuildGrafanaTablePanel(np Panel) grafanaclient.Panel {
 	panel := grafanaclient.NewPanel()
-        panel.DataSource = "nmon2influxdb"
+	panel.DataSource = dataSource
 	panel.Type = "table"
 	panel.Title = np.Title
 	if np.Span > 0 {
@@ -802,17 +804,17 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 	//check if datasource for nmon2influxdb exist
 	grafana := grafanaclient.NewSession(nmon.Config.GrafanaUser, nmon.Config.GrafanaPassword, nmon.Config.GrafanaURL)
 	err := grafana.DoLogon()
-	check(err)
+	nmon2influxdblib.CheckError(err)
 
 	resDs, err := grafana.GetDataSource(nmon.Config.GrafanaDatasource)
-	check(err)
+	nmon2influxdblib.CheckError(err)
 	if resDs.Name == "" {
 		plugins, err := grafana.GetDataSourcePlugins()
 
 		//grafana 3.0 new plugin architecture
 		if err.Error() == "HTTP 404: Data source not found" {
 			plugins, pluginErr := grafana.GetPlugins("datasource")
-			check(pluginErr)
+			nmon2influxdblib.CheckError(pluginErr)
 
 			status := ""
 			for _, plugin := range plugins {
@@ -826,7 +828,7 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 				os.Exit(1)
 			}
 		} else {
-			check(err)
+			nmon2influxdblib.CheckError(err)
 			if _, present := plugins["influxdb"]; !present {
 				fmt.Printf("No plugin for influxDB in Grafana !\n")
 				os.Exit(1)
@@ -843,7 +845,7 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 			IsDefault: true,
 		}
 		err = grafana.CreateDataSource(ds)
-		check(err)
+		nmon2influxdblib.CheckError(err)
 		fmt.Printf("Grafana %s DataSource created.\n", nmon.Config.GrafanaDatasource)
 	}
 

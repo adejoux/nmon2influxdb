@@ -1,23 +1,24 @@
 // nmon2influxdb
 // import nmon report in InfluxDB
 // author: adejoux@djouxtech.net
-package main
+package nmon
 
 import (
 	"fmt"
 	"regexp"
 
 	"github.com/adejoux/influxdbclient"
+	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
 	"github.com/codegangsta/cli"
 	//	"os"
 )
 
-//NmonListMeasurement list all measurements in INFLUXDB database
-func NmonListMeasurement(c *cli.Context) {
+//ListMeasurement list all measurements in INFLUXDB database
+func ListMeasurement(c *cli.Context) {
 	// parsing parameters
-	config := ParseParameters(c)
+	config := nmon2influxdblib.ParseParameters(c)
 
-	influxdb := config.connectDB(config.InfluxdbDatabase)
+	influxdb := config.ConnectDB(config.InfluxdbDatabase)
 	filters := new(influxdbclient.Filters)
 
 	if len(config.ListHost) > 0 {
@@ -25,7 +26,7 @@ func NmonListMeasurement(c *cli.Context) {
 	}
 
 	measurements, err := influxdb.ListMeasurement(filters)
-	check(err)
+	nmon2influxdblib.CheckError(err)
 	if measurements != nil {
 		fmt.Printf("%s\n", measurements.Name)
 		for _, value := range measurements.Datas {

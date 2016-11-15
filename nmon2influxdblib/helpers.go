@@ -2,7 +2,7 @@
 // import nmon data in InfluxDB
 // author = adejoux@djouxtech.net
 
-package main
+package nmon2influxdblib
 
 import (
 	"log"
@@ -11,14 +11,16 @@ import (
 
 //
 //helper functions
-//
-func check(e error) {
+
+//CheckError check error message and display it
+func CheckError(e error) {
 	if e != nil {
 		log.Fatal(e)
 	}
 }
 
-func checkInfo(e error) {
+// CheckInfo wrap info message
+func CheckInfo(e error) {
 	if e != nil {
 		log.Printf("info: %s", e)
 	}

@@ -1,22 +1,23 @@
 // nmon2influxdb
 // import nmon report in InfluxDB
 // author: adejoux@djouxtech.net
-package main
+package nmon
 
 import (
 	"fmt"
 	"os"
 
 	"github.com/adejoux/influxdbclient"
+	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
 	"github.com/codegangsta/cli"
 )
 
 const querytimeformat = "2006-01-02 15:04:05"
 
-//NmonStat get and display metrics statistics
-func NmonStat(c *cli.Context) {
+//Stat get and display metrics statistics
+func Stat(c *cli.Context) {
 	// parsing parameters
-	config := ParseParameters(c)
+	config := nmon2influxdblib.ParseParameters(c)
 	nmon := InitNmonTemplate(config)
 
 	if len(config.Metric) == 0 {
@@ -24,7 +25,7 @@ func NmonStat(c *cli.Context) {
 		os.Exit(1)
 	}
 
-	influxdb := config.connectDB(config.InfluxdbDatabase)
+	influxdb := config.ConnectDB(config.InfluxdbDatabase)
 	metric := config.Metric
 
 	filters := new(influxdbclient.Filters)
@@ -40,7 +41,7 @@ func NmonStat(c *cli.Context) {
 	toTime := toUnix.Format(querytimeformat)
 	result, err := influxdb.ReadPoints("value", filters, "name", metric, fromTime, toTime, "")
 	if err != nil {
-		check(err)
+		nmon2influxdblib.CheckError(err)
 	}
 
 	//generate stats

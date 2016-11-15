@@ -2,7 +2,7 @@
 // import nmon data in InfluxDB
 // author: adejoux@djouxtech.net
 
-package main
+package nmon
 
 import (
 	"bufio"
@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
 )
 
 // Nmon structure used to manage nmon files
@@ -23,7 +25,7 @@ type Nmon struct {
 	TextContent string
 	DataSeries  map[string]DataSerie
 	Debug       bool
-	Config      *Config
+	Config      *nmon2influxdblib.Config
 	starttime   time.Time
 	stoptime    time.Time
 	Location    *time.Location
@@ -36,7 +38,7 @@ type DataSerie struct {
 
 // AppendText add text section to dashboard
 func (nmon *Nmon) AppendText(text string) {
-	nmon.TextContent += ReplaceComma(text)
+	nmon.TextContent += nmon2influxdblib.ReplaceComma(text)
 }
 
 // NewNmon initialize a Nmon structure
@@ -78,7 +80,7 @@ func (nmon *Nmon) GetTimeStamp(label string) (timeStamp string, err error) {
 }
 
 //InitNmonTemplate init nmon structure when creating dashboard
-func InitNmonTemplate(config *Config) (nmon *Nmon) {
+func InitNmonTemplate(config *nmon2influxdblib.Config) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Config = config
 	nmon.SetLocation(config.Timezone)
@@ -86,7 +88,7 @@ func InitNmonTemplate(config *Config) (nmon *Nmon) {
 }
 
 //InitNmon init nmon structure for nmon file import
-func InitNmon(config *Config, nmonFile NmonFile) (nmon *Nmon) {
+func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Config = config
 	nmon.SetLocation(config.Timezone)
@@ -95,7 +97,7 @@ func InitNmon(config *Config, nmonFile NmonFile) (nmon *Nmon) {
 	var lines []string
 	if len(nmonFile.Host) > 0 {
 		scanner, err := nmonFile.GetRemoteScanner()
-		check(err)
+		nmon2influxdblib.CheckError(err)
 		scanner.Split(bufio.ScanLines)
 		for scanner.Scan() {
 			lines = append(lines, scanner.Text())
@@ -103,7 +105,7 @@ func InitNmon(config *Config, nmonFile NmonFile) (nmon *Nmon) {
 		scanner.Close()
 	} else {
 		scanner, err := nmonFile.GetScanner()
-		check(err)
+		nmon2influxdblib.CheckError(err)
 		scanner.Split(bufio.ScanLines)
 		for scanner.Scan() {
 			lines = append(lines, scanner.Text())

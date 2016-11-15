@@ -1,9 +1,7 @@
 // nmon2influxdb
-// import nmon data in InfluxDB
-
 // author: adejoux@djouxtech.net
 
-package main
+package nmon2influxdblib
 
 import (
 	"bufio"
@@ -33,6 +31,11 @@ type Config struct {
 	GrafanaURL           string `toml:"grafana_URL"`
 	GrafanaAccess        string
 	GrafanaDatasource    string
+	HMCServer            string
+	HMCUser              string
+	HMCPassword          string
+	HMCDatabase          string
+	HMCDataRetention     string
 	ImportSkipDisks      bool
 	ImportAllCpus        bool
 	ImportBuildDashboard bool
@@ -68,6 +71,10 @@ func InitConfig() Config {
 		InfluxdbServer:       "localhost",
 		InfluxdbPort:         "8086",
 		InfluxdbDatabase:     "nmon_reports",
+		HMCServer:            "",
+		HMCUser:              "hscroot",
+		HMCPassword:          "abc123",
+		HMCDatabase:          "nmon2influxdbHMC",
 		GrafanaUser:          "admin",
 		GrafanaPassword:      "admin",
 		GrafanaURL:           "http://localhost:3000",
@@ -116,11 +123,11 @@ func IsNotFile(file string) bool {
 //BuildCfgFile creates a default configuration file
 func (config *Config) BuildCfgFile(cfgfile string) {
 	file, err := os.Create(cfgfile)
-	check(err)
+	CheckError(err)
 	defer file.Close()
 	writer := bufio.NewWriter(file)
 	b, err := toml.Marshal(*config)
-	check(err)
+	CheckError(err)
 	r := bytes.NewReader(b)
 	r.WriteTo(writer)
 	writer.Flush()
@@ -144,11 +151,11 @@ func (config *Config) LoadCfgFile() {
 	defer file.Close()
 	buf, err := ioutil.ReadAll(file)
 	if err != nil {
-		check(err)
+		CheckError(err)
 	}
 
 	if err := toml.Unmarshal(buf, &config); err != nil {
-		check(err)
+		CheckError(err)
 	}
 
 }
@@ -195,6 +202,9 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.GrafanaURL = c.String("gurl")
 	config.GrafanaDatasource = c.String("datasource")
 	config.Debug = c.GlobalBool("debug")
+	config.HMCServer = c.String("hmc")
+	config.HMCUser = c.String("hmcuser")
+	config.HMCPassword = c.String("hmcpass")
 	config.InfluxdbServer = c.GlobalString("server")
 	config.InfluxdbUser = c.GlobalString("user")
 	config.InfluxdbPort = c.GlobalString("port")
@@ -210,8 +220,8 @@ func ParseParameters(c *cli.Context) (config *Config) {
 
 }
 
-// connect connect to the specified influxdb database
-func (config *Config) connectDB(db string) *influxdbclient.InfluxDB {
+// ConnectDB connect to the specified influxdb database
+func (config *Config) ConnectDB(db string) *influxdbclient.InfluxDB {
 	influxdbConfig := influxdbclient.InfluxDBConfig{
 		Host:     config.InfluxdbServer,
 		Port:     config.InfluxdbPort,
@@ -222,27 +232,36 @@ func (config *Config) connectDB(db string) *influxdbclient.InfluxDB {
 	}
 
 	influxdb, err := influxdbclient.NewInfluxDB(influxdbConfig)
-	check(err)
+	CheckError(err)
 
 	return &influxdb
 }
 
-// GetDataDB create or get the influxdb database like defined in config
-func (config *Config) GetDataDB() *influxdbclient.InfluxDB {
+// GetDB create or get the influxdb database used for nmon data
+func (config *Config) GetDB(dbType string) *influxdbclient.InfluxDB {
 
-	influxdb := config.connectDB(config.InfluxdbDatabase)
+	db := config.InfluxdbDatabase
+	retention := config.ImportDataRetention
 
-	if exist, _ := influxdb.ExistDB(config.InfluxdbDatabase); exist != true {
-		_, createErr := influxdb.CreateDB(config.InfluxdbDatabase)
-		check(createErr)
+	if dbType == "hmc" {
+		db = config.HMCDatabase
+		retention = config.HMCDataRetention
 	}
-	// Get default retention policy name
-	policyName, policyErr := influxdb.GetDefaultRetentionPolicy()
-	check(policyErr)
+
+	influxdb := config.ConnectDB(db)
+
+	if exist, _ := influxdb.ExistDB(db); exist != true {
+		_, createErr := influxdb.CreateDB(db)
+		CheckError(createErr)
+	}
+
 	// update default retention policy if ImportDataRetention is set
-	if len(config.ImportDataRetention) > 0 {
-		_, err := influxdb.UpdateRetentionPolicy(policyName, config.ImportDataRetention, true)
-		check(err)
+	if len(retention) > 0 {
+		// Get default retention policy name
+		policyName, policyErr := influxdb.GetDefaultRetentionPolicy()
+		CheckError(policyErr)
+		_, err := influxdb.UpdateRetentionPolicy(policyName, retention, true)
+		CheckError(err)
 	}
 	return influxdb
 }
@@ -250,16 +269,16 @@ func (config *Config) GetDataDB() *influxdbclient.InfluxDB {
 // GetLogDB create or get the influxdb database like defined in config
 func (config *Config) GetLogDB() *influxdbclient.InfluxDB {
 
-	influxdb := config.connectDB(config.ImportLogDatabase)
+	influxdb := config.ConnectDB(config.ImportLogDatabase)
 
 	if exist, _ := influxdb.ExistDB(config.ImportLogDatabase); exist != true {
 		_, err := influxdb.CreateDB(config.ImportLogDatabase)
-		check(err)
+		CheckError(err)
 		_, err = influxdb.SetRetentionPolicy("log_retention", config.ImportLogRetention, true)
-		check(err)
+		CheckError(err)
 	} else {
 		_, err := influxdb.UpdateRetentionPolicy("log_retention", config.ImportLogRetention, true)
-		check(err)
+		CheckError(err)
 	}
 	return influxdb
 }

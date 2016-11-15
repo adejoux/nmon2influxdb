@@ -8,11 +8,14 @@ package main
 import (
 	"os"
 
+	"github.com/adejoux/nmon2influxdb/hmc"
+	"github.com/adejoux/nmon2influxdb/nmon"
+	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
 	"github.com/codegangsta/cli"
 )
 
 func main() {
-	config := InitConfig()
+	config := nmon2influxdblib.InitConfig()
 
 	config.LoadCfgFile()
 
@@ -43,7 +46,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "1.1.3"
+	app.Version = "2.0.0"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
@@ -85,7 +88,7 @@ func main() {
 					Value: config.ImportLogRetention,
 				},
 			},
-			Action: NmonImport,
+			Action: nmon.Import,
 		},
 		{
 			Name:  "dashboard",
@@ -122,7 +125,7 @@ func main() {
 					Value: config.GrafanaDatasource,
 				},
 			},
-			Action: NmonDashboard,
+			Action: nmon.Dashboard,
 		},
 		{
 			Name:  "stats",
@@ -163,7 +166,7 @@ func main() {
 					Value: config.StatsFilter,
 				},
 			},
-			Action: NmonStat,
+			Action: nmon.Stat,
 		},
 		{
 			Name:  "list",
@@ -182,7 +185,34 @@ func main() {
 							Usage: "filter measurement",
 						},
 					},
-					Action: NmonListMeasurement,
+					Action: nmon.ListMeasurement,
+				},
+			},
+		},
+		{
+			Name:  "hmc",
+			Usage: "load hmc data",
+			Subcommands: []cli.Command{
+				{
+					Name:   "import",
+					Action: hmc.Import,
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:   "hmc",
+							Usage:  "hmc server",
+							EnvVar: config.HMCServer,
+						},
+						cli.StringFlag{
+							Name:   "hmcuser",
+							Usage:  "hmc user",
+							EnvVar: config.HMCUser,
+						},
+						cli.StringFlag{
+							Name:   "hmcpass",
+							Usage:  "hmc password",
+							EnvVar: config.HMCPassword,
+						},
+					},
 				},
 			},
 		},

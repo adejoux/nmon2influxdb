@@ -2,7 +2,7 @@
 // import nmon data in InfluxDB
 // author: adejoux@djouxtech.net
 
-package main
+package nmon2influxdblib
 
 import (
 	"bufio"
@@ -31,8 +31,8 @@ var remoteUserRegexp = regexp.MustCompile(`(\S+)@(\S+)`)
 const gzipfile = ".gz"
 const size = 64000
 
-// NmonFile structure used to select nmon files to import
-type NmonFile struct {
+// File structure used to select nmon files to import
+type File struct {
 	Name     string
 	FileType string
 	Host     string
@@ -42,21 +42,21 @@ type NmonFile struct {
 	lines    []string
 }
 
-// NmonFiles array of NmonFile
-type NmonFiles []NmonFile
+// Files array of File
+type Files []File
 
 //Add a file in the NmonFIles structure
-func (nmonFiles *NmonFiles) Add(file string, fileType string) {
-	*nmonFiles = append(*nmonFiles, NmonFile{Name: file, FileType: fileType})
+func (nmonFiles *Files) Add(file string, fileType string) {
+	*nmonFiles = append(*nmonFiles, File{Name: file, FileType: fileType})
 }
 
 //AddRemote a remote file in the NmonFIles structure
-func (nmonFiles *NmonFiles) AddRemote(file string, fileType string, host string, user string, key string) {
-	*nmonFiles = append(*nmonFiles, NmonFile{Name: file, FileType: fileType, Host: host, SSHUser: user, SSHKey: key})
+func (nmonFiles *Files) AddRemote(file string, fileType string, host string, user string, key string) {
+	*nmonFiles = append(*nmonFiles, File{Name: file, FileType: fileType, Host: host, SSHUser: user, SSHKey: key})
 }
 
 //Valid returns only valid fiels for nmon import
-func (nmonFiles *NmonFiles) Valid() (validFiles NmonFiles) {
+func (nmonFiles *Files) Valid() (validFiles Files) {
 	for _, v := range *nmonFiles {
 		if v.FileType == ".nmon" || v.FileType == gzipfile {
 			validFiles = append(validFiles, v)
@@ -78,7 +78,7 @@ type RemoteFileScanner struct {
 }
 
 // GetRemoteScanner open an nmon file based on file extension and provides a bufio Scanner
-func (nmonFile *NmonFile) GetRemoteScanner() (*RemoteFileScanner, error) {
+func (nmonFile *File) GetRemoteScanner() (*RemoteFileScanner, error) {
 
 	sftpConn := InitSFTP(nmonFile.SSHUser, nmonFile.Host, nmonFile.SSHKey)
 	file, err := sftpConn.Open(nmonFile.Name)
@@ -100,14 +100,14 @@ func (nmonFile *NmonFile) GetRemoteScanner() (*RemoteFileScanner, error) {
 }
 
 //Checksum generates SHA1 file checksum
-func (nmonFile *NmonFile) Checksum() (fileHash string) {
+func (nmonFile *File) Checksum() (fileHash string) {
 	if len(nmonFile.checksum) > 0 {
 		return nmonFile.checksum
 	}
 	var result []byte
 	if len(nmonFile.Host) > 0 {
 		scanner, err := nmonFile.GetRemoteScanner()
-		check(err)
+		CheckError(err)
 		scanner.Seek(-1024, 2)
 		hash := sha1.New()
 		if _, err = io.Copy(hash, scanner); err != nil {
@@ -116,7 +116,7 @@ func (nmonFile *NmonFile) Checksum() (fileHash string) {
 		fileHash = hex.EncodeToString(hash.Sum(result))
 	} else {
 		scanner, err := nmonFile.GetScanner()
-		check(err)
+		CheckError(err)
 		scanner.Seek(-1024, 2)
 		hash := sha1.New()
 		if _, err = io.Copy(hash, scanner); err != nil {
@@ -129,7 +129,7 @@ func (nmonFile *NmonFile) Checksum() (fileHash string) {
 }
 
 // GetScanner open an nmon file based on file extension and provides a bufio Scanner
-func (nmonFile *NmonFile) GetScanner() (*FileScanner, error) {
+func (nmonFile *File) GetScanner() (*FileScanner, error) {
 
 	file, err := os.Open(nmonFile.Name)
 	if err != nil {
@@ -150,7 +150,7 @@ func (nmonFile *NmonFile) GetScanner() (*FileScanner, error) {
 }
 
 // Parse parameters
-func (nmonFiles *NmonFiles) Parse(args []string, sshUser string, key string) {
+func (nmonFiles *Files) Parse(args []string, sshUser string, key string) {
 	for _, param := range args {
 		if remoteFileRegexp.MatchString(param) {
 			matched := remoteFileRegexp.FindStringSubmatch(param)
@@ -165,7 +165,7 @@ func (nmonFiles *NmonFiles) Parse(args []string, sshUser string, key string) {
 
 			sftpConn := InitSFTP(sshUser, host, key)
 			paraminfo, err := sftpConn.Stat(matchedParam)
-			check(err)
+			CheckError(err)
 			if err != nil {
 				if os.IsNotExist(err) {
 					fmt.Printf("%s doesn't exist ! skipped.\n", param)
@@ -174,7 +174,7 @@ func (nmonFiles *NmonFiles) Parse(args []string, sshUser string, key string) {
 			}
 			if paraminfo.IsDir() {
 				entries, err := sftpConn.ReadDir(matchedParam)
-				check(err)
+				CheckError(err)
 				for _, entry := range entries {
 					if !entry.IsDir() {
 						file := path.Join(matchedParam, entry.Name())
@@ -199,7 +199,7 @@ func (nmonFiles *NmonFiles) Parse(args []string, sshUser string, key string) {
 
 		if paraminfo.IsDir() {
 			entries, err := ioutil.ReadDir(param)
-			check(err)
+			CheckError(err)
 			for _, entry := range entries {
 				if !entry.IsDir() {
 					file := path.Join(param, entry.Name())
@@ -258,13 +258,13 @@ func InitSFTP(sshUser string, host string, key string) *sftp.Client {
 }
 
 //Content returns the nmon files content sorted in an slice of string format
-func (nmonFile *NmonFile) Content() []string {
+func (nmonFile *File) Content() []string {
 	if len(nmonFile.lines) > 0 {
 		return nmonFile.lines
 	}
 	if len(nmonFile.Host) > 0 {
 		scanner, err := nmonFile.GetRemoteScanner()
-		check(err)
+		CheckError(err)
 		scanner.Split(bufio.ScanLines)
 		for scanner.Scan() {
 			nmonFile.lines = append(nmonFile.lines, scanner.Text())
@@ -272,7 +272,7 @@ func (nmonFile *NmonFile) Content() []string {
 		scanner.Close()
 	} else {
 		scanner, err := nmonFile.GetScanner()
-		check(err)
+		CheckError(err)
 		scanner.Split(bufio.ScanLines)
 		for scanner.Scan() {
 			nmonFile.lines = append(nmonFile.lines, scanner.Text())
