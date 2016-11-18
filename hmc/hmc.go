@@ -24,20 +24,27 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+// HMC contains the base struct used by all the hmc sub command
 type HMC struct {
-	Session  *Session
-	InfluxDB *influxdbclient.InfluxDB
+	Session     *Session
+	InfluxDB    *influxdbclient.InfluxDB
+	GlobalPoint Point
 }
 
-type HMCPoint struct {
+// Point is a struct to simplify InfluxDB point creation
+type Point struct {
 	Name      string
 	Server    string
 	Metric    string
 	Pool      string
+	Device    string
+	Partition string
+	Type      string
 	Value     interface{}
 	Timestamp time.Time
 }
 
+//NewHMC return a new HMC struct and use the command line and config file parameters to intialize it.
 func NewHMC(c *cli.Context) *HMC {
 
 	var hmc HMC
@@ -54,6 +61,7 @@ func NewHMC(c *cli.Context) *HMC {
 	return &hmc
 }
 
+// WritePoints send points to InfluxDB database and reset points count
 func (hmc *HMC) WritePoints() (err error) {
 	err = hmc.InfluxDB.WritePoints()
 	nmon2influxdblib.CheckError(err)
@@ -61,19 +69,8 @@ func (hmc *HMC) WritePoints() (err error) {
 	return
 }
 
-func (hmc *HMC) GetManagedSystems() []System {
-	return hmc.Session.getManagedSystems()
-}
-
-func (hmc *HMC) GetPCMLinks(uuid string) ([]string, error) {
-	return hmc.Session.getPCM(uuid)
-}
-
-func (hmc *HMC) GetPCMData(link string) (PCMData, error) {
-	return hmc.Session.getPCMData(link)
-}
-
-func (hmc *HMC) AddPoint(point HMCPoint) {
+// AddPoint add a InfluxDB point. It's using the GlobalPoint parameter to fill some fields
+func (hmc *HMC) AddPoint(point Point) {
 
 	value, ok := point.Value.(float64)
 	if ok != true {
@@ -81,187 +78,36 @@ func (hmc *HMC) AddPoint(point HMCPoint) {
 		value = float64(point.Value.(int))
 	}
 
-	tags := map[string]string{"server": point.Server, "name": point.Metric}
+	tags := map[string]string{"server": hmc.GlobalPoint.Server, "name": point.Metric}
 	if len(point.Pool) > 0 {
 		tags["pool"] = point.Pool
 	}
-	field := map[string]interface{}{"value": value}
-	hmc.InfluxDB.AddPoint(point.Name, point.Timestamp, field, tags)
-}
 
-type PCMData struct {
-	SystemUtil struct {
-		UtilInfo struct {
-			Version          string   `json:"version"`
-			MetricType       string   `json:"metricType"`
-			Frequency        int      `json:"frequency"`
-			StartTimeStamp   string   `json:"startTimeStamp"`
-			EndTimeStamp     string   `json:"endTimeStamp"`
-			Mtms             string   `json:"mtms"`
-			Name             string   `json:"name"`
-			MetricArrayOrder []string `json:"metricArrayOrder"`
-			UUID             string   `json:"uuid"`
-		} `json:"utilInfo"`
-		UtilSamples []struct {
-			SampleType         string `json:"sampleType"`
-			SystemFirmwareUtil struct {
-				UtilizedProcUnits []interface{} `json:"utilizedProcUnits"`
-				AssignedMem       []int         `json:"assignedMem"`
-			} `json:"systemFirmwareUtil"`
-			ServerUtil struct {
-				Processor struct {
-					TotalProcUnits        []int     `json:"totalProcUnits"`
-					UtilizedProcUnits     []float64 `json:"utilizedProcUnits"`
-					AvailableProcUnits    []float64 `json:"availableProcUnits"`
-					ConfigurableProcUnits []int     `json:"configurableProcUnits"`
-				} `json:"processor"`
-				Memory struct {
-					TotalMem           []int `json:"totalMem"`
-					AssignedMemToLpars []int `json:"assignedMemToLpars"`
-					AvailableMem       []int `json:"availableMem"`
-					ConfigurableMem    []int `json:"configurableMem"`
-				} `json:"memory"`
-				SharedProcessorPool []struct {
-					AssignedProcUnits   []int     `json:"assignedProcUnits"`
-					UtilizedProcUnits   []float64 `json:"utilizedProcUnits"`
-					AvailableProcUnits  []int     `json:"availableProcUnits"`
-					ConfiguredProcUnits []int     `json:"configuredProcUnits"`
-					BorrowedProcUnits   []int     `json:"borrowedProcUnits"`
-					ID                  int       `json:"id"`
-					Name                string    `json:"name"`
-				} `json:"sharedProcessorPool"`
-				Network struct {
-					Headapters []struct {
-						DrcIndex      string `json:"drcIndex"`
-						PhysicalPorts []struct {
-							TransferredBytes []int  `json:"transferredBytes"`
-							ID               int    `json:"id"`
-							PhysicalLocation string `json:"physicalLocation"`
-							ReceivedPackets  []int  `json:"receivedPackets"`
-							SentPackets      []int  `json:"sentPackets"`
-							DroppedPackets   []int  `json:"droppedPackets"`
-							SentBytes        []int  `json:"sentBytes"`
-							ReceivedBytes    []int  `json:"receivedBytes"`
-						} `json:"physicalPorts"`
-					} `json:"headapters"`
-				} `json:"network"`
-			} `json:"serverUtil"`
-			ViosUtil []struct {
-				UUID   string `json:"uuid"`
-				State  string `json:"state"`
-				ID     int    `json:"id"`
-				Name   string `json:"name"`
-				Memory struct {
-					AssignedMem []int `json:"assignedMem"`
-					UtilizedMem []int `json:"utilizedMem"`
-				} `json:"memory"`
-				Processor struct {
-					PoolID                    int       `json:"poolId"`
-					Weight                    int       `json:"weight"`
-					Mode                      string    `json:"mode"`
-					MaxVirtualProcessors      []int     `json:"maxVirtualProcessors"`
-					MaxProcUnits              []int     `json:"maxProcUnits"`
-					EntitledProcUnits         []int     `json:"entitledProcUnits"`
-					UtilizedProcUnits         []float64 `json:"utilizedProcUnits"`
-					UtilizedCappedProcUnits   []float64 `json:"utilizedCappedProcUnits"`
-					UtilizedUncappedProcUnits []float64 `json:"utilizedUncappedProcUnits"`
-					IdleProcUnits             []float64 `json:"idleProcUnits"`
-					DonatedProcUnits          []int     `json:"donatedProcUnits"`
-				} `json:"processor"`
-				Network struct {
-					GenericAdapters []struct {
-						TransferredBytes []float64 `json:"transferredBytes"`
-						Type             string    `json:"type"`
-						ID               string    `json:"id"`
-						PhysicalLocation string    `json:"physicalLocation"`
-						ReceivedPackets  []float64 `json:"receivedPackets"`
-						SentPackets      []float64 `json:"sentPackets"`
-						DroppedPackets   []int     `json:"droppedPackets"`
-						SentBytes        []float64 `json:"sentBytes"`
-						ReceivedBytes    []float64 `json:"receivedBytes"`
-					} `json:"genericAdapters"`
-					SharedAdapters []struct {
-						TransferredBytes []float64 `json:"transferredBytes"`
-						ID               string    `json:"id"`
-						Type             string    `json:"type"`
-						PhysicalLocation string    `json:"physicalLocation"`
-						ReceivedPackets  []float64 `json:"receivedPackets"`
-						SentPackets      []float64 `json:"sentPackets"`
-						DroppedPackets   []int     `json:"droppedPackets"`
-						SentBytes        []float64 `json:"sentBytes"`
-						ReceivedBytes    []float64 `json:"receivedBytes"`
-						BridgedAdapters  []string  `json:"bridgedAdapters"`
-					} `json:"sharedAdapters"`
-				} `json:"network"`
-				Storage struct {
-					GenericPhysicalAdapters []struct {
-						TransmittedBytes []float64 `json:"transmittedBytes"`
-						Type             string    `json:"type"`
-						ID               string    `json:"id"`
-						PhysicalLocation string    `json:"physicalLocation"`
-						NumOfReads       []int     `json:"numOfReads"`
-						NumOfWrites      []float64 `json:"numOfWrites"`
-						ReadBytes        []int     `json:"readBytes"`
-						WriteBytes       []float64 `json:"writeBytes"`
-					} `json:"genericPhysicalAdapters"`
-					SharedStoragePools []struct {
-						TransmittedBytes []int  `json:"transmittedBytes"`
-						ID               string `json:"id"`
-						TotalSpace       []int  `json:"totalSpace"`
-						UsedSpace        []int  `json:"usedSpace"`
-						NumOfReads       []int  `json:"numOfReads"`
-						NumOfWrites      []int  `json:"numOfWrites"`
-						ReadBytes        []int  `json:"readBytes"`
-						WriteBytes       []int  `json:"writeBytes"`
-					} `json:"sharedStoragePools"`
-					FiberChannelAdapters []struct {
-						TransmittedBytes []int  `json:"transmittedBytes"`
-						Wwpn             string `json:"wwpn"`
-						PhysicalLocation string `json:"physicalLocation"`
-						NumOfPorts       int    `json:"numOfPorts"`
-						RunningSpeed     []int  `json:"runningSpeed"`
-						ID               string `json:"id"`
-						NumOfReads       []int  `json:"numOfReads"`
-						NumOfWrites      []int  `json:"numOfWrites"`
-						ReadBytes        []int  `json:"readBytes"`
-						WriteBytes       []int  `json:"writeBytes"`
-					} `json:"fiberChannelAdapters"`
-					GenericVirtualAdapters []struct {
-						TransmittedBytes []int  `json:"transmittedBytes"`
-						Type             string `json:"type"`
-						ID               string `json:"id"`
-						PhysicalLocation string `json:"physicalLocation"`
-						NumOfReads       []int  `json:"numOfReads"`
-						NumOfWrites      []int  `json:"numOfWrites"`
-						ReadBytes        []int  `json:"readBytes"`
-						WriteBytes       []int  `json:"writeBytes"`
-					} `json:"genericVirtualAdapters"`
-				} `json:"storage"`
-			} `json:"viosUtil"`
-			SampleInfo struct {
-				TimeStamp string `json:"timeStamp"`
-				Status    int    `json:"status"`
-				ErrorInfo []struct {
-					ErrID           string `json:"errId"`
-					ErrMsg          string `json:"errMsg"`
-					UUID            string `json:"uuid"`
-					ReportedBy      string `json:"reportedBy"`
-					OccurrenceCount int    `json:"occurrenceCount"`
-				} `json:"errorInfo"`
-			} `json:"sampleInfo"`
-		} `json:"utilSamples"`
-	} `json:"systemUtil"`
+	if len(point.Type) > 0 {
+		tags["type"] = point.Type
+	}
+	if len(point.Device) > 0 {
+		tags["device"] = point.Device
+	}
+
+	if len(hmc.GlobalPoint.Partition) > 0 {
+		tags["partition"] = hmc.GlobalPoint.Partition
+	}
+	field := map[string]interface{}{"value": value}
+	hmc.InfluxDB.AddPoint(point.Name, hmc.GlobalPoint.Timestamp, field, tags)
 }
 
 //
 // XML parsing structures
 //
 
+// Feed base struct of Atom feed
 type Feed struct {
 	XMLName xml.Name `xml:"feed"`
 	Entries []Entry  `xml:"entry"`
 }
 
+// Entry is the atom feed section containing the links to PCM data and the Category
 type Entry struct {
 	XMLName xml.Name `xml:"entry"`
 	ID      string   `xml:"id"`
@@ -269,22 +115,35 @@ type Entry struct {
 		Href string `xml:"href,attr"`
 	} `xml:"link,omitempty"`
 	Contents []Content `xml:"content"`
+	Category struct {
+		Term string `xml:"term,attr"`
+	} `xml:"category,omitempty"`
 }
 
+// Content feed struct containing all managed systems
 type Content struct {
 	XMLName xml.Name        `xml:"content"`
 	System  []ManagedSystem `xml:"http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/ ManagedSystem"`
 }
 
+// ManagedSystem struct contains a managed system and his associated partitions
 type ManagedSystem struct {
-	XMLName    xml.Name `xml:"http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/ ManagedSystem"`
-	SystemName string
+	XMLName                     xml.Name `xml:"http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/ ManagedSystem"`
+	SystemName                  string
+	AssociatedLogicalPartitions Partitions `xml:"http://www.ibm.com/xmlns/systems/power/firmware/uom/mc/2012_10/ AssociatedLogicalPartitions"`
 }
 
-//
-// HTTP session struct
-//
+// Partitions contains links to the partition informations
+type Partitions struct {
+	Links []Link `xml:"link,omitempty"`
+}
 
+// Link the link itself is stored in the attribute href
+type Link struct {
+	Href string `xml:"href,attr"`
+}
+
+// Session is the HTTP session struct
 type Session struct {
 	client   *http.Client
 	User     string
@@ -292,6 +151,7 @@ type Session struct {
 	url      string
 }
 
+// NewSession initialize a Session struct
 func NewSession(user string, password string, url string) *Session {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -305,6 +165,7 @@ func NewSession(user string, password string, url string) *Session {
 	return &Session{client: &http.Client{Transport: tr, Jar: jar}, User: user, Password: password, url: url}
 }
 
+// doLogon performs the login to the inflxudb instance
 func (s *Session) doLogon() {
 
 	authurl := s.url + "/rest/api/web/Logon"
@@ -345,8 +206,19 @@ func (s *Session) doLogon() {
 	}
 }
 
-func (s *Session) getPCM(uuid string) ([]string, error) {
-	var pcmlinks []string
+// PCMLinks store a system and associated partitions links to PCM data
+type PCMLinks struct {
+	System     string
+	Partitions []string
+}
+
+// GetPCMLinks encapsulation function
+func (hmc *HMC) GetPCMLinks(uuid string) (PCMLinks, error) {
+	return hmc.Session.getPCMLinks(uuid)
+}
+
+func (s *Session) getPCMLinks(uuid string) (PCMLinks, error) {
+	var pcmlinks PCMLinks
 	pcmurl := s.url + "/rest/api/pcm/ManagedSystem/" + uuid + "/ProcessedMetrics"
 	request, _ := http.NewRequest("GET", pcmurl, nil)
 
@@ -358,10 +230,6 @@ func (s *Session) getPCM(uuid string) ([]string, error) {
 	}
 
 	defer response.Body.Close()
-	contents, readErr := ioutil.ReadAll(response.Body)
-	if readErr != nil {
-		return pcmlinks, readErr
-	}
 
 	if response.StatusCode != 200 {
 		errorMessage := fmt.Sprintf("Error getting PCM informations. status code: %d", response.StatusCode)
@@ -370,34 +238,49 @@ func (s *Session) getPCM(uuid string) ([]string, error) {
 	}
 
 	var feed Feed
+	contents, readErr := ioutil.ReadAll(response.Body)
+	if readErr != nil {
+		return pcmlinks, readErr
+	}
 	unmarshalErr := xml.Unmarshal(contents, &feed)
 
 	if unmarshalErr != nil {
 		return pcmlinks, unmarshalErr
 	}
 	for _, entry := range feed.Entries {
-		pcmlinks = append(pcmlinks, entry.Link.Href)
+		if len(entry.Category.Term) == 0 {
+			continue
+		}
+		if entry.Category.Term == "ManagedSystem" {
+			pcmlinks.System = entry.Link.Href
+		}
+
+		if entry.Category.Term == "LogicalPartition" {
+			pcmlinks.Partitions = append(pcmlinks.Partitions, entry.Link.Href)
+		}
 	}
 
 	return pcmlinks, nil
 }
 
+// GetPCMData encapsulation function
+func (hmc *HMC) GetPCMData(link string) (PCMData, error) {
+	return hmc.Session.getPCMData(link)
+}
+
+// get PCMData retreives the PCM data in JSON format and returns them stored in an PCMData struct
 func (s *Session) getPCMData(rawurl string) (PCMData, error) {
-	//the link url can use ip address instead of hostname. Authentication was not performed on it.
-	//it's better to only keep the path and use the url provided by the user.
 	var data PCMData
 	u, _ := url.Parse(rawurl)
 	pcmurl := s.url + u.Path
-
 	request, err := http.NewRequest("GET", pcmurl, nil)
-
-	//request.Header.Set("Accept", "application/json")
 
 	response, err := s.client.Do(request)
 	if err != nil {
 		return data, err
 	}
 	defer response.Body.Close()
+
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return data, err
@@ -407,21 +290,18 @@ func (s *Session) getPCMData(rawurl string) (PCMData, error) {
 		log.Fatalf("Error getting PCM Data informations. status code: %d", response.StatusCode)
 	}
 
-	// var prettyJSON bytes.Buffer
-	// error := json.Indent(&prettyJSON, contents, "", "\t")
-	// if error != nil {
-	// 	log.Println("JSON parse error: ", error)
-	// 	return
-	// }
-	//
-	// log.Println("output:", string(prettyJSON.Bytes()))
-
 	json.Unmarshal(contents, &data)
 
 	return data, err
 
 }
 
+// GetManagedSystems encapsulation function
+func (hmc *HMC) GetManagedSystems() []System {
+	return hmc.Session.getManagedSystems()
+}
+
+// getManagedSystems returns a list of the managed systems retrieved from the atom feed
 func (s *Session) getManagedSystems() (systems []System) {
 	mgdurl := s.url + "/rest/api/uom/ManagedSystem"
 	request, err := http.NewRequest("GET", mgdurl, nil)
@@ -432,6 +312,7 @@ func (s *Session) getManagedSystems() (systems []System) {
 	if err != nil {
 		log.Fatal(err)
 	} else {
+
 		defer response.Body.Close()
 		contents, err := ioutil.ReadAll(response.Body)
 		if err != nil {
@@ -460,6 +341,7 @@ func (s *Session) getManagedSystems() (systems []System) {
 	return
 }
 
+// System struct store system Name and UUID
 type System struct {
 	Name string
 	UUID string
