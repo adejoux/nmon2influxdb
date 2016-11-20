@@ -177,6 +177,54 @@ type PCMData struct {
 					TimeSpentWaitingForDispatch []float64 `json:"timeSpentWaitingForDispatch"`
 					TimePerInstructionExecution []float64 `json:"timePerInstructionExecution"`
 				} `json:"processor"`
+				Storage struct {
+					VirtualFiberChannelAdapters []struct {
+						TransmittedBytes []float64 `json:"transmittedBytes"`
+						Wwpn             string    `json:"wwpn"`
+						Wwpn2            string    `json:"wwpn2"`
+						ViosID           int       `json:"viosId"`
+						PhysicalLocation string    `json:"physicalLocation"`
+						PhysicalPortWWPN string    `json:"physicalPortWWPN"`
+						RunningSpeed     []int     `json:"runningSpeed"`
+						ID               string    `json:"id"`
+						NumOfReads       []float64 `json:"numOfReads"`
+						NumOfWrites      []float64 `json:"numOfWrites"`
+						ReadBytes        []float64 `json:"readBytes"`
+						WriteBytes       []float64 `json:"writeBytes"`
+					} `json:"virtualFiberChannelAdapters"`
+					GenericVirtualAdapters []struct {
+						TransmittedBytes []float64 `json:"transmittedBytes"`
+						Type             string    `json:"type"`
+						ID               string    `json:"id"`
+						ViosID           int       `json:"viosId"`
+						PhysicalLocation string    `json:"physicalLocation"`
+						NumOfReads       []float64 `json:"numOfReads"`
+						NumOfWrites      []float64 `json:"numOfWrites"`
+						ReadBytes        []float64 `json:"readBytes"`
+						WriteBytes       []float64 `json:"writeBytes"`
+					} `json:"genericVirtualAdapters"`
+				} `json:"storage"`
+				Network struct {
+					VirtualEthernetAdapters []struct {
+						TransferredPhysicalBytes []float64 `json:"transferredPhysicalBytes"`
+						TransferredBytes         []float64 `json:"transferredBytes"`
+						Type                     string    `json:"type"`
+						ID                       string    `json:"id"`
+						VlanID                   int       `json:"vlanId"`
+						IsPortVlanID             bool      `json:"vlanId"`
+						PhysicalLocation         string    `json:"physicalLocation"`
+						ReceivedPackets          []float64 `json:"receivedPackets"`
+						ReceivedPhysicalPackets  []float64 `json:"receivedPhysicalPackets"`
+						SentPackets              []float64 `json:"sentPackets"`
+						SentPhysicalPackets      []float64 `json:"sentPhysicalPackets"`
+						DroppedPackets           []float64 `json:"droppedPackets"`
+						DroppedPhysicalPackets   []float64 `json:"droppedPhysicalPackets"`
+						SentBytes                []float64 `json:"sentBytes"`
+						SentPhysicalBytes        []float64 `json:"sentPhysicalBytes"`
+						ReceivedBytes            []float64 `json:"receivedBytes"`
+						ReceivedPhysicalBytes    []float64 `json:"receivedPhysicalBytes"`
+					} `json:"virtualEthernetAdapters"`
+				} `json:"network"`
 				State string `json:"state"`
 				UUID  string `json:"uuid"`
 			} `json:"lparsUtil"`

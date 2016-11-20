@@ -7,6 +7,7 @@ package hmc
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -105,8 +106,53 @@ func Import(c *cli.Context) {
 						hmc.AddPoint(Point{Name: "memory",
 							Metric: "BackedPhysicalMem",
 							Value:  lpar.Memory.BackedPhysicalMem[0]})
-					}
 
+						for _, vfc := range lpar.Storage.VirtualFiberChannelAdapters {
+							hmc.GlobalPoint.WWPN = vfc.Wwpn
+							hmc.GlobalPoint.PhysicalPortWWPN = vfc.PhysicalPortWWPN
+							hmc.GlobalPoint.ViosID = strconv.Itoa(vfc.ViosID)
+							hmc.AddPoint(Point{Name: "VirtualFiberChannelAdapters",
+								Metric: "transmittedBytes",
+								Value:  vfc.TransmittedBytes[0]})
+							hmc.AddPoint(Point{Name: "VirtualFiberChannelAdapters",
+								Metric: "numOfReads",
+								Value:  vfc.NumOfReads[0]})
+							hmc.AddPoint(Point{Name: "VirtualFiberChannelAdapters",
+								Metric: "numOfWrites",
+								Value:  vfc.NumOfWrites[0]})
+							hmc.AddPoint(Point{Name: "VirtualFiberChannelAdapters",
+								Metric: "readBytes",
+								Value:  vfc.ReadBytes[0]})
+							hmc.AddPoint(Point{Name: "VirtualFiberChannelAdapters",
+								Metric: "writeBytes",
+								Value:  vfc.WriteBytes[0]})
+							hmc.GlobalPoint.WWPN = ""
+							hmc.GlobalPoint.PhysicalPortWWPN = ""
+							hmc.GlobalPoint.ViosID = ""
+						}
+
+						for _, vscsi := range lpar.Storage.GenericVirtualAdapters {
+							hmc.GlobalPoint.Device = vscsi.ID
+							hmc.GlobalPoint.ViosID = strconv.Itoa(vscsi.ViosID)
+							hmc.AddPoint(Point{Name: "genericVirtualAdapters",
+								Metric: "transmittedBytes",
+								Value:  vscsi.TransmittedBytes[0]})
+							hmc.AddPoint(Point{Name: "genericVirtualAdapters",
+								Metric: "numOfReads",
+								Value:  vscsi.NumOfReads[0]})
+							hmc.AddPoint(Point{Name: "genericVirtualAdapters",
+								Metric: "numOfWrites",
+								Value:  vscsi.NumOfWrites[0]})
+							hmc.AddPoint(Point{Name: "genericVirtualAdapters",
+								Metric: "readBytes",
+								Value:  vscsi.ReadBytes[0]})
+							hmc.AddPoint(Point{Name: "genericVirtualAdapters",
+								Metric: "writeBytes",
+								Value:  vscsi.WriteBytes[0]})
+							hmc.GlobalPoint.Device = ""
+							hmc.GlobalPoint.ViosID = ""
+						}
+					}
 				}
 				fmt.Printf(" %d points\n", hmc.InfluxDB.PointsCount())
 				hmc.WritePoints()
@@ -150,6 +196,7 @@ func Import(c *cli.Context) {
 				Value:  sample.ServerUtil.Memory.ConfigurableMem[0]})
 
 			for _, spp := range sample.ServerUtil.SharedProcessorPool {
+				hmc.GlobalPoint.Pool = spp.Name
 				hmc.AddPoint(Point{Name: "sharedProcessorPool",
 					Metric: "assignedProcUnits",
 					Value:  spp.AssignedProcUnits[0],
@@ -162,169 +209,140 @@ func Import(c *cli.Context) {
 					Metric: "availableProcUnits",
 					Value:  spp.AvailableProcUnits[0],
 					Pool:   spp.Name})
+				hmc.GlobalPoint.Pool = ""
 			}
 			for _, vios := range sample.ViosUtil {
 				hmc.GlobalPoint.Partition = vios.Name
 				for _, scsi := range vios.Storage.GenericPhysicalAdapters {
+					hmc.GlobalPoint.Device = scsi.ID
 					hmc.AddPoint(Point{Name: "genericPhysicalAdapters",
 						Metric: "transmittedBytes",
-						Value:  scsi.TransmittedBytes[0],
-						Device: scsi.ID})
+						Value:  scsi.TransmittedBytes[0]})
 					hmc.AddPoint(Point{Name: "genericPhysicalAdapters",
 						Metric: "numOfReads",
-						Value:  scsi.NumOfReads[0],
-						Device: scsi.ID})
+						Value:  scsi.NumOfReads[0]})
 					hmc.AddPoint(Point{Name: "genericPhysicalAdapters",
 						Metric: "numOfWrites",
-						Value:  scsi.NumOfWrites[0],
-						Device: scsi.ID})
+						Value:  scsi.NumOfWrites[0]})
 					hmc.AddPoint(Point{Name: "genericPhysicalAdapters",
 						Metric: "readBytes",
-						Value:  scsi.ReadBytes[0],
-						Device: scsi.ID})
+						Value:  scsi.ReadBytes[0]})
 					hmc.AddPoint(Point{Name: "genericPhysicalAdapters",
 						Metric: "writeBytes",
-						Value:  scsi.WriteBytes[0],
-						Device: scsi.ID})
+						Value:  scsi.WriteBytes[0]})
+					hmc.GlobalPoint.Device = ""
 				}
 				for _, fc := range vios.Storage.FiberChannelAdapters {
+					hmc.GlobalPoint.Device = fc.ID
 					hmc.AddPoint(Point{Name: "fiberChannelAdapters",
 						Metric: "transmittedBytes",
-						Value:  fc.TransmittedBytes[0],
-						Device: fc.ID})
+						Value:  fc.TransmittedBytes[0]})
 					hmc.AddPoint(Point{Name: "fiberChannelAdapters",
 						Metric: "numOfReads",
-						Value:  fc.NumOfReads[0],
-						Device: fc.ID})
+						Value:  fc.NumOfReads[0]})
 					hmc.AddPoint(Point{Name: "fiberChannelAdapters",
 						Metric: "numOfWrites",
-						Value:  fc.NumOfWrites[0],
-						Device: fc.ID})
+						Value:  fc.NumOfWrites[0]})
 					hmc.AddPoint(Point{Name: "fiberChannelAdapters",
 						Metric: "readBytes",
-						Value:  fc.ReadBytes[0],
-						Device: fc.ID})
+						Value:  fc.ReadBytes[0]})
 					hmc.AddPoint(Point{Name: "fiberChannelAdapters",
 						Metric: "writeBytes",
-						Value:  fc.WriteBytes[0],
-						Device: fc.ID})
+						Value:  fc.WriteBytes[0]})
+					hmc.GlobalPoint.Device = ""
 				}
 				for _, vscsi := range vios.Storage.GenericVirtualAdapters {
+					hmc.GlobalPoint.Device = vscsi.ID
 					hmc.AddPoint(Point{Name: "genericVirtualAdapters",
 						Metric: "transmittedBytes",
-						Value:  vscsi.TransmittedBytes[0],
-						Device: vscsi.ID})
+						Value:  vscsi.TransmittedBytes[0]})
 					hmc.AddPoint(Point{Name: "genericVirtualAdapters",
 						Metric: "numOfReads",
-						Value:  vscsi.NumOfReads[0],
-						Device: vscsi.ID})
+						Value:  vscsi.NumOfReads[0]})
 					hmc.AddPoint(Point{Name: "genericVirtualAdapters",
 						Metric: "numOfWrites",
-						Value:  vscsi.NumOfWrites[0],
-						Device: vscsi.ID})
+						Value:  vscsi.NumOfWrites[0]})
 					hmc.AddPoint(Point{Name: "genericVirtualAdapters",
 						Metric: "readBytes",
-						Value:  vscsi.ReadBytes[0],
-						Device: vscsi.ID})
+						Value:  vscsi.ReadBytes[0]})
 					hmc.AddPoint(Point{Name: "genericVirtualAdapters",
 						Metric: "writeBytes",
-						Value:  vscsi.WriteBytes[0],
-						Device: vscsi.ID})
+						Value:  vscsi.WriteBytes[0]})
+					hmc.GlobalPoint.Device = ""
 				}
 				for _, ssp := range vios.Storage.SharedStoragePools {
+					hmc.GlobalPoint.Pool = ssp.ID
 					hmc.AddPoint(Point{Name: "sharedStoragePool",
 						Metric: "transmittedBytes",
-						Value:  ssp.TransmittedBytes[0],
-						Pool:   ssp.ID})
+						Value:  ssp.TransmittedBytes[0]})
 					hmc.AddPoint(Point{Name: "sharedStoragePool",
 						Metric: "totalSpace",
-						Value:  ssp.TotalSpace[0],
-						Pool:   ssp.ID})
+						Value:  ssp.TotalSpace[0]})
 					hmc.AddPoint(Point{Name: "sharedStoragePool",
 						Metric: "usedSpace",
-						Value:  ssp.UsedSpace[0],
-						Pool:   ssp.ID})
+						Value:  ssp.UsedSpace[0]})
 					hmc.AddPoint(Point{Name: "sharedStoragePool",
 						Metric: "numOfReads",
-						Value:  ssp.NumOfReads[0],
-						Pool:   ssp.ID})
+						Value:  ssp.NumOfReads[0]})
 					hmc.AddPoint(Point{Name: "sharedStoragePool",
 						Metric: "numOfWrites",
-						Value:  ssp.NumOfWrites[0],
-						Pool:   ssp.ID})
+						Value:  ssp.NumOfWrites[0]})
 					hmc.AddPoint(Point{Name: "sharedStoragePool",
 						Metric: "readBytes",
-						Value:  ssp.ReadBytes[0],
-						Pool:   ssp.ID})
+						Value:  ssp.ReadBytes[0]})
 					hmc.AddPoint(Point{Name: "sharedStoragePool",
 						Metric: "writeBytes",
-						Value:  ssp.WriteBytes[0],
-						Pool:   ssp.ID})
+						Value:  ssp.WriteBytes[0]})
+					hmc.GlobalPoint.Pool = ""
 				}
 				for _, net := range vios.Network.GenericAdapters {
+					hmc.GlobalPoint.Device = net.ID
+					hmc.GlobalPoint.Type = net.Type
 					hmc.AddPoint(Point{Name: "genericAdapters",
 						Metric: "transferredBytes",
-						Value:  net.TransferredBytes[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.TransferredBytes[0]})
 					hmc.AddPoint(Point{Name: "genericAdapters",
 						Metric: "receivedPackets",
-						Value:  net.ReceivedPackets[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.ReceivedPackets[0]})
 					hmc.AddPoint(Point{Name: "genericAdapters",
 						Metric: "sentPackets",
-						Value:  net.SentPackets[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.SentPackets[0]})
 					hmc.AddPoint(Point{Name: "genericAdapters",
 						Metric: "droppedPackets",
-						Value:  net.DroppedPackets[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.DroppedPackets[0]})
 					hmc.AddPoint(Point{Name: "genericAdapters",
 						Metric: "sentBytes",
-						Value:  net.SentBytes[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.SentBytes[0]})
 					hmc.AddPoint(Point{Name: "genericAdapters",
 						Metric: "ReceivedBytes",
-						Value:  net.ReceivedBytes[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.ReceivedBytes[0]})
+					hmc.GlobalPoint.Device = ""
+					hmc.GlobalPoint.Type = ""
 				}
 
 				for _, net := range vios.Network.SharedAdapters {
+					hmc.GlobalPoint.Device = net.ID
+					hmc.GlobalPoint.Type = net.Type
 					hmc.AddPoint(Point{Name: "sharedAdapters",
 						Metric: "transferredBytes",
-						Value:  net.TransferredBytes[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.TransferredBytes[0]})
 					hmc.AddPoint(Point{Name: "sharedAdapters",
 						Metric: "receivedPackets",
-						Value:  net.ReceivedPackets[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.ReceivedPackets[0]})
 					hmc.AddPoint(Point{Name: "sharedAdapters",
 						Metric: "sentPackets",
-						Value:  net.SentPackets[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.SentPackets[0]})
 					hmc.AddPoint(Point{Name: "sharedAdapters",
 						Metric: "droppedPackets",
-						Value:  net.DroppedPackets[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.DroppedPackets[0]})
 					hmc.AddPoint(Point{Name: "sharedAdapters",
 						Metric: "sentBytes",
-						Value:  net.SentBytes[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.SentBytes[0]})
 					hmc.AddPoint(Point{Name: "sharedAdapters",
 						Metric: "ReceivedBytes",
-						Value:  net.ReceivedBytes[0],
-						Device: net.ID,
-						Type:   net.Type})
+						Value:  net.ReceivedBytes[0]})
+					hmc.GlobalPoint.Device = ""
+					hmc.GlobalPoint.Type = ""
 				}
 
 			}
