@@ -14,6 +14,8 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+const timeFormat = "2006-01-02T15:04:05-0700"
+
 //Import is the entry point for subcommand hmc
 func Import(c *cli.Context) {
 	// parsing parameters
@@ -34,7 +36,7 @@ func Import(c *cli.Context) {
 		}
 
 		//set parameters common to all points in GlobalPoint
-		hmc.GlobalPoint.Server = system.Name
+		hmc.GlobalPoint.System = system.Name
 
 		fmt.Printf("MANAGED SYSTEM: %s\n", system.Name)
 		pcmlinks, getPCMErr := hmc.GetSystemPCMLinks(system.UUID)
@@ -57,12 +59,12 @@ func Import(c *cli.Context) {
 			}
 
 			for _, lparLink := range lparLinks.Partitions {
-				hmc.GlobalPoint = Point{Server: system.Name}
+				hmc.GlobalPoint = Point{System: system.Name}
 				lparData, getErr := hmc.GetPCMData(lparLink)
 				nmon2influxdblib.CheckError(getErr)
 				fmt.Printf("partition %s:", lparData.SystemUtil.UtilSamples[0].LparsUtil[0].Name)
 				for _, sample := range lparData.SystemUtil.UtilSamples {
-					timestamp, timeErr := time.Parse("2006-01-02T15:04:05+0000", sample.SampleInfo.TimeStamp)
+					timestamp, timeErr := time.Parse(timeFormat, sample.SampleInfo.TimeStamp)
 					nmon2influxdblib.CheckError(timeErr)
 					//Set timestamp common to all this points
 					hmc.GlobalPoint.Timestamp = timestamp
@@ -210,7 +212,7 @@ func Import(c *cli.Context) {
 		nmon2influxdblib.CheckError(err)
 		for _, sample := range data.SystemUtil.UtilSamples {
 
-			timestamp, timeErr := time.Parse("2006-01-02T15:04:05+0000", sample.SampleInfo.TimeStamp)
+			timestamp, timeErr := time.Parse(timeFormat, sample.SampleInfo.TimeStamp)
 			nmon2influxdblib.CheckError(timeErr)
 
 			//Set timestamp common to all this points

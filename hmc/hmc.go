@@ -39,7 +39,7 @@ type HMC struct {
 // Point is a struct to simplify InfluxDB point creation
 type Point struct {
 	Name                    string
-	Server                  string
+	System                  string
 	Metric                  string
 	Pool                    string
 	Device                  string
@@ -91,7 +91,7 @@ func (hmc *HMC) AddPoint(point Point) {
 		value = float64(point.Value.(int))
 	}
 
-	tags := map[string]string{"server": hmc.GlobalPoint.Server, "name": point.Metric}
+	tags := map[string]string{"system": hmc.GlobalPoint.System, "name": point.Metric}
 	if len(hmc.GlobalPoint.Pool) > 0 {
 		tags["pool"] = point.Pool
 	}
@@ -100,7 +100,7 @@ func (hmc *HMC) AddPoint(point Point) {
 		tags["type"] = point.Type
 	}
 	if len(hmc.GlobalPoint.Device) > 0 {
-		tags["device"] = point.Device
+		tags["device"] = hmc.GlobalPoint.Device
 	}
 
 	if len(hmc.GlobalPoint.WWPN) > 0 {
