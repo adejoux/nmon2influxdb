@@ -6,6 +6,7 @@ package hmc
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -20,19 +21,90 @@ func Import(c *cli.Context) {
 
 	hmc := NewHMC(c)
 
-	systems := hmc.GetManagedSystems()
+	systems, GetSysErr := hmc.GetManagedSystems()
+	nmon2influxdblib.CheckError(GetSysErr)
 
 	for _, system := range systems {
 		//set parameters common to all points in GlobalPoint
 		hmc.GlobalPoint.Server = system.Name
-		fmt.Printf("Processing performance data from: %s\n", system.Name)
+		fmt.Printf("MANAGED SYSTEM: %s\n", system.Name)
 
-		pcmlinks, getPCMErr := hmc.GetPCMLinks(system.UUID)
+		pcmlinks, getPCMErr := hmc.GetSystemPCMLinks(system.UUID)
 		if getPCMErr != nil {
 			fmt.Printf("Error getting PCM data\n")
 			continue
 		}
 
+		var lparLinks PCMLinks
+		for _, link := range pcmlinks.Partitions {
+			//need to parse the link because the specified hostname can be different
+			//of the one specified by the user and the auth cookie will not match
+			rawurl, _ := url.Parse(link)
+			var lparGetPCMErr error
+			lparLinks, lparGetPCMErr = hmc.GetPartitionPCMLinks(rawurl.Path)
+			if lparGetPCMErr != nil {
+				fmt.Println(lparGetPCMErr)
+				fmt.Printf("Error getting PCM data\n")
+				continue
+			}
+
+			for _, lparLink := range lparLinks.Partitions {
+				hmc.GlobalPoint = Point{Server: system.Name}
+				lparData, getErr := hmc.GetPCMData(lparLink)
+				nmon2influxdblib.CheckError(getErr)
+				fmt.Printf("partition %s:", lparData.SystemUtil.UtilSamples[0].LparsUtil[0].Name)
+				for _, sample := range lparData.SystemUtil.UtilSamples {
+					timestamp, timeErr := time.Parse("2006-01-02T15:04:05+0000", sample.SampleInfo.TimeStamp)
+					nmon2influxdblib.CheckError(timeErr)
+					//Set timestamp common to all this points
+					hmc.GlobalPoint.Timestamp = timestamp
+
+					for _, lpar := range sample.LparsUtil {
+						hmc.GlobalPoint.Partition = lpar.Name
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "MaxVirtualProcessors",
+							Value:  lpar.Processor.MaxVirtualProcessors[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "MaxProcUnits",
+							Value:  lpar.Processor.MaxProcUnits[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "EntitledProcUnits",
+							Value:  lpar.Processor.EntitledProcUnits[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "UtilizedProcUnits",
+							Value:  lpar.Processor.UtilizedProcUnits[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "UtilizedCappedProcUnits",
+							Value:  lpar.Processor.UtilizedCappedProcUnits[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "UtilizedUncappedProcUnits",
+							Value:  lpar.Processor.UtilizedUncappedProcUnits[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "IdleProcUnits",
+							Value:  lpar.Processor.IdleProcUnits[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "DonatedProcUnits",
+							Value:  lpar.Processor.DonatedProcUnits[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "TimeSpentWaitingForDispatch",
+							Value:  lpar.Processor.TimeSpentWaitingForDispatch[0]})
+						hmc.AddPoint(Point{Name: "processor",
+							Metric: "TimePerInstructionExecution",
+							Value:  lpar.Processor.TimePerInstructionExecution[0]})
+
+						hmc.AddPoint(Point{Name: "memory",
+							Metric: "LogicalMem",
+							Value:  lpar.Memory.LogicalMem[0]})
+						hmc.AddPoint(Point{Name: "memory",
+							Metric: "BackedPhysicalMem",
+							Value:  lpar.Memory.BackedPhysicalMem[0]})
+					}
+
+				}
+				fmt.Printf(" %d points\n", hmc.InfluxDB.PointsCount())
+				hmc.WritePoints()
+			}
+		}
 		// Get Managed System PCM metrics
 		data, err := hmc.GetPCMData(pcmlinks.System)
 		nmon2influxdblib.CheckError(err)
@@ -249,6 +321,7 @@ func Import(c *cli.Context) {
 				}
 
 			}
+
 		}
 		hmc.WritePoints()
 	}

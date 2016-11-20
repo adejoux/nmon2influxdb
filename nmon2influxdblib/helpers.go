@@ -45,6 +45,15 @@ func PrintHTTPResponse(response *http.Response) {
 	fmt.Println(string(responseDump))
 }
 
+//PrintHTTPResponse print raw http response for debugging purpose
+func PrintHTTPRequest(request *http.Request) {
+	requestDump, err := httputil.DumpRequest(request, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(requestDump))
+}
+
 //PrintPrettyJSON helper used to display JSON output in a nicer way
 func PrintPrettyJSON(contents []byte) {
 	var prettyJSON bytes.Buffer

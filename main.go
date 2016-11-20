@@ -198,19 +198,19 @@ func main() {
 					Action: hmc.Import,
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:   "hmc",
-							Usage:  "hmc server",
-							EnvVar: config.HMCServer,
+							Name:  "hmc",
+							Usage: "hmc server",
+							Value: config.HMCServer,
 						},
 						cli.StringFlag{
-							Name:   "hmcuser",
-							Usage:  "hmc user",
-							EnvVar: config.HMCUser,
+							Name:  "hmcuser",
+							Usage: "hmc user",
+							Value: config.HMCUser,
 						},
 						cli.StringFlag{
-							Name:   "hmcpass",
-							Usage:  "hmc password",
-							EnvVar: config.HMCPassword,
+							Name:  "hmcpass",
+							Usage: "hmc password",
+							Value: config.HMCPassword,
 						},
 					},
 				},

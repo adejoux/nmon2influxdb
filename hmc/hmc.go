@@ -24,11 +24,15 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+// hmc can be really slow to answer
+const timeout = 30
+
 // HMC contains the base struct used by all the hmc sub command
 type HMC struct {
 	Session     *Session
 	InfluxDB    *influxdbclient.InfluxDB
 	GlobalPoint Point
+	Debug       bool
 }
 
 // Point is a struct to simplify InfluxDB point creation
@@ -53,6 +57,7 @@ func NewHMC(c *cli.Context) *HMC {
 
 	//getting databases connections
 	hmc.InfluxDB = config.GetDB("hmc")
+	hmc.Debug = config.Debug
 	hmcURL := fmt.Sprintf("https://"+"%s"+":12443", config.HMCServer)
 	//initialize new http session
 	hmc.Session = NewSession(config.HMCUser, config.HMCPassword, hmcURL)
@@ -162,7 +167,7 @@ func NewSession(user string, password string, url string) *Session {
 		log.Fatal(err)
 	}
 
-	return &Session{client: &http.Client{Transport: tr, Jar: jar}, User: user, Password: password, url: url}
+	return &Session{client: &http.Client{Transport: tr, Jar: jar, Timeout: time.Second * timeout}, User: user, Password: password, url: url}
 }
 
 // doLogon performs the login to the inflxudb instance
@@ -212,24 +217,40 @@ type PCMLinks struct {
 	Partitions []string
 }
 
-// GetPCMLinks encapsulation function
-func (hmc *HMC) GetPCMLinks(uuid string) (PCMLinks, error) {
-	return hmc.Session.getPCMLinks(uuid)
+// GetSystemPCMLinks encapsulation function
+func (hmc *HMC) GetSystemPCMLinks(uuid string) (PCMLinks, error) {
+	pcmurl := hmc.Session.url + "/rest/api/pcm/ManagedSystem/" + uuid + "/ProcessedMetrics"
+	return hmc.Session.getPCMLinks(pcmurl, hmc.Debug)
 }
 
-func (s *Session) getPCMLinks(uuid string) (PCMLinks, error) {
+// GetPartitionPCMLinks encapsulation function
+func (hmc *HMC) GetPartitionPCMLinks(link string) (PCMLinks, error) {
+	pcmurl := hmc.Session.url + link
+
+	return hmc.Session.getPCMLinks(pcmurl, hmc.Debug)
+}
+
+func (s *Session) getPCMLinks(link string, debug bool) (PCMLinks, error) {
+	if debug {
+		fmt.Println(link)
+	}
 	var pcmlinks PCMLinks
-	pcmurl := s.url + "/rest/api/pcm/ManagedSystem/" + uuid + "/ProcessedMetrics"
-	request, _ := http.NewRequest("GET", pcmurl, nil)
+	request, _ := http.NewRequest("GET", link, nil)
 
-	request.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	request.Header.Set("Accept", "*/*;q=0.8")
 
+	if debug {
+		nmon2influxdblib.PrintHTTPRequest(request)
+	}
 	response, requestErr := s.client.Do(request)
 	if requestErr != nil {
 		return pcmlinks, requestErr
 	}
-
 	defer response.Body.Close()
+
+	if debug {
+		nmon2influxdblib.PrintHTTPResponse(response)
+	}
 
 	if response.StatusCode != 200 {
 		errorMessage := fmt.Sprintf("Error getting PCM informations. status code: %d", response.StatusCode)
@@ -265,79 +286,92 @@ func (s *Session) getPCMLinks(uuid string) (PCMLinks, error) {
 
 // GetPCMData encapsulation function
 func (hmc *HMC) GetPCMData(link string) (PCMData, error) {
-	return hmc.Session.getPCMData(link)
+	return hmc.Session.getPCMData(link, hmc.Debug)
 }
 
 // get PCMData retreives the PCM data in JSON format and returns them stored in an PCMData struct
-func (s *Session) getPCMData(rawurl string) (PCMData, error) {
+func (s *Session) getPCMData(rawurl string, debug bool) (PCMData, error) {
 	var data PCMData
 	u, _ := url.Parse(rawurl)
 	pcmurl := s.url + u.Path
-	request, err := http.NewRequest("GET", pcmurl, nil)
+	if debug {
+		fmt.Println(pcmurl)
+	}
+	request, _ := http.NewRequest("GET", pcmurl, nil)
 
 	response, err := s.client.Do(request)
 	if err != nil {
 		return data, err
 	}
 	defer response.Body.Close()
+	if debug {
+		nmon2influxdblib.PrintHTTPResponse(response)
+	}
 
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return data, err
 	}
 
+	if debug {
+		nmon2influxdblib.PrintPrettyJSON(contents)
+	}
+
 	if response.StatusCode != 200 {
 		log.Fatalf("Error getting PCM Data informations. status code: %d", response.StatusCode)
 	}
 
-	json.Unmarshal(contents, &data)
+	jsonErr := json.Unmarshal(contents, &data)
 
-	return data, err
+	if jsonErr != nil {
+		nmon2influxdblib.PrintPrettyJSON(contents)
+	}
+	return data, jsonErr
 
 }
 
 // GetManagedSystems encapsulation function
-func (hmc *HMC) GetManagedSystems() []System {
+func (hmc *HMC) GetManagedSystems() ([]System, error) {
 	return hmc.Session.getManagedSystems()
 }
 
 // getManagedSystems returns a list of the managed systems retrieved from the atom feed
-func (s *Session) getManagedSystems() (systems []System) {
+func (s *Session) getManagedSystems() (systems []System, err error) {
 	mgdurl := s.url + "/rest/api/uom/ManagedSystem"
-	request, err := http.NewRequest("GET", mgdurl, nil)
+	request, _ := http.NewRequest("GET", mgdurl, nil)
 
 	request.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 
 	response, err := s.client.Do(request)
 	if err != nil {
-		log.Fatal(err)
-	} else {
+		return
+	}
 
-		defer response.Body.Close()
-		contents, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
+	defer response.Body.Close()
+	contents, readErr := ioutil.ReadAll(response.Body)
+	if readErr != nil {
+		return systems, readErr
+	}
 
-		if response.StatusCode != 200 {
-			log.Fatalf("Error getting LPAR informations. status code: %d", response.StatusCode)
-		}
+	if response.StatusCode != 200 {
+		log.Fatalf("Error getting LPAR informations. status code: %d", response.StatusCode)
+	}
 
-		var feed Feed
-		newErr := xml.Unmarshal(contents, &feed)
+	var feed Feed
+	newErr := xml.Unmarshal(contents, &feed)
 
-		if newErr != nil {
-			log.Fatal(newErr)
-		}
-		for _, entry := range feed.Entries {
+	if newErr != nil {
+		return systems, newErr
+	}
+	for _, entry := range feed.Entries {
 
-			for _, content := range entry.Contents {
-				for _, system := range content.System {
-					systems = append(systems, System{Name: system.SystemName, UUID: entry.ID})
-				}
+		for _, content := range entry.Contents {
+			for _, system := range content.System {
+				systems = append(systems, System{Name: system.SystemName, UUID: entry.ID})
 			}
 		}
 	}
+
 	return
 }
 

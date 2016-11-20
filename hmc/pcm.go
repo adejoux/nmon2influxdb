@@ -26,10 +26,10 @@ type PCMData struct {
 			} `json:"systemFirmwareUtil"`
 			ServerUtil struct {
 				Processor struct {
-					TotalProcUnits        []int     `json:"totalProcUnits"`
+					TotalProcUnits        []float64 `json:"totalProcUnits"`
 					UtilizedProcUnits     []float64 `json:"utilizedProcUnits"`
 					AvailableProcUnits    []float64 `json:"availableProcUnits"`
-					ConfigurableProcUnits []int     `json:"configurableProcUnits"`
+					ConfigurableProcUnits []float64 `json:"configurableProcUnits"`
 				} `json:"processor"`
 				Memory struct {
 					TotalMem           []int `json:"totalMem"`
@@ -38,11 +38,11 @@ type PCMData struct {
 					ConfigurableMem    []int `json:"configurableMem"`
 				} `json:"memory"`
 				SharedProcessorPool []struct {
-					AssignedProcUnits   []int     `json:"assignedProcUnits"`
+					AssignedProcUnits   []float64 `json:"assignedProcUnits"`
 					UtilizedProcUnits   []float64 `json:"utilizedProcUnits"`
-					AvailableProcUnits  []int     `json:"availableProcUnits"`
-					ConfiguredProcUnits []int     `json:"configuredProcUnits"`
-					BorrowedProcUnits   []int     `json:"borrowedProcUnits"`
+					AvailableProcUnits  []float64 `json:"availableProcUnits"`
+					ConfiguredProcUnits []float64 `json:"configuredProcUnits"`
+					BorrowedProcUnits   []float64 `json:"borrowedProcUnits"`
 					ID                  int       `json:"id"`
 					Name                string    `json:"name"`
 				} `json:"sharedProcessorPool"`
@@ -50,14 +50,14 @@ type PCMData struct {
 					Headapters []struct {
 						DrcIndex      string `json:"drcIndex"`
 						PhysicalPorts []struct {
-							TransferredBytes []int  `json:"transferredBytes"`
-							ID               int    `json:"id"`
-							PhysicalLocation string `json:"physicalLocation"`
-							ReceivedPackets  []int  `json:"receivedPackets"`
-							SentPackets      []int  `json:"sentPackets"`
-							DroppedPackets   []int  `json:"droppedPackets"`
-							SentBytes        []int  `json:"sentBytes"`
-							ReceivedBytes    []int  `json:"receivedBytes"`
+							TransferredBytes []float64 `json:"transferredBytes"`
+							ID               int       `json:"id"`
+							PhysicalLocation string    `json:"physicalLocation"`
+							ReceivedPackets  []float64 `json:"receivedPackets"`
+							SentPackets      []float64 `json:"sentPackets"`
+							DroppedPackets   []float64 `json:"droppedPackets"`
+							SentBytes        []float64 `json:"sentBytes"`
+							ReceivedBytes    []float64 `json:"receivedBytes"`
 						} `json:"physicalPorts"`
 					} `json:"headapters"`
 				} `json:"network"`
@@ -76,13 +76,13 @@ type PCMData struct {
 					Weight                    int       `json:"weight"`
 					Mode                      string    `json:"mode"`
 					MaxVirtualProcessors      []int     `json:"maxVirtualProcessors"`
-					MaxProcUnits              []int     `json:"maxProcUnits"`
-					EntitledProcUnits         []int     `json:"entitledProcUnits"`
+					MaxProcUnits              []float64 `json:"maxProcUnits"`
+					EntitledProcUnits         []float64 `json:"entitledProcUnits"`
 					UtilizedProcUnits         []float64 `json:"utilizedProcUnits"`
 					UtilizedCappedProcUnits   []float64 `json:"utilizedCappedProcUnits"`
 					UtilizedUncappedProcUnits []float64 `json:"utilizedUncappedProcUnits"`
 					IdleProcUnits             []float64 `json:"idleProcUnits"`
-					DonatedProcUnits          []int     `json:"donatedProcUnits"`
+					DonatedProcUnits          []float64 `json:"donatedProcUnits"`
 				} `json:"processor"`
 				Network struct {
 					GenericAdapters []struct {
@@ -92,7 +92,7 @@ type PCMData struct {
 						PhysicalLocation string    `json:"physicalLocation"`
 						ReceivedPackets  []float64 `json:"receivedPackets"`
 						SentPackets      []float64 `json:"sentPackets"`
-						DroppedPackets   []int     `json:"droppedPackets"`
+						DroppedPackets   []float64 `json:"droppedPackets"`
 						SentBytes        []float64 `json:"sentBytes"`
 						ReceivedBytes    []float64 `json:"receivedBytes"`
 					} `json:"genericAdapters"`
@@ -103,7 +103,7 @@ type PCMData struct {
 						PhysicalLocation string    `json:"physicalLocation"`
 						ReceivedPackets  []float64 `json:"receivedPackets"`
 						SentPackets      []float64 `json:"sentPackets"`
-						DroppedPackets   []int     `json:"droppedPackets"`
+						DroppedPackets   []float64 `json:"droppedPackets"`
 						SentBytes        []float64 `json:"sentBytes"`
 						ReceivedBytes    []float64 `json:"receivedBytes"`
 						BridgedAdapters  []string  `json:"bridgedAdapters"`
@@ -115,45 +115,71 @@ type PCMData struct {
 						Type             string    `json:"type"`
 						ID               string    `json:"id"`
 						PhysicalLocation string    `json:"physicalLocation"`
-						NumOfReads       []int     `json:"numOfReads"`
+						NumOfReads       []float64 `json:"numOfReads"`
 						NumOfWrites      []float64 `json:"numOfWrites"`
-						ReadBytes        []int     `json:"readBytes"`
+						ReadBytes        []float64 `json:"readBytes"`
 						WriteBytes       []float64 `json:"writeBytes"`
 					} `json:"genericPhysicalAdapters"`
 					SharedStoragePools []struct {
-						TransmittedBytes []int  `json:"transmittedBytes"`
-						ID               string `json:"id"`
-						TotalSpace       []int  `json:"totalSpace"`
-						UsedSpace        []int  `json:"usedSpace"`
-						NumOfReads       []int  `json:"numOfReads"`
-						NumOfWrites      []int  `json:"numOfWrites"`
-						ReadBytes        []int  `json:"readBytes"`
-						WriteBytes       []int  `json:"writeBytes"`
+						TransmittedBytes []float64 `json:"transmittedBytes"`
+						ID               string    `json:"id"`
+						TotalSpace       []int     `json:"totalSpace"`
+						UsedSpace        []int     `json:"usedSpace"`
+						NumOfReads       []float64 `json:"numOfReads"`
+						NumOfWrites      []float64 `json:"numOfWrites"`
+						ReadBytes        []float64 `json:"readBytes"`
+						WriteBytes       []float64 `json:"writeBytes"`
 					} `json:"sharedStoragePools"`
 					FiberChannelAdapters []struct {
-						TransmittedBytes []int  `json:"transmittedBytes"`
-						Wwpn             string `json:"wwpn"`
-						PhysicalLocation string `json:"physicalLocation"`
-						NumOfPorts       int    `json:"numOfPorts"`
-						RunningSpeed     []int  `json:"runningSpeed"`
-						ID               string `json:"id"`
-						NumOfReads       []int  `json:"numOfReads"`
-						NumOfWrites      []int  `json:"numOfWrites"`
-						ReadBytes        []int  `json:"readBytes"`
-						WriteBytes       []int  `json:"writeBytes"`
+						TransmittedBytes []float64 `json:"transmittedBytes"`
+						Wwpn             string    `json:"wwpn"`
+						PhysicalLocation string    `json:"physicalLocation"`
+						NumOfPorts       int       `json:"numOfPorts"`
+						RunningSpeed     []int     `json:"runningSpeed"`
+						ID               string    `json:"id"`
+						NumOfReads       []float64 `json:"numOfReads"`
+						NumOfWrites      []float64 `json:"numOfWrites"`
+						ReadBytes        []float64 `json:"readBytes"`
+						WriteBytes       []float64 `json:"writeBytes"`
 					} `json:"fiberChannelAdapters"`
 					GenericVirtualAdapters []struct {
-						TransmittedBytes []int  `json:"transmittedBytes"`
-						Type             string `json:"type"`
-						ID               string `json:"id"`
-						PhysicalLocation string `json:"physicalLocation"`
-						NumOfReads       []int  `json:"numOfReads"`
-						NumOfWrites      []int  `json:"numOfWrites"`
-						ReadBytes        []int  `json:"readBytes"`
-						WriteBytes       []int  `json:"writeBytes"`
+						TransmittedBytes []float64 `json:"transmittedBytes"`
+						Type             string    `json:"type"`
+						ID               string    `json:"id"`
+						PhysicalLocation string    `json:"physicalLocation"`
+						NumOfReads       []float64 `json:"numOfReads"`
+						NumOfWrites      []float64 `json:"numOfWrites"`
+						ReadBytes        []float64 `json:"readBytes"`
+						WriteBytes       []float64 `json:"writeBytes"`
 					} `json:"genericVirtualAdapters"`
 				} `json:"storage"`
 			} `json:"viosUtil"`
+			LparsUtil []struct {
+				ID     int    `json:"id"`
+				Name   string `json:"name"`
+				Type   string `json:"type"`
+				Memory struct {
+					LogicalMem        []int `json:"logicalMem"`
+					BackedPhysicalMem []int `json:"backedPhysicalMem"`
+				} `json:"memory"`
+				Processor struct {
+					PoolID                      int       `json:"poolId"`
+					Weight                      int       `json:"weight"`
+					Mode                        string    `json:"mode"`
+					MaxVirtualProcessors        []float64 `json:"maxVirtualProcessors"`
+					MaxProcUnits                []float64 `json:"maxProcUnits"`
+					EntitledProcUnits           []float64 `json:"entitledProcUnits"`
+					UtilizedProcUnits           []float64 `json:"utilizedProcUnits"`
+					UtilizedCappedProcUnits     []float64 `json:"utilizedCappedProcUnits"`
+					UtilizedUncappedProcUnits   []float64 `json:"utilizedUncappedProcUnits"`
+					IdleProcUnits               []float64 `json:"idleProcUnits"`
+					DonatedProcUnits            []float64 `json:"donatedProcUnits"`
+					TimeSpentWaitingForDispatch []float64 `json:"timeSpentWaitingForDispatch"`
+					TimePerInstructionExecution []float64 `json:"timePerInstructionExecution"`
+				} `json:"processor"`
+				State string `json:"state"`
+				UUID  string `json:"uuid"`
+			} `json:"lparsUtil"`
 			SampleInfo struct {
 				TimeStamp string `json:"timeStamp"`
 				Status    int    `json:"status"`

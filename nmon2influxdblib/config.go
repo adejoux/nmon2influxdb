@@ -31,9 +31,9 @@ type Config struct {
 	GrafanaURL           string `toml:"grafana_URL"`
 	GrafanaAccess        string
 	GrafanaDatasource    string
-	HMCServer            string
-	HMCUser              string
-	HMCPassword          string
+	HMCServer            string `toml:"hmc_server"`
+	HMCUser              string `toml:"hmc_user"`
+	HMCPassword          string `toml:"hmc_password"`
 	HMCDatabase          string
 	HMCDataRetention     string
 	ImportSkipDisks      bool
