@@ -34,8 +34,9 @@ type Config struct {
 	HMCServer            string `toml:"hmc_server"`
 	HMCUser              string `toml:"hmc_user"`
 	HMCPassword          string `toml:"hmc_password"`
-	HMCDatabase          string
-	HMCDataRetention     string
+	HMCDatabase          string `toml:"hmc_database"`
+	HMCDataRetention     string `toml:"hmc_data_retention"`
+	HMCManagedSystem     string `toml:"hmc_managed_system"`
 	ImportSkipDisks      bool
 	ImportAllCpus        bool
 	ImportBuildDashboard bool
@@ -71,7 +72,6 @@ func InitConfig() Config {
 		InfluxdbServer:       "localhost",
 		InfluxdbPort:         "8086",
 		InfluxdbDatabase:     "nmon_reports",
-		HMCServer:            "",
 		HMCUser:              "hscroot",
 		HMCPassword:          "abc123",
 		HMCDatabase:          "nmon2influxdbHMC",
@@ -205,6 +205,7 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.HMCServer = c.String("hmc")
 	config.HMCUser = c.String("hmcuser")
 	config.HMCPassword = c.String("hmcpass")
+	config.HMCManagedSystem = c.String("managed_system")
 	config.InfluxdbServer = c.GlobalString("server")
 	config.InfluxdbUser = c.GlobalString("user")
 	config.InfluxdbPort = c.GlobalString("port")

@@ -29,10 +29,11 @@ const timeout = 30
 
 // HMC contains the base struct used by all the hmc sub command
 type HMC struct {
-	Session     *Session
-	InfluxDB    *influxdbclient.InfluxDB
-	GlobalPoint Point
-	Debug       bool
+	Session             *Session
+	InfluxDB            *influxdbclient.InfluxDB
+	GlobalPoint         Point
+	FilterManagedSystem string
+	Debug               bool
 }
 
 // Point is a struct to simplify InfluxDB point creation
@@ -58,6 +59,7 @@ func NewHMC(c *cli.Context) *HMC {
 	//getting databases connections
 	hmc.InfluxDB = config.GetDB("hmc")
 	hmc.Debug = config.Debug
+	hmc.FilterManagedSystem = config.HMCManagedSystem
 	hmcURL := fmt.Sprintf("https://"+"%s"+":12443", config.HMCServer)
 	//initialize new http session
 	hmc.Session = NewSession(config.HMCUser, config.HMCPassword, hmcURL)

@@ -212,6 +212,11 @@ func main() {
 							Usage: "hmc password",
 							Value: config.HMCPassword,
 						},
+						cli.StringFlag{
+							Name:  "managed_system,m",
+							Usage: "only import this managed system",
+							Value: config.HMCManagedSystem,
+						},
 					},
 				},
 			},

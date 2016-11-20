@@ -25,10 +25,17 @@ func Import(c *cli.Context) {
 	nmon2influxdblib.CheckError(GetSysErr)
 
 	for _, system := range systems {
+		if len(hmc.FilterManagedSystem) > 0 {
+			if hmc.FilterManagedSystem != system.Name {
+				fmt.Printf("Skipping system: %s\n", system.Name)
+				continue
+			}
+		}
+
 		//set parameters common to all points in GlobalPoint
 		hmc.GlobalPoint.Server = system.Name
-		fmt.Printf("MANAGED SYSTEM: %s\n", system.Name)
 
+		fmt.Printf("MANAGED SYSTEM: %s\n", system.Name)
 		pcmlinks, getPCMErr := hmc.GetSystemPCMLinks(system.UUID)
 		if getPCMErr != nil {
 			fmt.Printf("Error getting PCM data\n")
