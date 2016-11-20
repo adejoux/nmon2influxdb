@@ -38,18 +38,21 @@ type HMC struct {
 
 // Point is a struct to simplify InfluxDB point creation
 type Point struct {
-	Name             string
-	Server           string
-	Metric           string
-	Pool             string
-	Device           string
-	Partition        string
-	Type             string
-	WWPN             string
-	PhysicalPortWWPN string
-	ViosID           string
-	Value            interface{}
-	Timestamp        time.Time
+	Name                    string
+	Server                  string
+	Metric                  string
+	Pool                    string
+	Device                  string
+	Partition               string
+	Type                    string
+	WWPN                    string
+	PhysicalPortWWPN        string
+	ViosID                  string
+	VlanID                  string
+	VswitchID               string
+	SharedEthernetAdapterID string
+	Value                   interface{}
+	Timestamp               time.Time
 }
 
 //NewHMC return a new HMC struct and use the command line and config file parameters to intialize it.
@@ -109,9 +112,17 @@ func (hmc *HMC) AddPoint(point Point) {
 	}
 
 	if len(hmc.GlobalPoint.ViosID) > 0 {
-		tags["viosid"] = hmc.GlobalPoint.ViosID
+		tags["ViosID"] = hmc.GlobalPoint.ViosID
 	}
-
+	if len(hmc.GlobalPoint.VlanID) > 0 {
+		tags["VlanID"] = hmc.GlobalPoint.VlanID
+	}
+	if len(hmc.GlobalPoint.VswitchID) > 0 {
+		tags["VswitchID"] = hmc.GlobalPoint.VswitchID
+	}
+	if len(hmc.GlobalPoint.SharedEthernetAdapterID) > 0 {
+		tags["SEA"] = hmc.GlobalPoint.SharedEthernetAdapterID
+	}
 	if len(hmc.GlobalPoint.Partition) > 0 {
 		tags["partition"] = hmc.GlobalPoint.Partition
 	}

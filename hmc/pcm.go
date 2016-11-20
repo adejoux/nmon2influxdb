@@ -208,21 +208,22 @@ type PCMData struct {
 					VirtualEthernetAdapters []struct {
 						TransferredPhysicalBytes []float64 `json:"transferredPhysicalBytes"`
 						TransferredBytes         []float64 `json:"transferredBytes"`
-						Type                     string    `json:"type"`
-						ID                       string    `json:"id"`
-						VlanID                   int       `json:"vlanId"`
-						IsPortVlanID             bool      `json:"vlanId"`
 						PhysicalLocation         string    `json:"physicalLocation"`
+						VlanID                   int       `json:"vlanId"`
+						VswitchID                int       `json:"vswitchId"`
+						IsPortVlanID             bool      `json:"isPortVlanId"`
 						ReceivedPackets          []float64 `json:"receivedPackets"`
-						ReceivedPhysicalPackets  []float64 `json:"receivedPhysicalPackets"`
 						SentPackets              []float64 `json:"sentPackets"`
-						SentPhysicalPackets      []float64 `json:"sentPhysicalPackets"`
 						DroppedPackets           []float64 `json:"droppedPackets"`
-						DroppedPhysicalPackets   []float64 `json:"droppedPhysicalPackets"`
 						SentBytes                []float64 `json:"sentBytes"`
-						SentPhysicalBytes        []float64 `json:"sentPhysicalBytes"`
 						ReceivedBytes            []float64 `json:"receivedBytes"`
+						ReceivedPhysicalPackets  []float64 `json:"receivedPhysicalPackets"`
+						SentPhysicalPackets      []float64 `json:"sentPhysicalPackets"`
+						DroppedPhysicalPackets   []float64 `json:"droppedPhysicalPackets"`
+						SentPhysicalBytes        []float64 `json:"sentPhysicalBytes"`
 						ReceivedPhysicalBytes    []float64 `json:"receivedPhysicalBytes"`
+						ViosID                   int       `json:"viosId,omitempty"`
+						SharedEthernetAdapterID  string    `json:"sharedEthernetAdapterId,omitempty"`
 					} `json:"virtualEthernetAdapters"`
 				} `json:"network"`
 				State string `json:"state"`
