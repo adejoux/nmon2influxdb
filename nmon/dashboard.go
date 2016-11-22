@@ -6,7 +6,6 @@ package nmon
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -83,6 +82,10 @@ func DashboardTemplate(config *nmon2influxdblib.Config, file string) {
 		fmt.Printf("Cannot convert template !\n")
 		nmon2influxdblib.CheckError(err)
 	}
+	// if config.DashboardWriteFile {
+	// 	nmon2influxdblib.PrintPrettyJSON()
+	// 	return
+	// }
 	err = nmon.UploadDashboard(dashboard)
 	nmon2influxdblib.CheckError(err)
 	return
@@ -110,7 +113,8 @@ func (nmon *Nmon) WriteDashboard() {
 	// make a write buffer
 	writer := bufio.NewWriter(file)
 	b, _ := json.Marshal(dashboard)
-	r := bytes.NewReader(b)
+
+	r := nmon2influxdblib.GetPrettyJSON(b)
 	r.WriteTo(writer)
 	writer.Flush()
 

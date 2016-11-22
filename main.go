@@ -43,6 +43,15 @@ func main() {
 	if len(config.ImportSkipMetrics) > 0 {
 		os.Setenv("NMON2INFLUXDB_SKIP_METRICS", config.ImportSkipMetrics)
 	}
+
+	if len(config.HMCServer) > 0 {
+		os.Setenv("NMON2INFLUXDB_HMC_SERVER", config.HMCServer)
+	}
+
+	if len(config.ImportSkipMetrics) > 0 {
+		os.Setenv("NMON2INFLUXDB_HMC_USER", config.HMCServer)
+	}
+
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
@@ -195,26 +204,27 @@ func main() {
 			Subcommands: []cli.Command{
 				{
 					Name:   "import",
+					Usage:  "import HMC PCM data",
 					Action: hmc.Import,
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:  "hmc",
-							Usage: "hmc server",
-							Value: config.HMCServer,
+							Name:   "hmc",
+							Usage:  "HMC server",
+							EnvVar: "NMON2INFLUXDB_HMC_SERVER",
 						},
 						cli.StringFlag{
 							Name:  "hmcuser",
-							Usage: "hmc user",
+							Usage: "HMC user",
 							Value: config.HMCUser,
 						},
 						cli.StringFlag{
 							Name:  "hmcpass",
-							Usage: "hmc password",
+							Usage: "HMC password",
 							Value: config.HMCPassword,
 						},
 						cli.StringFlag{
 							Name:  "managed_system,m",
-							Usage: "only import this managed system",
+							Usage: "only import from this managed system",
 							Value: config.HMCManagedSystem,
 						},
 					},

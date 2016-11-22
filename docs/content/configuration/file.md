@@ -46,6 +46,14 @@ import_log_retention="1d"
 
 # dashboard
 dashboard_write_file = false
+
+# HMC parameters
+hmc_server="mylab"
+hmc_user="hscroot"
+hmc_password="abc123"
+hmc_managed_system="mysystem"
+hmc_database="nmon2influxdbHMC"
+hmc_data_retention="40d"
 {{< /highlight >}}
 
 # Additional parameters

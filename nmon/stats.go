@@ -1,4 +1,4 @@
-// nmon2influxdb
+// Package nmon provides wrapper on nmon reltaed commands
 // import nmon report in InfluxDB
 // author: adejoux@djouxtech.net
 package nmon

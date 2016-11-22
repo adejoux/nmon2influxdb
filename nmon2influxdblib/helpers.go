@@ -56,12 +56,17 @@ func PrintHTTPRequest(request *http.Request) {
 
 //PrintPrettyJSON helper used to display JSON output in a nicer way
 func PrintPrettyJSON(contents []byte) {
+	text := GetPrettyJSON(contents)
+	log.Println("output:", string(text.Bytes()))
+}
+
+//GetPrettyJSON returns pretty json string
+func GetPrettyJSON(contents []byte) bytes.Buffer {
 	var prettyJSON bytes.Buffer
 	error := json.Indent(&prettyJSON, contents, "", "\t")
 	if error != nil {
 		log.Println("JSON parse error: ", error)
-
 	}
 
-	log.Println("output:", string(prettyJSON.Bytes()))
+	return prettyJSON
 }

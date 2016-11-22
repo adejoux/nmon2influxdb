@@ -24,6 +24,7 @@ func Import(c *cli.Context) {
 
 	hmc := NewHMC(c)
 
+	fmt.Printf("Getting list of managed systems\n")
 	systems, GetSysErr := hmc.GetManagedSystems()
 	nmon2influxdblib.CheckError(GetSysErr)
 
@@ -201,6 +202,33 @@ func Import(c *cli.Context) {
 							hmc.GlobalPoint.SharedEthernetAdapterID = ""
 							hmc.GlobalPoint.ViosID = ""
 						}
+
+						for _, net := range lpar.Network.SriovLogicalPorts {
+							hmc.GlobalPoint.DrcIndex = net.DrcIndex
+							hmc.GlobalPoint.PhysicalLocation = net.PhysicalLocation
+							hmc.GlobalPoint.PhysicalDrcIndex = net.PhysicalDrcIndex
+							hmc.GlobalPoint.PhysicalPortID = strconv.Itoa(net.PhysicalPortID)
+							hmc.AddPoint(Point{Name: "PartitionSriovLogicalPorts",
+								Metric: "receivedPackets",
+								Value:  net.ReceivedPackets[0]})
+							hmc.AddPoint(Point{Name: "PartitionSriovLogicalPorts",
+								Metric: "sentPackets",
+								Value:  net.SentPackets[0]})
+							hmc.AddPoint(Point{Name: "PartitionSriovLogicalPorts",
+								Metric: "droppedPackets",
+								Value:  net.DroppedPackets[0]})
+							hmc.AddPoint(Point{Name: "PartitionSriovLogicalPorts",
+								Metric: "sentBytes",
+								Value:  net.SentBytes[0]})
+							hmc.AddPoint(Point{Name: "PartitionSriovLogicalPorts",
+								Metric: "ReceivedBytes",
+								Value:  net.ReceivedBytes[0]})
+
+							hmc.GlobalPoint.DrcIndex = ""
+							hmc.GlobalPoint.PhysicalLocation = ""
+							hmc.GlobalPoint.PhysicalDrcIndex = ""
+							hmc.GlobalPoint.PhysicalPortID = ""
+						}
 					}
 				}
 				fmt.Printf(" %d points\n", hmc.InfluxDB.PointsCount())
@@ -248,23 +276,20 @@ func Import(c *cli.Context) {
 				hmc.GlobalPoint.Pool = spp.Name
 				hmc.AddPoint(Point{Name: "SystemSharedProcessorPool",
 					Metric: "assignedProcUnits",
-					Value:  spp.AssignedProcUnits[0],
-					Pool:   spp.Name})
+					Value:  spp.AssignedProcUnits[0]})
 				hmc.AddPoint(Point{Name: "SystemSharedProcessorPool",
 					Metric: "utilizedProcUnits",
-					Pool:   spp.Name,
 					Value:  spp.UtilizedProcUnits[0]})
 				hmc.AddPoint(Point{Name: "SystemSharedProcessorPool",
 					Metric: "availableProcUnits",
-					Value:  spp.AvailableProcUnits[0],
-					Pool:   spp.Name})
+					Value:  spp.AvailableProcUnits[0]})
 				hmc.GlobalPoint.Pool = ""
 			}
 			for _, vios := range sample.ViosUtil {
 				hmc.GlobalPoint.Partition = vios.Name
 				for _, scsi := range vios.Storage.GenericPhysicalAdapters {
 					hmc.GlobalPoint.Device = scsi.ID
-					hmc.AddPoint(Point{Name: "genericPhysicalAdapters",
+					hmc.AddPoint(Point{Name: "SystemgenericPhysicalAdapters",
 						Metric: "transmittedBytes",
 						Value:  scsi.TransmittedBytes[0]})
 					hmc.AddPoint(Point{Name: "SystemGenericPhysicalAdapters",

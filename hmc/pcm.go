@@ -225,6 +225,22 @@ type PCMData struct {
 						ViosID                   int       `json:"viosId,omitempty"`
 						SharedEthernetAdapterID  string    `json:"sharedEthernetAdapterId,omitempty"`
 					} `json:"virtualEthernetAdapters"`
+					SriovLogicalPorts []struct {
+						DrcIndex         string    `json:"drcIndex"`
+						PhysicalLocation string    `json:"physicalLocation"`
+						PhysicalDrcIndex string    `json:"physicalDrcIndex"`
+						PhysicalPortID   int       `json:"physicalPortId"`
+						TransferredBytes []float64 `json:"transferredBytes"`
+						VlanID           int       `json:"vlanId"`
+						VswitchID        int       `json:"vswitchId"`
+						IsPortVlanID     bool      `json:"isPortVlanId"`
+						ReceivedPackets  []float64 `json:"receivedPackets"`
+						SentPackets      []float64 `json:"sentPackets"`
+						DroppedPackets   []float64 `json:"droppedPackets"`
+						SentBytes        []float64 `json:"sentBytes"`
+						ReceivedBytes    []float64 `json:"receivedBytes"`
+						ViosID           int       `json:"viosId,omitempty"`
+					} `json:"sriovLogicalPorts"`
 				} `json:"network"`
 				State string `json:"state"`
 				UUID  string `json:"uuid"`

@@ -51,6 +51,10 @@ type Point struct {
 	VlanID                  string
 	VswitchID               string
 	SharedEthernetAdapterID string
+	DrcIndex                string
+	PhysicalLocation        string
+	PhysicalDrcIndex        string
+	PhysicalPortID          string
 	Value                   interface{}
 	Timestamp               time.Time
 }
@@ -93,11 +97,11 @@ func (hmc *HMC) AddPoint(point Point) {
 
 	tags := map[string]string{"system": hmc.GlobalPoint.System, "name": point.Metric}
 	if len(hmc.GlobalPoint.Pool) > 0 {
-		tags["pool"] = point.Pool
+		tags["pool"] = hmc.GlobalPoint.Pool
 	}
 
 	if len(hmc.GlobalPoint.Type) > 0 {
-		tags["type"] = point.Type
+		tags["type"] = hmc.GlobalPoint.Type
 	}
 	if len(hmc.GlobalPoint.Device) > 0 {
 		tags["device"] = hmc.GlobalPoint.Device
