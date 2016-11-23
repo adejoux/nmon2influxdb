@@ -82,10 +82,7 @@ func DashboardTemplate(config *nmon2influxdblib.Config, file string) {
 		fmt.Printf("Cannot convert template !\n")
 		nmon2influxdblib.CheckError(err)
 	}
-	// if config.DashboardWriteFile {
-	// 	nmon2influxdblib.PrintPrettyJSON()
-	// 	return
-	// }
+
 	err = nmon.UploadDashboard(dashboard)
 	nmon2influxdblib.CheckError(err)
 	return

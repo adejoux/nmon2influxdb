@@ -234,11 +234,11 @@ func (s *Session) doLogon() {
 
 	response, err := s.client.Do(request)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("HMC error sending auth request: %v\n", err)
 	} else {
 		defer response.Body.Close()
 		if response.StatusCode != 200 {
-			log.Fatalf("Error status code: %d", response.StatusCode)
+			log.Fatalf("HMC authentication error: %s\n", response.Status)
 		}
 	}
 }
