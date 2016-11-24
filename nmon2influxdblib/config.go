@@ -37,6 +37,8 @@ type Config struct {
 	HMCDatabase          string `toml:"hmc_database"`
 	HMCDataRetention     string `toml:"hmc_data_retention"`
 	HMCManagedSystem     string `toml:"hmc_managed_system"`
+	HMCManagedSystemOnly bool   `toml:"hmc_managed_system_only"`
+	HMCSamples           int    `toml:"hmc_samples"`
 	ImportSkipDisks      bool
 	ImportAllCpus        bool
 	ImportBuildDashboard bool
@@ -206,6 +208,8 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.HMCUser = c.String("hmcuser")
 	config.HMCPassword = c.String("hmcpass")
 	config.HMCManagedSystem = c.String("managed_system")
+	config.HMCManagedSystemOnly = c.Bool("managed_system-only")
+	config.HMCSamples = c.Int("samples")
 	config.InfluxdbServer = c.GlobalString("server")
 	config.InfluxdbUser = c.GlobalString("user")
 	config.InfluxdbPort = c.GlobalString("port")

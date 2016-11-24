@@ -20,7 +20,7 @@ pygmentsUseClasses = true
 	repo_url = "https://github.com/adejoux/nmon2influxdb"
 	repo_id = "nmon2influxdb"
 
-	version = "2.0.0"
+	version = "2.0.1"
 	logo = "images/logo.png"
 	favicon = ""
 

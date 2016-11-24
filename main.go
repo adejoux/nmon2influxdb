@@ -55,7 +55,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "2.0.0"
+	app.Version = "2.0.1"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
@@ -226,6 +226,15 @@ func main() {
 							Name:  "managed_system,m",
 							Usage: "only import from this managed system",
 							Value: config.HMCManagedSystem,
+						},
+						cli.BoolFlag{
+							Name:  "managed_system-only,sys-only",
+							Usage: "skip partition metrics",
+						},
+						cli.IntFlag{
+							Name:  "samples",
+							Usage: "import latest <value> samples",
+							Value: config.HMCSamples,
 						},
 					},
 				},

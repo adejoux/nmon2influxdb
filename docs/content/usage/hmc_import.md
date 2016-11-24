@@ -20,6 +20,8 @@ OPTIONS:
    --hmcuser "hscroot"		hmc user
    --hmcpass "abc123"		hmc password
    --managed_system, -m 	only import this managed system
+   --managed_system-only, --sys-only	skip partition metrics
+   --samples "0"			import latest <value> samples
 {{< /highlight >}}
 
 # Parameters
@@ -28,6 +30,8 @@ OPTIONS:
   * **hmcuser**: HMC user to use for connection
   * **hmcpass**: add per cpu metrics
   * **managed_system**: fetch HMC PCM data only for this managed system
+  * **--sys-only**: skip partition metrics
+  * **--samples <value>**: fetch the latest <value> samples. Each sample is averaging 30 seconds.
 
 # Environment variables
 
@@ -48,6 +52,7 @@ hmc_password="abc123"
 hmc_managed_system="mysystem"
 hmc_database="nmon2influxdbHMC"
 hmc_data_retention="40d"
+hmc_samples=10
 {{< /highlight >}}
 
 It's possible to set all CLI parameters. It's also possible to change the InfluxDB database name with **hmc_database** and change the data retention with **hmc_data_retention**.
@@ -59,10 +64,21 @@ Loading HMC metrics from HMC **myhmc**:
 {{< highlight batch >}}
 nmon2influxdb hmc import
 Getting list of managed systems
-MANAGED SYSTEM: p750A
-partition powerVC: 2940 points
-MANAGED SYSTEM: p720-NIM_RETIRED
-Error getting PCM data
+
+p750A
+managed system                     p750A:     2673 points fetched.
+Partition           BCK_BCK DR #adxlpar2:     2916 points fetched.
+Partition               BCK DR #adxlpar2:     2916 points fetched.
+Partition                        powerVC:     2916 points fetched.
+
+POWER8-S824A
+managed system              POWER8-S824A:    59532 points fetched.
+Partition                       WM-SLES1:    17958 points fetched.
+Partition                 LV-PCM-Manager:     8398 points fetched.
+Partition                     PowerVC-LE:     7163 points fetched.
+Partition                   LVL-cluster2:     7163 points fetched.
+Partition                   lvl-cluster1:     7163 points fetched.
+Partition                       WM-SLES2:    18031 points fetched.
 {{< /highlight >}}
 
 Note: parameters can also be set in the configuration file **~/.nmon2influxdb.cfg**.
@@ -70,9 +86,16 @@ Note: parameters can also be set in the configuration file **~/.nmon2influxdb.cf
 Loading HMC metrics from HMC **myhmc** for system **mysystem** only:
 
 {{< highlight batch >}}
-nmon2influxdb hmc import -m p750A
+nmon2influxdb hmc import -m POWER8-S824A
+Fetching latest 2 hours performance metrics. See hmc_samples parameter.
 Getting list of managed systems
-MANAGED SYSTEM: p750A
-partition powerVC: 2940 points
-Skipping system: p720-NIM_RETIRED
+Skipping system: p750A
+POWER8-S824A
+managed system              POWER8-S824A:    59532 points fetched.
+Partition                       WM-SLES1:    17958 points fetched.
+Partition                 LV-PCM-Manager:     8398 points fetched.
+Partition                     PowerVC-LE:     7163 points fetched.
+Partition                   LVL-cluster2:     7163 points fetched.
+Partition                   lvl-cluster1:     7163 points fetched.
+Partition                       WM-SLES2:    18031 points fetched.
 {{< /highlight >}}

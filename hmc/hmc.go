@@ -34,6 +34,8 @@ type HMC struct {
 	GlobalPoint         Point
 	FilterManagedSystem string
 	Debug               bool
+	ManagedSystemOnly   bool
+	Samples             int
 }
 
 // Point is a struct to simplify InfluxDB point creation
@@ -68,6 +70,8 @@ func NewHMC(c *cli.Context) *HMC {
 
 	//getting databases connections
 	hmc.InfluxDB = config.GetDB("hmc")
+	hmc.ManagedSystemOnly = config.HMCManagedSystemOnly
+	hmc.Samples = config.HMCSamples
 	hmc.Debug = config.Debug
 	hmc.FilterManagedSystem = config.HMCManagedSystem
 	hmcURL := fmt.Sprintf("https://"+"%s"+":12443", config.HMCServer)
@@ -251,15 +255,24 @@ type PCMLinks struct {
 
 // GetSystemPCMLinks encapsulation function
 func (hmc *HMC) GetSystemPCMLinks(uuid string) (PCMLinks, error) {
-	pcmurl := hmc.Session.url + "/rest/api/pcm/ManagedSystem/" + uuid + "/ProcessedMetrics"
-	return hmc.Session.getPCMLinks(pcmurl, hmc.Debug)
+	var pcmURL string
+	if hmc.Samples > 0 {
+		pcmURL = fmt.Sprintf("%s/rest/api/pcm/ManagedSystem/%s/ProcessedMetrics?NoOfSamples=%d", hmc.Session.url, uuid, hmc.Samples)
+	} else {
+		pcmURL = hmc.Session.url + "/rest/api/pcm/ManagedSystem/" + uuid + "/ProcessedMetrics"
+	}
+	return hmc.Session.getPCMLinks(pcmURL, hmc.Debug)
 }
 
 // GetPartitionPCMLinks encapsulation function
 func (hmc *HMC) GetPartitionPCMLinks(link string) (PCMLinks, error) {
-	pcmurl := hmc.Session.url + link
-
-	return hmc.Session.getPCMLinks(pcmurl, hmc.Debug)
+	var pcmURL string
+	if hmc.Samples > 0 {
+		pcmURL = fmt.Sprintf("%s%s?NoOfSamples=%d", hmc.Session.url, link, hmc.Samples)
+	} else {
+		pcmURL = hmc.Session.url + link
+	}
+	return hmc.Session.getPCMLinks(pcmURL, hmc.Debug)
 }
 
 func (s *Session) getPCMLinks(link string, debug bool) (PCMLinks, error) {
