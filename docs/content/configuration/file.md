@@ -72,7 +72,7 @@ stats_host=""
 
 If you are always querying the same host or applying the same timeframe to your queries you can setup here this values.
 
-##data retention
+## data retention
 
 By default, data are kept indefinitely in InfluxDB. It's possible to change it to have data expiration.
 
@@ -85,3 +85,53 @@ This value is updated each time a import is done.
 All data older than what are specified in the retention policy are not kept.
 
 **Note:** it's the timestamp associated with data which matters. If you load data from one year ago and you have a retention policy of 30 days, you will not see the data.
+
+## custom tags
+
+Starting with version [2.1.0](/210_version_released), it's possible to add custom tags to your data by adding a input section in the configuration file:
+
+``` toml
+[[input]]
+  Measurement="PartitionProcessor"
+  Name="partition"
+  Match="adxlpar"
+  [[input.tag]]
+    Name="datacenter"
+    Value="DC1"
+```
+Custom tags are added at import time.
+It will add a tag named **datacenter** with value **DC1** if the tag **partition** in the measurement **PartitionProcessor** match the regular expression **adxlpar**.
+
+Attribute's description:
+
+  * **Measurement**: it's the measurement where an additional tag could be added
+  * **Name**: name of the tag to check
+  * **Match**: the regular expression used to check the tag value. No need to put the regular expression between '/' characters.
+
+It's possible to add multiple tags for the same data:
+
+
+``` toml
+[[input]]
+  Measurement="PartitionProcessor"
+  Name="partition"
+  Match="adxlpar"
+  [[input.tag]]
+    Name="datacenter"
+    Value="DC1"
+  [[input.tag]]
+    Name="group"
+    Value="adx"
+```
+
+If you want to match the exact name, use regular expression syntax (^ and $):
+
+``` toml
+[[input]]
+  Measurement="PartitionProcessor"
+  Name="partition"
+  Match="^adxlpar1$"
+  [[input.tag]]
+    Name="datacenter"
+    Value="DC1"
+```

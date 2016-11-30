@@ -20,6 +20,7 @@ import (
 // Nmon structure used to manage nmon files
 type Nmon struct {
 	Hostname    string
+	Serial      string
 	OS          string
 	TimeStamps  map[string]string
 	TextContent string
@@ -29,6 +30,7 @@ type Nmon struct {
 	starttime   time.Time
 	stoptime    time.Time
 	Location    *time.Location
+	TagParsers  nmon2influxdblib.TagParsers
 }
 
 // DataSerie structure contains the columns and points to insert in InfluxDB
@@ -139,6 +141,12 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 		if hostRegexp.MatchString(line) {
 			matched := hostRegexp.FindStringSubmatch(line)
 			nmon.Hostname = strings.ToLower(matched[1])
+			continue
+		}
+
+		if serialRegexp.MatchString(line) {
+			matched := serialRegexp.FindStringSubmatch(line)
+			nmon.Serial = strings.ToLower(matched[1])
 			continue
 		}
 

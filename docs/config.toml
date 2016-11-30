@@ -3,6 +3,7 @@ title = "nmon2influxdb"
 theme = "darkdoc"
 metadataformat = "yaml"
 pygmentsUseClasses = true
+PygmentsCodeFences = true
 
 [params]
 	# General information

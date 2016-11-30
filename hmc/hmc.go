@@ -36,6 +36,7 @@ type HMC struct {
 	Debug               bool
 	ManagedSystemOnly   bool
 	Samples             int
+	TagParsers          nmon2influxdblib.TagParsers
 }
 
 // Point is a struct to simplify InfluxDB point creation
@@ -74,6 +75,11 @@ func NewHMC(c *cli.Context) *HMC {
 	hmc.Samples = config.HMCSamples
 	hmc.Debug = config.Debug
 	hmc.FilterManagedSystem = config.HMCManagedSystem
+
+	if len(config.Inputs) > 0 {
+		//Build tag parsing
+		hmc.TagParsers = nmon2influxdblib.ParseInputs(config.Inputs)
+	}
 	hmcURL := fmt.Sprintf("https://"+"%s"+":12443", config.HMCServer)
 	//initialize new http session
 	hmc.Session = NewSession(config.HMCUser, config.HMCPassword, hmcURL)
@@ -135,6 +141,17 @@ func (hmc *HMC) AddPoint(point Point) {
 		tags["partition"] = hmc.GlobalPoint.Partition
 	}
 	field := map[string]interface{}{"value": value}
+
+	// Checking additional tagging
+	for key, value := range tags {
+		if _, ok := hmc.TagParsers[point.Name][key]; ok {
+			for _, tagParser := range hmc.TagParsers[point.Name][key] {
+				if tagParser.Regexp.MatchString(value) {
+					tags[tagParser.Name] = tagParser.Value
+				}
+			}
+		}
+	}
 	hmc.InfluxDB.AddPoint(point.Name, hmc.GlobalPoint.Timestamp, field, tags)
 }
 

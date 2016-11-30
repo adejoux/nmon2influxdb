@@ -59,6 +59,18 @@ type Config struct {
 	Metric               string `toml:"metric,omitempty"`
 	ListFilter           string `toml:",omitempty"`
 	ListHost             string `toml:",omitempty"`
+	Inputs               Inputs `toml:"input,omitempty"`
+}
+
+// Inputs allows to put multiple input in the configuration file
+type Inputs []Input
+
+// Input specify how to apply new filters
+type Input struct {
+	Measurement string
+	Name        string
+	Match       string
+	Tags        Tags `toml:"tag"`
 }
 
 // InitConfig setup initial configuration with sane values
@@ -157,9 +169,9 @@ func (config *Config) LoadCfgFile() {
 	}
 
 	if err := toml.Unmarshal(buf, &config); err != nil {
-		CheckError(err)
+		fmt.Printf("syntax error in configuration file: %s \n", err.Error())
+		os.Exit(1)
 	}
-
 }
 
 // AddDashboardParams initialize default parameters for dashboard
@@ -256,6 +268,7 @@ func (config *Config) GetDB(dbType string) *influxdbclient.InfluxDB {
 	influxdb := config.ConnectDB(db)
 
 	if exist, _ := influxdb.ExistDB(db); exist != true {
+		fmt.Printf("Creating InfluxDB database %s\n", db)
 		_, createErr := influxdb.CreateDB(db)
 		CheckError(createErr)
 	}
@@ -265,6 +278,7 @@ func (config *Config) GetDB(dbType string) *influxdbclient.InfluxDB {
 		// Get default retention policy name
 		policyName, policyErr := influxdb.GetDefaultRetentionPolicy()
 		CheckError(policyErr)
+		fmt.Printf("Updating  %s retention policy to keep only the last %s days. Timestamp based.\n", policyName, retention)
 		_, err := influxdb.UpdateRetentionPolicy(policyName, retention, true)
 		CheckError(err)
 	}

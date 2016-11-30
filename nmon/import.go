@@ -19,6 +19,7 @@ import (
 )
 
 var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
+var serialRegexp = regexp.MustCompile(`^AAA,SerialNumber,(\S+)`)
 var osRegexp = regexp.MustCompile(`^AAA,.*(Linux|AIX)`)
 var timeRegexp = regexp.MustCompile(`^ZZZZ,([^,]+),(.*)$`)
 var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
@@ -51,19 +52,25 @@ func Import(c *cli.Context) {
 	nmonFiles := new(nmon2influxdblib.Files)
 	nmonFiles.Parse(c.Args(), config.ImportSSHUser, config.ImportSSHKey)
 
+	tagParsers := nmon2influxdblib.ParseInputs(config.Inputs)
+
+	var userSkipRegexp *regexp.Regexp
+	if len(config.ImportSkipMetrics) > 0 {
+		skipped := strings.Replace(config.ImportSkipMetrics, ",", "|", -1)
+		userSkipRegexp = regexp.MustCompile(skipped)
+	}
+
 	for _, nmonFile := range nmonFiles.Valid() {
 		var count int64
 		count = 0
 		nmon := InitNmon(config, nmonFile)
 
-		lines := nmonFile.Content()
-
-		var userSkipRegexp *regexp.Regexp
-
-		if len(config.ImportSkipMetrics) > 0 {
-			skipped := strings.Replace(config.ImportSkipMetrics, ",", "|", -1)
-			userSkipRegexp = regexp.MustCompile(skipped)
+		if len(config.Inputs) > 0 {
+			//Build tag parsing
+			nmon.TagParsers = tagParsers
 		}
+
+		lines := nmonFile.Content()
 
 		var last string
 		filters := new(influxdbclient.Filters)
@@ -156,9 +163,19 @@ func Import(c *cli.Context) {
 						measurement = nameRegexp.ReplaceAllString(name, "")
 					}
 
+					// Checking additional tagging
+					for key, value := range tags {
+						if _, ok := nmon.TagParsers[measurement][key]; ok {
+							for _, tagParser := range nmon.TagParsers[measurement][key] {
+								if tagParser.Regexp.MatchString(value) {
+									tags[tagParser.Name] = tagParser.Value
+								}
+							}
+						}
+					}
 					influxdb.AddPoint(measurement, timestamp, field, tags)
 
-					if influxdb.PointsCount() == 10000 {
+					if influxdb.PointsCount() == 5000 {
 						err = influxdb.WritePoints()
 						nmon2influxdblib.CheckError(err)
 						count += influxdb.PointsCount()
@@ -203,6 +220,10 @@ func Import(c *cli.Context) {
 					}
 
 					tags := map[string]string{"host": nmon.Hostname, "name": column, "pid": elems[1], "command": elems[13], "wlm": wlmclass}
+
+					if len(nmon.Serial) > 0 {
+						tags["serial"] = nmon.Serial
+					}
 
 					// try to convert string to integer
 					converted, parseErr := strconv.ParseFloat(value, 64)
