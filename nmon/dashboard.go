@@ -421,7 +421,7 @@ func (nmon *Nmon) GenerateAixDashboard() grafanaclient.Dashboard {
 	panels = new(Panels)
 	panels.Add(&Panel{Host: host,
 		Title:          "Disk %Busy",
-		Measurement:    "DISKRIO",
+		Measurement:    "DISKBUSY",
 		Group:          []string{"name"},
 		Stack:          false,
 		LeftYAxisLabel: "%"})
