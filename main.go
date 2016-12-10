@@ -6,6 +6,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/adejoux/nmon2influxdb/hmc"
@@ -17,7 +18,8 @@ import (
 func main() {
 	config := nmon2influxdblib.InitConfig()
 
-	config.LoadCfgFile()
+	cfgfile := config.LoadCfgFile()
+	fmt.Printf("Using configuration file %s\n", cfgfile)
 
 	// cannot set values directly for boolean flags
 	if config.DashboardWriteFile {
@@ -55,7 +57,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "2.1.0"
+	app.Version = "2.1.1"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",

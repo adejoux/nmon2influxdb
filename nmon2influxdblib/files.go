@@ -222,7 +222,7 @@ type SSHConfig struct {
 func InitSFTP(sshUser string, host string, key string) *sftp.Client {
 	var auths []ssh.AuthMethod
 
-	if !IsNotFile(key) {
+	if IsFile(key) {
 		pemBytes, err := ioutil.ReadFile(key)
 		if err != nil {
 			log.Fatal(err)

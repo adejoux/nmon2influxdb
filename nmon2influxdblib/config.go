@@ -114,24 +114,29 @@ func InitConfig() Config {
 }
 
 //GetCfgFile returns the current configuration file path
-func GetCfgFile() (cfgfile string) {
+func GetCfgFile() string {
+	// if configuration file exist in /etc/nmon2influxdb. Stop here.
+	if IsFile("/etc/nmon2influxdb/nmon2influxdb.cfg") {
+		return "/etc/nmon2influxdb/nmon2influxdb.cfg"
+	}
+
 	currUser, _ := user.Current()
 	home := currUser.HomeDir
-	cfgfile = filepath.Join(home, ".nmon2influxdb.cfg")
-	return
+	homeCFGfile := filepath.Join(home, ".nmon2influxdb.cfg")
+	return homeCFGfile
 }
 
-//IsNotFile returns true if the file doesn't exist
-func IsNotFile(file string) bool {
+//IsFile returns true if the file doesn't exist
+func IsFile(file string) bool {
 	stat, err := os.Stat(file)
 	if err != nil {
-		return true
-	}
-	if stat.Mode().IsRegular() {
 		return false
 	}
+	if stat.Mode().IsRegular() {
+		return true
+	}
 
-	return true
+	return false
 }
 
 //BuildCfgFile creates a default configuration file
@@ -149,10 +154,12 @@ func (config *Config) BuildCfgFile(cfgfile string) {
 }
 
 // LoadCfgFile loads current configuration file settings
-func (config *Config) LoadCfgFile() {
+func (config *Config) LoadCfgFile() (cfgfile string) {
 
-	cfgfile := GetCfgFile()
-	if IsNotFile(cfgfile) {
+	cfgfile = GetCfgFile()
+
+	//it would be only if no conf file exists. And it will build a configuration file in the home directory
+	if !IsFile(cfgfile) {
 		config.BuildCfgFile(cfgfile)
 	}
 
@@ -172,6 +179,7 @@ func (config *Config) LoadCfgFile() {
 		fmt.Printf("syntax error in configuration file: %s \n", err.Error())
 		os.Exit(1)
 	}
+	return
 }
 
 // AddDashboardParams initialize default parameters for dashboard

@@ -18,10 +18,7 @@ const timeFormat = "2006-01-02T15:04:05-0700"
 
 //Import is the entry point for subcommand hmc
 func Import(c *cli.Context) {
-	// parsing parameters
-	//config := nmon2influxdblib.ParseParameters(c)
 	//new hmc session
-
 	hmc := NewHMC(c)
 
 	if hmc.Samples > 0 {
