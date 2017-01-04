@@ -59,7 +59,7 @@ type Config struct {
 	Metric               string `toml:"metric,omitempty"`
 	ListFilter           string `toml:",omitempty"`
 	ListHost             string `toml:",omitempty"`
-	Inputs               Inputs `toml:"input,omitempty"`
+	Inputs               Inputs `toml:"input"`
 }
 
 // Inputs allows to put multiple input in the configuration file
