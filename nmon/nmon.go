@@ -85,6 +85,10 @@ func (nmon *Nmon) GetTimeStamp(label string) (timeStamp string, err error) {
 func InitNmonTemplate(config *nmon2influxdblib.Config) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Config = config
+  if config.Debug {
+    fmt.Printf("configuration: %+v\n", config)
+  }
+
 	nmon.SetLocation(config.Timezone)
 	return
 }
@@ -93,6 +97,10 @@ func InitNmonTemplate(config *nmon2influxdblib.Config) (nmon *Nmon) {
 func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Config = config
+	if config.Debug {
+		fmt.Printf("configuration: %+v\n", config)
+	}
+
 	nmon.SetLocation(config.Timezone)
 	nmon.Debug = config.Debug
 
@@ -186,7 +194,7 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 			}
 
 			if config.Debug == true {
-				fmt.Printf("ADDING serie %s\n", name)
+				fmt.Printf("Adding serie %s\n", name)
 			}
 
 			dataserie := nmon.DataSeries[name]

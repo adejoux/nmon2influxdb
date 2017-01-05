@@ -69,6 +69,10 @@ func NewHMC(c *cli.Context) *HMC {
 	// parsing parameters
 	config := nmon2influxdblib.ParseParameters(c)
 
+	if config.Debug {
+		fmt.Printf("configuration: %+v\n", config)
+	}
+
 	//getting databases connections
 	hmc.InfluxDB = config.GetDB("hmc")
 	hmc.ManagedSystemOnly = config.HMCManagedSystemOnly
@@ -294,7 +298,7 @@ func (hmc *HMC) GetPartitionPCMLinks(link string) (PCMLinks, error) {
 
 func (s *Session) getPCMLinks(link string, debug bool) (PCMLinks, error) {
 	if debug {
-		fmt.Println(link)
+		fmt.Printf("getPCMLinks link: %s\n", link)
 	}
 	var pcmlinks PCMLinks
 	request, _ := http.NewRequest("GET", link, nil)
@@ -302,6 +306,7 @@ func (s *Session) getPCMLinks(link string, debug bool) (PCMLinks, error) {
 	request.Header.Set("Accept", "*/*;q=0.8")
 
 	if debug {
+		fmt.Printf("getPCMLinks HTTP request: ")
 		nmon2influxdblib.PrintHTTPRequest(request)
 	}
 	response, requestErr := s.client.Do(request)
@@ -310,13 +315,13 @@ func (s *Session) getPCMLinks(link string, debug bool) (PCMLinks, error) {
 	}
 	defer response.Body.Close()
 
-	if debug {
-		nmon2influxdblib.PrintHTTPResponse(response)
-	}
-
 	if response.StatusCode != 200 {
 		errorMessage := fmt.Sprintf("Error getting PCM informations. status code: %d", response.StatusCode)
 		statusErr := errors.New(errorMessage)
+		if debug {
+			fmt.Printf("getPCMLinks HTTP response: ")
+			nmon2influxdblib.PrintHTTPResponse(response)
+		}
 		return pcmlinks, statusErr
 	}
 
@@ -357,7 +362,7 @@ func (s *Session) getPCMData(rawurl string, debug bool) (PCMData, error) {
 	u, _ := url.Parse(rawurl)
 	pcmurl := s.url + u.Path
 	if debug {
-		fmt.Println(pcmurl)
+		fmt.Printf("getPCMData link:%s\n", pcmurl)
 	}
 	request, _ := http.NewRequest("GET", pcmurl, nil)
 
@@ -366,16 +371,18 @@ func (s *Session) getPCMData(rawurl string, debug bool) (PCMData, error) {
 		return data, err
 	}
 	defer response.Body.Close()
-	if debug {
-		nmon2influxdblib.PrintHTTPResponse(response)
-	}
 
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
+		if debug {
+			fmt.Printf("getPCMData response: ")
+			nmon2influxdblib.PrintHTTPResponse(response)
+		}
 		return data, err
 	}
 
 	if debug {
+		fmt.Printf("getPCMData JSON: ")
 		nmon2influxdblib.PrintPrettyJSON(contents)
 	}
 
