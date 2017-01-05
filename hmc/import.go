@@ -60,6 +60,12 @@ func Import(c *cli.Context) {
 			//Set timestamp common to all this points
 			hmc.GlobalPoint.Timestamp = timestamp
 
+			// if sample status equal 1 we have no data in this sample
+			if sample.SampleInfo.Status == 1 {
+				fmt.Printf("Skipping sample. Error in sample collection: %s\n", sample.SampleInfo.ErrorInfo[0].ErrMsg)
+				continue
+			}
+
 			hmc.AddPoint(Point{Name: "SystemProcessor",
 				Metric: "TotalProcUnits",
 				Value:  sample.ServerUtil.Processor.TotalProcUnits[0]})
@@ -259,6 +265,12 @@ func Import(c *cli.Context) {
 				nmon2influxdblib.CheckError(getErr)
 				fmt.Printf("Partition %30s:", lparData.SystemUtil.UtilSamples[0].LparsUtil[0].Name)
 				for _, sample := range lparData.SystemUtil.UtilSamples {
+					// if sample status equal 1 we have no data in this sample
+					if sample.SampleInfo.Status == 1 {
+						fmt.Printf("Skipping sample. Error in sample collection: %s\n", sample.SampleInfo.ErrorInfo[0].ErrMsg)
+						continue
+					}
+
 					timestamp, timeErr := time.Parse(timeFormat, sample.SampleInfo.TimeStamp)
 					nmon2influxdblib.CheckError(timeErr)
 					//Set timestamp common to all this points
