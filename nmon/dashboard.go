@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+        "path"
 
 	"github.com/adejoux/grafanaclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -49,13 +50,14 @@ func Dashboard(c *cli.Context) {
 
 //DashboardFile export dashboard to file
 func DashboardFile(config *nmon2influxdblib.Config, file string) {
-	nmonFile := nmon2influxdblib.File{Name: file, FileType: ".nmon"}
+	nmonFile := nmon2influxdblib.File{Name: file, FileType: path.Ext(file)}
 	nmon := InitNmon(config, nmonFile)
 	if config.DashboardWriteFile {
 		nmon.WriteDashboard()
 		return
 	}
 
+        fmt.Printf("%s\n\n", nmon.OS)
 	if nmon.OS != linux && nmon.OS != aix {
 		fmt.Printf("Error: unable to find if it's a Linux or AIX nmon file !\n")
 		os.Exit(1)
