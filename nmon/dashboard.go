@@ -57,7 +57,6 @@ func DashboardFile(config *nmon2influxdblib.Config, file string) {
 		return
 	}
 
-        fmt.Printf("%s\n\n", nmon.OS)
 	if nmon.OS != linux && nmon.OS != aix {
 		fmt.Printf("Error: unable to find if it's a Linux or AIX nmon file !\n")
 		os.Exit(1)
