@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+        "path"
 
 	"github.com/adejoux/grafanaclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -49,7 +50,7 @@ func Dashboard(c *cli.Context) {
 
 //DashboardFile export dashboard to file
 func DashboardFile(config *nmon2influxdblib.Config, file string) {
-	nmonFile := nmon2influxdblib.File{Name: file, FileType: ".nmon"}
+	nmonFile := nmon2influxdblib.File{Name: file, FileType: path.Ext(file)}
 	nmon := InitNmon(config, nmonFile)
 	if config.DashboardWriteFile {
 		nmon.WriteDashboard()
