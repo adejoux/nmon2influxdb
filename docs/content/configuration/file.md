@@ -15,6 +15,7 @@ It will allow to change default configuration value in command line. Command lin
 {{< highlight toml >}}
 # general
 debug = false
+debug_file=""
 timezone = "Europe/Paris"
 
 # influxdb
