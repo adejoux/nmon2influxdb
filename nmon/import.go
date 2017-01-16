@@ -6,6 +6,7 @@ package nmon
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"regexp"
@@ -61,6 +62,9 @@ func Import(c *cli.Context) {
 	}
 
 	for _, nmonFile := range nmonFiles.Valid() {
+
+		// store the list of metrics which was logged as skipped
+		LoggedSkippedMetrics := make(map[string]bool)
 		var count int64
 		count = 0
 		nmon := InitNmon(config, nmonFile)
@@ -120,7 +124,10 @@ func Import(c *cli.Context) {
 				if len(config.ImportSkipMetrics) > 0 {
 					if userSkipRegexp.MatchString(name) {
 						if nmon.Debug {
-							fmt.Printf("metric skipped : %s\n", name)
+							if !LoggedSkippedMetrics[name] {
+								log.Printf("metric skipped : %s\n", name)
+								LoggedSkippedMetrics[name] = true
+							}
 						}
 						continue
 					}
@@ -138,8 +145,8 @@ func Import(c *cli.Context) {
 				for i, value := range elems[2:] {
 					if len(nmon.DataSeries[name].Columns) < i+1 {
 						if nmon.Debug {
-							fmt.Printf(line)
-							fmt.Printf("Entry added position %d in serie %s since nmon start: skipped\n", i+1, name)
+							log.Printf(line)
+							log.Printf("Entry added position %d in serie %s since nmon start: skipped\n", i+1, name)
 						}
 						continue
 					}
@@ -192,7 +199,10 @@ func Import(c *cli.Context) {
 				if len(config.ImportSkipMetrics) > 0 {
 					if userSkipRegexp.MatchString(name) {
 						if nmon.Debug {
-							fmt.Printf("metric skipped : %s\n", name)
+							if !LoggedSkippedMetrics[name] {
+								log.Printf("metric skipped : %s\n", name)
+								LoggedSkippedMetrics[name] = true
+							}
 						}
 						continue
 					}
@@ -204,8 +214,8 @@ func Import(c *cli.Context) {
 				nmon2influxdblib.CheckError(convErr)
 
 				if len(elems) < 14 {
-					fmt.Printf("error TOP import:")
-					fmt.Println(elems)
+					log.Printf("error TOP import:")
+					log.Println(elems)
 					continue
 				}
 

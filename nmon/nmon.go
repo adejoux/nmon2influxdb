@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -85,9 +86,9 @@ func (nmon *Nmon) GetTimeStamp(label string) (timeStamp string, err error) {
 func InitNmonTemplate(config *nmon2influxdblib.Config) (nmon *Nmon) {
 	nmon = NewNmon()
 	nmon.Config = config
-  if config.Debug {
-    fmt.Printf("configuration: %+v\n", config)
-  }
+	if config.Debug {
+		log.Printf("configuration: %+v\n", config.Sanitized())
+	}
 
 	nmon.SetLocation(config.Timezone)
 	return
@@ -98,7 +99,7 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 	nmon = NewNmon()
 	nmon.Config = config
 	if config.Debug {
-		fmt.Printf("configuration: %+v\n", config)
+		log.Printf("configuration: %+v\n", config.Sanitized())
 	}
 
 	nmon.SetLocation(config.Timezone)
@@ -182,7 +183,7 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 
 			if len(elems) < 3 {
 				if config.Debug == true {
-					fmt.Printf("ERROR: parsing the following line : %s\n", line)
+					log.Printf("ERROR: parsing the following line : %s\n", line)
 				}
 				continue
 			}
@@ -194,7 +195,7 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 			}
 
 			if config.Debug == true {
-				fmt.Printf("Adding serie %s\n", name)
+				log.Printf("Adding serie %s\n", name)
 			}
 
 			dataserie := nmon.DataSeries[name]

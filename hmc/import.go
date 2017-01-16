@@ -5,9 +5,10 @@
 package hmc
 
 import (
-	"fmt"
+	"log"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -22,19 +23,19 @@ func Import(c *cli.Context) {
 	hmc := NewHMC(c)
 
 	if hmc.Samples > 0 {
-		fmt.Printf("Fetching %d latest samples. 30 seconds interval.\n", hmc.Samples)
+		log.Printf("Fetching %d latest samples. 30 seconds interval.\n", hmc.Samples)
 	} else {
-		fmt.Printf("Fetching latest 2 hours performance metrics. See hmc_samples parameter.\n")
+		log.Printf("Fetching latest 2 hours performance metrics. See hmc_samples parameter.\n")
 	}
 
-	fmt.Printf("Getting list of managed systems\n")
+	log.Printf("Getting list of managed systems\n")
 	systems, GetSysErr := hmc.GetManagedSystems()
 	nmon2influxdblib.CheckError(GetSysErr)
 
 	for _, system := range systems {
 		if len(hmc.FilterManagedSystem) > 0 {
 			if hmc.FilterManagedSystem != system.Name {
-				fmt.Printf("\nSkipping system: %s\n", system.Name)
+				log.Printf("\nSkipping system: %s\n", system.Name)
 				continue
 			}
 		}
@@ -42,10 +43,10 @@ func Import(c *cli.Context) {
 		//set parameters common to all points in GlobalPoint
 		hmc.GlobalPoint.System = system.Name
 
-		fmt.Printf("\n%s\n", system.Name)
+		log.Printf("MANAGED SYSTEM %s\n", strings.ToUpper(system.Name))
 		pcmlinks, getPCMErr := hmc.GetSystemPCMLinks(system.UUID)
 		if getPCMErr != nil {
-			fmt.Printf("Error getting PCM data\n")
+			log.Printf("Error getting PCM data\n")
 			continue
 		}
 
@@ -62,7 +63,7 @@ func Import(c *cli.Context) {
 
 			// if sample status equal 1 we have no data in this sample
 			if sample.SampleInfo.Status == 1 {
-				fmt.Printf("Skipping sample. Error in sample collection: %s\n", sample.SampleInfo.ErrorInfo[0].ErrMsg)
+				log.Printf("Skipping sample. Error in sample collection: %s\n", sample.SampleInfo.ErrorInfo[0].ErrMsg)
 				continue
 			}
 
@@ -241,7 +242,7 @@ func Import(c *cli.Context) {
 			}
 
 		}
-		fmt.Printf("managed system %25s: %8d points fetched.\n", system.Name, hmc.InfluxDB.PointsCount())
+		log.Printf("managed system metrics: %8d points fetched.\n", hmc.InfluxDB.PointsCount())
 		hmc.WritePoints()
 		if hmc.ManagedSystemOnly {
 			continue
@@ -254,8 +255,8 @@ func Import(c *cli.Context) {
 			var lparGetPCMErr error
 			lparLinks, lparGetPCMErr = hmc.GetPartitionPCMLinks(rawurl.Path)
 			if lparGetPCMErr != nil {
-				fmt.Println(lparGetPCMErr)
-				fmt.Printf("Error getting PCM data\n")
+				log.Println(lparGetPCMErr)
+				log.Printf("Error getting PCM data\n")
 				continue
 			}
 
@@ -263,11 +264,11 @@ func Import(c *cli.Context) {
 				hmc.GlobalPoint = Point{System: system.Name}
 				lparData, getErr := hmc.GetPCMData(lparLink)
 				nmon2influxdblib.CheckError(getErr)
-				fmt.Printf("Partition %30s:", lparData.SystemUtil.UtilSamples[0].LparsUtil[0].Name)
+
 				for _, sample := range lparData.SystemUtil.UtilSamples {
 					// if sample status equal 1 we have no data in this sample
 					if sample.SampleInfo.Status == 1 {
-						fmt.Printf("Skipping sample. Error in sample collection: %s\n", sample.SampleInfo.ErrorInfo[0].ErrMsg)
+						log.Printf("Skipping sample. Error in sample collection: %s\n", sample.SampleInfo.ErrorInfo[0].ErrMsg)
 						continue
 					}
 
@@ -437,7 +438,7 @@ func Import(c *cli.Context) {
 						}
 					}
 				}
-				fmt.Printf(" %8d points fetched.\n", hmc.InfluxDB.PointsCount())
+				log.Printf("Partition %25s: %8d points fetched.\n", lparData.SystemUtil.UtilSamples[0].LparsUtil[0].Name, hmc.InfluxDB.PointsCount())
 				hmc.WritePoints()
 			}
 		}

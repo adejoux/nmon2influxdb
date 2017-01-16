@@ -6,8 +6,8 @@ package nmon2influxdblib
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -17,9 +17,14 @@ import (
 	"github.com/naoina/toml"
 )
 
+//used for debug
+var secretUser = "secretuser"
+var secretPassword = "secret"
+
 // Config is the configuration structure used by nmon2influxdb
 type Config struct {
 	Debug                bool
+	DebugFile            string
 	Timezone             string
 	InfluxdbUser         string
 	InfluxdbPassword     string
@@ -89,6 +94,7 @@ func InitConfig() Config {
 		HMCUser:              "hscroot",
 		HMCPassword:          "abc123",
 		HMCDatabase:          "nmon2influxdbHMC",
+		HMCSamples:           10,
 		GrafanaUser:          "admin",
 		GrafanaPassword:      "admin",
 		GrafanaURL:           "http://localhost:3000",
@@ -150,7 +156,7 @@ func (config *Config) BuildCfgFile(cfgfile string) {
 	r := bytes.NewReader(b)
 	r.WriteTo(writer)
 	writer.Flush()
-	fmt.Printf("Generating default configuration file : %s\n", cfgfile)
+	log.Printf("Generating default configuration file : %s\n", cfgfile)
 }
 
 // LoadCfgFile loads current configuration file settings
@@ -165,7 +171,7 @@ func (config *Config) LoadCfgFile() (cfgfile string) {
 
 	file, err := os.Open(cfgfile)
 	if err != nil {
-		fmt.Printf("Error opening configuration file %s\n", cfgfile)
+		log.Printf("Error opening configuration file %s\n", cfgfile)
 		return
 	}
 
@@ -176,7 +182,7 @@ func (config *Config) LoadCfgFile() (cfgfile string) {
 	}
 
 	if err := toml.Unmarshal(buf, &config); err != nil {
-		fmt.Printf("syntax error in configuration file: %s \n", err.Error())
+		log.Printf("syntax error in configuration file: %s \n", err.Error())
 		os.Exit(1)
 	}
 	return
@@ -224,6 +230,7 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.GrafanaURL = c.String("gurl")
 	config.GrafanaDatasource = c.String("datasource")
 	config.Debug = c.GlobalBool("debug")
+	config.DebugFile = c.GlobalString("debug-file")
 	config.HMCServer = c.String("hmc")
 	config.HMCUser = c.String("hmcuser")
 	config.HMCPassword = c.String("hmcpass")
@@ -236,6 +243,22 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.InfluxdbDatabase = c.GlobalString("db")
 	config.InfluxdbPassword = c.GlobalString("pass")
 	config.Timezone = c.GlobalString("tz")
+
+	if len(config.DebugFile) > 0 {
+		//if a debug file is set. Debug is true
+		config.Debug = true
+
+		debugFile, err := os.OpenFile(config.DebugFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		// never closing the file here to be able to change the log output in all packages
+		// No better solution for now.
+		//		defer debugFile.Close()
+		log.SetOutput(debugFile)
+		log.Printf("NEW NMON2INFLUXDB EXECUTION\n")
+
+	}
 
 	if config.ImportBuildDashboard {
 		config.AddDashboardParams()
@@ -276,7 +299,7 @@ func (config *Config) GetDB(dbType string) *influxdbclient.InfluxDB {
 	influxdb := config.ConnectDB(db)
 
 	if exist, _ := influxdb.ExistDB(db); exist != true {
-		fmt.Printf("Creating InfluxDB database %s\n", db)
+		log.Printf("Creating InfluxDB database %s\n", db)
 		_, createErr := influxdb.CreateDB(db)
 		CheckError(createErr)
 	}
@@ -286,7 +309,7 @@ func (config *Config) GetDB(dbType string) *influxdbclient.InfluxDB {
 		// Get default retention policy name
 		policyName, policyErr := influxdb.GetDefaultRetentionPolicy()
 		CheckError(policyErr)
-		fmt.Printf("Updating  %s retention policy to keep only the last %s days. Timestamp based.\n", policyName, retention)
+		log.Printf("Updating  %s retention policy to keep only the last %s days. Timestamp based.\n", policyName, retention)
 		_, err := influxdb.UpdateRetentionPolicy(policyName, retention, true)
 		CheckError(err)
 	}
@@ -310,4 +333,16 @@ func (config *Config) GetLogDB() *influxdbclient.InfluxDB {
 		CheckError(err)
 	}
 	return influxdb
+}
+
+// Sanitized returns a copy of the config struct without the password. Used for debug
+func (config *Config) Sanitized() (debugConfig Config) {
+	debugConfig = *config
+	debugConfig.HMCUser = secretUser
+	debugConfig.HMCPassword = secretPassword
+	debugConfig.GrafanaUser = secretUser
+	debugConfig.GrafanaPassword = secretPassword
+	debugConfig.InfluxdbUser = secretUser
+	debugConfig.InfluxdbPassword = secretPassword
+	return
 }

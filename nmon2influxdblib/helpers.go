@@ -36,28 +36,28 @@ func ReplaceComma(s string) string {
 	return "<tr><td>" + strings.Replace(s, ",", "</td><td>", 1) + "</td></tr>"
 }
 
-//PrintHTTPResponse print raw http response for debugging purpose
-func PrintHTTPResponse(response *http.Response) {
+//SPrintHTTPResponse print raw http response for debugging purpose
+func SPrintHTTPResponse(response *http.Response) string {
 	responseDump, err := httputil.DumpResponse(response, true)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(responseDump))
+	return string(responseDump)
 }
 
-//PrintHTTPRequest print raw http request for debugging purpose
-func PrintHTTPRequest(request *http.Request) {
+//SPrintHTTPRequest print raw http request for debugging purpose
+func SPrintHTTPRequest(request *http.Request) string {
 	requestDump, err := httputil.DumpRequest(request, true)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	fmt.Println(string(requestDump))
+	return string(requestDump)
 }
 
-//PrintPrettyJSON helper used to display JSON output in a nicer way
-func PrintPrettyJSON(contents []byte) {
+//SPrintPrettyJSON helper used to display JSON output in a nicer way
+func SPrintPrettyJSON(contents []byte) string {
 	text := GetPrettyJSON(contents)
-	log.Println("output:", string(text.Bytes()))
+	return string(text.Bytes())
 }
 
 //GetPrettyJSON returns pretty json string
