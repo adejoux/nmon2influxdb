@@ -134,7 +134,9 @@ func Import(c *cli.Context) {
 				}
 
 				timeStr, getErr := nmon.GetTimeStamp(matched[1])
-				nmon2influxdblib.CheckError(getErr)
+				if getErr != nil {
+					continue
+				}
 				last = timeStr
 				timestamp, convErr := nmon.ConvertTimeStamp(timeStr)
 				nmon2influxdblib.CheckError(convErr)
@@ -209,7 +211,10 @@ func Import(c *cli.Context) {
 				}
 
 				timeStr, getErr := nmon.GetTimeStamp(matched[1])
-				nmon2influxdblib.CheckError(getErr)
+				if getErr != nil {
+					continue
+				}
+				
 				timestamp, convErr := nmon.ConvertTimeStamp(timeStr)
 				nmon2influxdblib.CheckError(convErr)
 
