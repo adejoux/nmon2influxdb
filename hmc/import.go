@@ -50,6 +50,58 @@ func Import(c *cli.Context) {
 			continue
 		}
 
+		// Get Managed System Energy PCM metrics
+		energyData, energyErr := hmc.GetEnergyPCMData(pcmlinks.System)
+		nmon2influxdblib.CheckError(energyErr)
+
+		for _, sample := range energyData.SystemUtil.UtilSamples {
+			//
+			// Process Power metrics
+			//
+			timestamp, timeErr := time.Parse(timeFormat, sample.SampleInfo.TimeStamp)
+			nmon2influxdblib.CheckError(timeErr)
+
+			//Set timestamp common to all this points
+			hmc.GlobalPoint.Timestamp = timestamp
+
+			// if sample status equal 1 we have no data in this sample
+			if sample.SampleInfo.Status == 1 {
+				log.Printf("Skipping sample. Error in sample collection: %s\n", sample.SampleInfo.ErrorInfo[0].ErrMsg)
+				continue
+			}
+
+			hmc.AddPoint(Point{Name: "PowerReading",
+				Metric: "powerUtil",
+				Value:  sample.EnergyUtil.PowerUtil.PowerReading[0]})
+
+			for _, baseboardTemperature := range sample.EnergyUtil.ThermalUtil.BaseboardTemperatures {
+				hmc.AddPoint(Point{Name: "TemperatureReading",
+					Metric:     "baseboardTemperature",
+					Instance:   baseboardTemperature.EntityInstance,
+					InstanceID: baseboardTemperature.EntityID,
+					Value:      baseboardTemperature.TemperatureReading})
+			}
+
+			for _, cpuTemperature := range sample.EnergyUtil.ThermalUtil.CPUTemperatures {
+				hmc.AddPoint(Point{Name: "TemperatureReading",
+					Metric:     "cpuTemperature",
+					Instance:   cpuTemperature.EntityInstance,
+					InstanceID: cpuTemperature.EntityID,
+					Value:      cpuTemperature.TemperatureReading})
+			}
+
+			for _, inletTemperature := range sample.EnergyUtil.ThermalUtil.InletTemperatures {
+				hmc.AddPoint(Point{Name: "TemperatureReading",
+					Metric:     "inletTemperature",
+					Instance:   inletTemperature.EntityInstance,
+					InstanceID: inletTemperature.EntityID,
+					Value:      inletTemperature.TemperatureReading})
+			}
+
+			log.Printf("managed system Energy metrics: %8d points fetched.\n", hmc.InfluxDB.PointsCount())
+			hmc.WritePoints()
+		}
+
 		// Get Managed System PCM metrics
 		data, err := hmc.GetPCMData(pcmlinks.System)
 		nmon2influxdblib.CheckError(err)

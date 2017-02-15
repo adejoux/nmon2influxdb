@@ -58,6 +58,8 @@ type Point struct {
 	PhysicalLocation        string
 	PhysicalDrcIndex        string
 	PhysicalPortID          string
+	Instance                string
+	InstanceID              string
 	Value                   interface{}
 	Timestamp               time.Time
 }
@@ -353,6 +355,12 @@ func (s *Session) getPCMLinks(link string, debug bool) (PCMLinks, error) {
 
 // GetPCMData encapsulation function
 func (hmc *HMC) GetPCMData(link string) (PCMData, error) {
+	return hmc.Session.getPCMData(link, hmc.Debug)
+}
+
+// GetEnergyPCMData encapsulation function
+func (hmc *HMC) GetEnergyPCMData(link string) (PCMData, error) {
+	link += "?type=Energy"
 	return hmc.Session.getPCMData(link, hmc.Debug)
 }
 

@@ -245,6 +245,28 @@ type PCMData struct {
 				State string `json:"state"`
 				UUID  string `json:"uuid"`
 			} `json:"lparsUtil"`
+			EnergyUtil struct {
+				PowerUtil struct {
+					PowerReading []int `json:"powerReading"`
+				} `json:"powerUtil"`
+				ThermalUtil struct {
+					BaseboardTemperatures []struct {
+						EntityID           string `json:"entityId"`
+						EntityInstance     string `json:"entityInstance"`
+						TemperatureReading []int  `json:"temperatureReading"`
+					} `json:"baseboardTemperatures"`
+					CPUTemperatures []struct {
+						EntityID           string `json:"entityId"`
+						EntityInstance     string `json:"entityInstance"`
+						TemperatureReading []int  `json:"temperatureReading"`
+					} `json:"cpuTemperatures"`
+					InletTemperatures []struct {
+						EntityID           string `json:"entityId"`
+						EntityInstance     string `json:"entityInstance"`
+						TemperatureReading []int  `json:"temperatureReading"`
+					} `json:"inletTemperatures"`
+				} `json:"thermalUtil"`
+			} `json:"energyUtil"`
 			SampleInfo struct {
 				TimeStamp string `json:"timeStamp"`
 				Status    int    `json:"status"`
