@@ -13,6 +13,17 @@ user/password: demo/demo
 
 It's a read only editor user. You can change anything but cannot save it.
 
+# Dashboards available on grafana.com
+
+Multiple ready-to-use dashboards are available on [grafana.com](https://grafana.com/adejoux)
+
+The following dashboards are available:
+
+  * [AIX NMON report](https://grafana.com/dashboards/1555)
+  * [AIX NMON Individual disks](https://grafana.com/dashboards/1701)
+  * [Power Systems HMC partition view](https://grafana.com/dashboards/1510)
+  * [Power Systems HMC system view](https://grafana.com/dashboards/1465)
+
 # Download
 
 Go to my [github repository Releases section](https://github.com/adejoux/nmon2influxdb/releases)

@@ -52,6 +52,12 @@ func main() {
 		os.Setenv("NMON2INFLUXDB_FORCE", "true")
 	}
 
+	if config.InfluxdbSecure {
+		os.Setenv("NMON2INFLUXDB_SECURE", "true")
+	}
+	if config.InfluxdbSkipCertCheck {
+		os.Setenv("NMON2INFLUXDB_SKIP_CERT_CHECK", "true")
+	}
 	if len(config.ImportSkipMetrics) > 0 {
 		os.Setenv("NMON2INFLUXDB_SKIP_METRICS", config.ImportSkipMetrics)
 	}
@@ -67,7 +73,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "2.1.3"
+	app.Version = "2.1.4"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
@@ -264,6 +270,16 @@ func main() {
 			Name:  "port,p",
 			Usage: "InfluxDB port",
 			Value: config.InfluxdbPort,
+		},
+		cli.BoolFlag{
+			Name:  "secure",
+			Usage: "use ssl for InfluxDB",
+			EnvVar: "NMON2INFLUXDB_SECURE",
+		},
+		cli.BoolFlag{
+			Name:  "skip_cert_check",
+			Usage: "skip cert check for ssl connzction to InfluxDB",
+			EnvVar: "NMON2INFLUXDB_SKIP_CERT_CHECK",
 		},
 		cli.StringFlag{
 			Name:  "db,d",

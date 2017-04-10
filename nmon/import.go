@@ -91,7 +91,7 @@ func Import(c *cli.Context) {
 		}
 		nmon2influxdblib.CheckError(err)
 
-		origChecksum, err := influxdbLog.ReadLastPoint("value", filters, "nmon2influxdblib.CheckErrorsum")
+		origChecksum, err := influxdbLog.ReadLastPoint("value", filters, "checksum")
 		nmon2influxdblib.CheckError(err)
 
 		ckfield := map[string]interface{}{"value": nmonFile.Checksum()}
@@ -214,7 +214,7 @@ func Import(c *cli.Context) {
 				if getErr != nil {
 					continue
 				}
-				
+
 				timestamp, convErr := nmon.ConvertTimeStamp(timeStr)
 				nmon2influxdblib.CheckError(convErr)
 

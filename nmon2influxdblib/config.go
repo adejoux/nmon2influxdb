@@ -30,6 +30,8 @@ type Config struct {
 	InfluxdbPassword     string
 	InfluxdbServer       string
 	InfluxdbPort         string
+	InfluxdbSecure 			 bool
+	InfluxdbSkipCertCheck bool
 	InfluxdbDatabase     string
 	GrafanaUser          string
 	GrafanaPassword      string
@@ -91,6 +93,8 @@ func InitConfig() Config {
 		InfluxdbServer:       "localhost",
 		InfluxdbPort:         "8086",
 		InfluxdbDatabase:     "nmon_reports",
+		InfluxdbSecure: 			false,
+		InfluxdbSkipCertCheck:  false,
 		HMCUser:              "hscroot",
 		HMCPassword:          "abc123",
 		HMCDatabase:          "nmon2influxdbHMC",
@@ -241,6 +245,8 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.InfluxdbUser = c.GlobalString("user")
 	config.InfluxdbPort = c.GlobalString("port")
 	config.InfluxdbDatabase = c.GlobalString("db")
+	config.InfluxdbSecure = c.GlobalBool("secure")
+	config.InfluxdbSkipCertCheck = c.GlobalBool("skip_cert_check")
 	config.InfluxdbPassword = c.GlobalString("pass")
 	config.Timezone = c.GlobalString("tz")
 
@@ -277,8 +283,9 @@ func (config *Config) ConnectDB(db string) *influxdbclient.InfluxDB {
 		User:     config.InfluxdbUser,
 		Pass:     config.InfluxdbPassword,
 		Debug:    config.Debug,
+		Secure:   config.InfluxdbSecure,
+		SkipCertCheck: config.InfluxdbSkipCertCheck,
 	}
-
 	influxdb, err := influxdbclient.NewInfluxDB(influxdbConfig)
 	CheckError(err)
 
