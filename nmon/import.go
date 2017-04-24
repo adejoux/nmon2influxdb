@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"math"
 
 	"github.com/adejoux/influxdbclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -157,7 +158,7 @@ func Import(c *cli.Context) {
 
 					// try to convert string to integer
 					converted, parseErr := strconv.ParseFloat(value, 64)
-					if parseErr != nil {
+					if (parseErr != nil || math.IsNaN(converted)) {
 						//if not working, skip to next value. We don't want text values in InfluxDB.
 						continue
 					}
