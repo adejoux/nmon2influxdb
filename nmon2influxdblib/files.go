@@ -243,6 +243,7 @@ func InitSFTP(sshUser string, host string, key string) *sftp.Client {
 	config := &ssh.ClientConfig{
 		User: sshUser,
 		Auth: auths,
+                HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 	sshhost := fmt.Sprintf("%s:22", host)
 	conn, err := ssh.Dial("tcp", sshhost, config)
