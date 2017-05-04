@@ -5,7 +5,6 @@
 package nmon
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -105,24 +104,7 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 	nmon.SetLocation(config.Timezone)
 	nmon.Debug = config.Debug
 
-	var lines []string
-	if len(nmonFile.Host) > 0 {
-		scanner, err := nmonFile.GetRemoteScanner()
-		nmon2influxdblib.CheckError(err)
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			lines = append(lines, scanner.Text())
-		}
-		scanner.Close()
-	} else {
-		scanner, err := nmonFile.GetScanner()
-		nmon2influxdblib.CheckError(err)
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			lines = append(lines, scanner.Text())
-		}
-		scanner.Close()
-	}
+	lines := nmonFile.Content()
 
 	var userSkipRegexp *regexp.Regexp
 
@@ -130,7 +112,8 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 		skipped := strings.Replace(config.ImportSkipMetrics, ",", "|", -1)
 		userSkipRegexp = regexp.MustCompile(skipped)
 	}
-
+	badtext := fmt.Sprintf("%s%s",nmonFile.Delimiter(),nmonFile.Delimiter())
+  var badRegexp = regexp.MustCompile(badtext)
 	for _, line := range lines {
 
 		if cpuallRegexp.MatchString(line) && !config.ImportAllCpus {
@@ -179,7 +162,8 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 			if badRegexp.MatchString(line) {
 				continue
 			}
-			elems := strings.Split(line, ",")
+
+			elems := strings.Split(line, nmonFile.Delimiter())
 
 			if len(elems) < 3 {
 				if config.Debug == true {
@@ -233,7 +217,7 @@ func (nmon *Nmon) StopTime() string {
 	return nmon.stoptime.UTC().Format(time.RFC3339)
 }
 
-const timeformat = "15:04:05,02-Jan-2006"
+const timeformat = "15:04:05 02-Jan-2006"
 
 //SetLocation set the timezone used to input metrics in InfluxDB
 func (nmon *Nmon) SetLocation(tz string) (err error) {
@@ -262,7 +246,9 @@ func (nmon *Nmon) ConvertTimeStamp(s string) (time.Time, error) {
 		return time.Now().Truncate(24 * time.Hour), err
 	}
 
-	t, err := time.ParseInLocation(timeformat, s, nmon.Location)
+  //replace separator
+  stamp := s[0:8] + " " + s[9:]
+	t, err := time.ParseInLocation(timeformat, stamp, nmon.Location)
 	return t, err
 }
 

@@ -20,19 +20,18 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-var hostRegexp = regexp.MustCompile(`^AAA,host,(\S+)`)
-var serialRegexp = regexp.MustCompile(`^AAA,SerialNumber,(\S+)`)
-var osRegexp = regexp.MustCompile(`^AAA,.*(Linux|AIX)`)
-var timeRegexp = regexp.MustCompile(`^ZZZZ,([^,]+),(.*)$`)
-var intervalRegexp = regexp.MustCompile(`^AAA,interval,(\d+)`)
-var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|,T\d`)
-var infoRegexp = regexp.MustCompile(`AAA,(.*)`)
-var badRegexp = regexp.MustCompile(`,,`)
+var hostRegexp = regexp.MustCompile(`^AAA.host.(\S+)`)
+var serialRegexp = regexp.MustCompile(`^AAA.SerialNumber.(\S+)`)
+var osRegexp = regexp.MustCompile(`^AAA.*(Linux|AIX)`)
+var timeRegexp = regexp.MustCompile(`^ZZZZ.(T\d+).(.*)$`)
+var intervalRegexp = regexp.MustCompile(`^AAA.interval.(\d+)`)
+var headerRegexp = regexp.MustCompile(`^AAA|^BBB|^UARG|\WT\d{4,16}`)
+var infoRegexp = regexp.MustCompile(`^AAA.(.*)`)
 var cpuallRegexp = regexp.MustCompile(`^CPU\d+|^SCPU\d+|^PCPU\d+`)
 var diskallRegexp = regexp.MustCompile(`^DISK`)
-var skipRegexp = regexp.MustCompile(`T0+,|^Z|^TOP,%CPU`)
-var statsRegexp = regexp.MustCompile(`^[^,]+?,(T\d+)`)
-var topRegexp = regexp.MustCompile(`^TOP,\d+,(T\d+)`)
+var skipRegexp = regexp.MustCompile(`T0+\W|^Z|^TOP.%CPU`)
+var statsRegexp = regexp.MustCompile(`\W(T\d{4,16})`)
+var topRegexp = regexp.MustCompile(`^TOP.\d+.(T\d+)`)
 var nfsRegexp = regexp.MustCompile(`^NFS`)
 var nameRegexp = regexp.MustCompile(`(\d+)$`)
 
@@ -63,6 +62,7 @@ func Import(c *cli.Context) {
 	}
 
 	for _, nmonFile := range nmonFiles.Valid() {
+
 
 		// store the list of metrics which was logged as skipped
 		LoggedSkippedMetrics := make(map[string]bool)
@@ -104,7 +104,6 @@ func Import(c *cli.Context) {
 			}
 		}
 		for _, line := range lines {
-
 			if cpuallRegexp.MatchString(line) && !config.ImportAllCpus {
 				continue
 			}
@@ -119,7 +118,7 @@ func Import(c *cli.Context) {
 
 			if statsRegexp.MatchString(line) {
 				matched := statsRegexp.FindStringSubmatch(line)
-				elems := strings.Split(line, ",")
+				elems := strings.Split(line, nmonFile.Delimiter())
 				name := elems[0]
 
 				if len(config.ImportSkipMetrics) > 0 {
@@ -197,7 +196,7 @@ func Import(c *cli.Context) {
 
 			if topRegexp.MatchString(line) {
 				matched := topRegexp.FindStringSubmatch(line)
-				elems := strings.Split(line, ",")
+				elems := strings.Split(line, nmonFile.Delimiter())
 				name := elems[0]
 				if len(config.ImportSkipMetrics) > 0 {
 					if userSkipRegexp.MatchString(name) {

@@ -27,19 +27,21 @@ import (
 
 var remoteFileRegexp = regexp.MustCompile(`(\S+):(\S+)`)
 var remoteUserRegexp = regexp.MustCompile(`(\S+)@(\S+)`)
+var delimiterRegexp = regexp.MustCompile(`^\w+(.)`)
 
 const gzipfile = ".gz"
 const size = 64000
 
 // File structure used to select nmon files to import
 type File struct {
-	Name     string
-	FileType string
-	Host     string
-	SSHUser  string
-	SSHKey   string
-	checksum string
-	lines    []string
+	Name      string
+	FileType  string
+	Host      string
+	SSHUser   string
+	SSHKey    string
+	checksum  string
+	delimiter string
+	lines     []string
 }
 
 // Files array of File
@@ -97,6 +99,20 @@ func (nmonFile *File) GetRemoteScanner() (*RemoteFileScanner, error) {
 
 	reader := bufio.NewReader(file)
 	return &RemoteFileScanner{file, bufio.NewScanner(reader)}, nil
+}
+
+//Delimiter return delimiter character used inside the nmon file
+func (nmonFile *File) Delimiter() (string) {
+
+  if len(nmonFile.delimiter) > 0 {
+		return nmonFile.delimiter
+	}
+
+	if delimiterRegexp.MatchString(nmonFile.lines[1]) {
+		matched := delimiterRegexp.FindStringSubmatch(nmonFile.lines[1])
+		return matched[1]
+	}
+	return ","
 }
 
 //Checksum generates SHA1 file checksum
