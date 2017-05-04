@@ -10,6 +10,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"io"
 	"io/ioutil"
 	"log"
@@ -28,6 +29,7 @@ import (
 var remoteFileRegexp = regexp.MustCompile(`(\S+):(\S+)`)
 var remoteUserRegexp = regexp.MustCompile(`(\S+)@(\S+)`)
 var delimiterRegexp = regexp.MustCompile(`^\w+(.)`)
+var statsRegexp = regexp.MustCompile(`\W(T\d{4,16})`)
 
 const gzipfile = ".gz"
 const size = 64000
@@ -40,7 +42,7 @@ type File struct {
 	SSHUser   string
 	SSHKey    string
 	checksum  string
-	delimiter string
+	Delimiter string
 	lines     []string
 }
 
@@ -101,19 +103,7 @@ func (nmonFile *File) GetRemoteScanner() (*RemoteFileScanner, error) {
 	return &RemoteFileScanner{file, bufio.NewScanner(reader)}, nil
 }
 
-//Delimiter return delimiter character used inside the nmon file
-func (nmonFile *File) Delimiter() (string) {
 
-  if len(nmonFile.delimiter) > 0 {
-		return nmonFile.delimiter
-	}
-
-	if delimiterRegexp.MatchString(nmonFile.lines[1]) {
-		matched := delimiterRegexp.FindStringSubmatch(nmonFile.lines[1])
-		return matched[1]
-	}
-	return ","
-}
 
 //Checksum generates SHA1 file checksum
 func (nmonFile *File) Checksum() (fileHash string) {
@@ -279,23 +269,55 @@ func (nmonFile *File) Content() []string {
 	if len(nmonFile.lines) > 0 {
 		return nmonFile.lines
 	}
+
 	if len(nmonFile.Host) > 0 {
 		scanner, err := nmonFile.GetRemoteScanner()
 		CheckError(err)
 		scanner.Split(bufio.ScanLines)
+		first := true
 		for scanner.Scan() {
-			nmonFile.lines = append(nmonFile.lines, scanner.Text())
+			line := scanner.Text()
+			if first {
+				if delimiterRegexp.MatchString(line) {
+					matched := delimiterRegexp.FindStringSubmatch(line)
+					nmonFile.Delimiter = matched[1]
+				} else {
+				  nmonFile.Delimiter = ","
+			  }
+				first = false
+			}
+
+			if nmonFile.Delimiter == ";" {
+				line = strings.Replace(line, ",", ".", -1)
+			}
+			nmonFile.lines = append(nmonFile.lines, line)
 		}
 		scanner.Close()
 	} else {
 		scanner, err := nmonFile.GetScanner()
 		CheckError(err)
 		scanner.Split(bufio.ScanLines)
+		first := true
 		for scanner.Scan() {
-			nmonFile.lines = append(nmonFile.lines, scanner.Text())
+			line := scanner.Text()
+			if first {
+				if delimiterRegexp.MatchString(line) {
+					matched := delimiterRegexp.FindStringSubmatch(line)
+					nmonFile.Delimiter = matched[1]
+				} else {
+					nmonFile.Delimiter = ","
+				}
+				first = false
+			}
+
+			if statsRegexp.MatchString(line) && nmonFile.Delimiter == ";" {
+				line = strings.Replace(line, ",", ".", -1)
+			}
+			nmonFile.lines = append(nmonFile.lines, line)
 		}
 		scanner.Close()
 	}
+
 
 	sort.Strings(nmonFile.lines)
 

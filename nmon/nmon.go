@@ -112,7 +112,7 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 		skipped := strings.Replace(config.ImportSkipMetrics, ",", "|", -1)
 		userSkipRegexp = regexp.MustCompile(skipped)
 	}
-	badtext := fmt.Sprintf("%s%s",nmonFile.Delimiter(),nmonFile.Delimiter())
+	badtext := fmt.Sprintf("%s%s",nmonFile.Delimiter,nmonFile.Delimiter)
   var badRegexp = regexp.MustCompile(badtext)
 	for _, line := range lines {
 
@@ -163,7 +163,7 @@ func InitNmon(config *nmon2influxdblib.Config, nmonFile nmon2influxdblib.File) (
 				continue
 			}
 
-			elems := strings.Split(line, nmonFile.Delimiter())
+			elems := strings.Split(line, nmonFile.Delimiter)
 
 			if len(elems) < 3 {
 				if config.Debug == true {

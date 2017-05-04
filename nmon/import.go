@@ -76,7 +76,7 @@ func Import(c *cli.Context) {
 		}
 
 		lines := nmonFile.Content()
-
+		log.Printf("NMON file separator: %s\n", nmonFile.Delimiter)
 		var last string
 		filters := new(influxdbclient.Filters)
 		filters.Add("file", path.Base(nmonFile.Name), "text")
@@ -103,7 +103,9 @@ func Import(c *cli.Context) {
 				continue
 			}
 		}
+
 		for _, line := range lines {
+
 			if cpuallRegexp.MatchString(line) && !config.ImportAllCpus {
 				continue
 			}
@@ -118,7 +120,7 @@ func Import(c *cli.Context) {
 
 			if statsRegexp.MatchString(line) {
 				matched := statsRegexp.FindStringSubmatch(line)
-				elems := strings.Split(line, nmonFile.Delimiter())
+				elems := strings.Split(line, nmonFile.Delimiter)
 				name := elems[0]
 
 				if len(config.ImportSkipMetrics) > 0 {
@@ -184,7 +186,7 @@ func Import(c *cli.Context) {
 					}
 					influxdb.AddPoint(measurement, timestamp, field, tags)
 
-					if influxdb.PointsCount() == 5000 {
+					if influxdb.PointsCount() >= 5000 {
 						err = influxdb.WritePoints()
 						nmon2influxdblib.CheckError(err)
 						count += influxdb.PointsCount()
@@ -196,7 +198,8 @@ func Import(c *cli.Context) {
 
 			if topRegexp.MatchString(line) {
 				matched := topRegexp.FindStringSubmatch(line)
-				elems := strings.Split(line, nmonFile.Delimiter())
+
+				elems := strings.Split(line, nmonFile.Delimiter)
 				name := elems[0]
 				if len(config.ImportSkipMetrics) > 0 {
 					if userSkipRegexp.MatchString(name) {
