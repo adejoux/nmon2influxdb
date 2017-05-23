@@ -22,7 +22,7 @@ type PCMData struct {
 			SampleType         string `json:"sampleType"`
 			SystemFirmwareUtil struct {
 				UtilizedProcUnits []interface{} `json:"utilizedProcUnits"`
-				AssignedMem       []int         `json:"assignedMem"`
+				AssignedMem       []float64         `json:"assignedMem"`
 			} `json:"systemFirmwareUtil"`
 			ServerUtil struct {
 				Processor struct {
@@ -32,10 +32,10 @@ type PCMData struct {
 					ConfigurableProcUnits []float64 `json:"configurableProcUnits"`
 				} `json:"processor"`
 				Memory struct {
-					TotalMem           []int `json:"totalMem"`
-					AssignedMemToLpars []int `json:"assignedMemToLpars"`
-					AvailableMem       []int `json:"availableMem"`
-					ConfigurableMem    []int `json:"configurableMem"`
+					TotalMem           []float64 `json:"totalMem"`
+					AssignedMemToLpars []float64 `json:"assignedMemToLpars"`
+					AvailableMem       []float64 `json:"availableMem"`
+					ConfigurableMem    []float64 `json:"configurableMem"`
 				} `json:"memory"`
 				SharedProcessorPool []struct {
 					AssignedProcUnits   []float64 `json:"assignedProcUnits"`
@@ -68,14 +68,14 @@ type PCMData struct {
 				ID     int    `json:"id"`
 				Name   string `json:"name"`
 				Memory struct {
-					AssignedMem []int `json:"assignedMem"`
-					UtilizedMem []int `json:"utilizedMem"`
+					AssignedMem []float64 `json:"assignedMem"`
+					UtilizedMem []float64 `json:"utilizedMem"`
 				} `json:"memory"`
 				Processor struct {
 					PoolID                    int       `json:"poolId"`
 					Weight                    int       `json:"weight"`
 					Mode                      string    `json:"mode"`
-					MaxVirtualProcessors      []int     `json:"maxVirtualProcessors"`
+					MaxVirtualProcessors      []float64     `json:"maxVirtualProcessors"`
 					MaxProcUnits              []float64 `json:"maxProcUnits"`
 					EntitledProcUnits         []float64 `json:"entitledProcUnits"`
 					UtilizedProcUnits         []float64 `json:"utilizedProcUnits"`
@@ -123,8 +123,8 @@ type PCMData struct {
 					SharedStoragePools []struct {
 						TransmittedBytes []float64 `json:"transmittedBytes"`
 						ID               string    `json:"id"`
-						TotalSpace       []int     `json:"totalSpace"`
-						UsedSpace        []int     `json:"usedSpace"`
+						TotalSpace       []float64     `json:"totalSpace"`
+						UsedSpace        []float64     `json:"usedSpace"`
 						NumOfReads       []float64 `json:"numOfReads"`
 						NumOfWrites      []float64 `json:"numOfWrites"`
 						ReadBytes        []float64 `json:"readBytes"`
@@ -135,7 +135,7 @@ type PCMData struct {
 						Wwpn             string    `json:"wwpn"`
 						PhysicalLocation string    `json:"physicalLocation"`
 						NumOfPorts       int       `json:"numOfPorts"`
-						RunningSpeed     []int     `json:"runningSpeed"`
+						RunningSpeed     []float64     `json:"runningSpeed"`
 						ID               string    `json:"id"`
 						NumOfReads       []float64 `json:"numOfReads"`
 						NumOfWrites      []float64 `json:"numOfWrites"`
@@ -159,8 +159,8 @@ type PCMData struct {
 				Name   string `json:"name"`
 				Type   string `json:"type"`
 				Memory struct {
-					LogicalMem        []int `json:"logicalMem"`
-					BackedPhysicalMem []int `json:"backedPhysicalMem"`
+					LogicalMem        []float64 `json:"logicalMem"`
+					BackedPhysicalMem []float64 `json:"backedPhysicalMem"`
 				} `json:"memory"`
 				Processor struct {
 					PoolID                      int       `json:"poolId"`
@@ -185,7 +185,7 @@ type PCMData struct {
 						ViosID           int       `json:"viosId"`
 						PhysicalLocation string    `json:"physicalLocation"`
 						PhysicalPortWWPN string    `json:"physicalPortWWPN"`
-						RunningSpeed     []int     `json:"runningSpeed"`
+						RunningSpeed     []float64     `json:"runningSpeed"`
 						ID               string    `json:"id"`
 						NumOfReads       []float64 `json:"numOfReads"`
 						NumOfWrites      []float64 `json:"numOfWrites"`

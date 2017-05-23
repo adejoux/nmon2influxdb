@@ -101,13 +101,14 @@ func (hmc *HMC) WritePoints() (err error) {
 }
 
 // AddPoint add a InfluxDB point. It's using the GlobalPoint parameter to fill some fields
-func (hmc *HMC) AddPoint(point Point) {
+func (hmc *HMC) AddPoint(name string, metric string, values []float64) {
 
-	value, ok := point.Value.(float64)
-	if ok != true {
-		// Else it's int type(no other possible types)
-		value = float64(point.Value.(int))
+  value := 0.0
+	if len(values) > 0 {
+		value = values[0]
 	}
+
+	point := Point{ Name: name, Metric: metric, Value: value}
 
 	tags := map[string]string{"system": hmc.GlobalPoint.System, "name": point.Metric}
 	if len(hmc.GlobalPoint.Pool) > 0 {
