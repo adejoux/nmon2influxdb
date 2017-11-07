@@ -23,50 +23,50 @@ var secretPassword = "secret"
 
 // Config is the configuration structure used by nmon2influxdb
 type Config struct {
-	Debug                bool
-	DebugFile            string
-	Timezone             string
-	InfluxdbUser         string
-	InfluxdbPassword     string
-	InfluxdbServer       string
-	InfluxdbPort         string
-	InfluxdbSecure 			 bool
+	Debug                 bool
+	DebugFile             string
+	Timezone              string
+	InfluxdbUser          string
+	InfluxdbPassword      string
+	InfluxdbServer        string
+	InfluxdbPort          string
+	InfluxdbSecure        bool
 	InfluxdbSkipCertCheck bool
-	InfluxdbDatabase     string
-	GrafanaUser          string
-	GrafanaPassword      string
-	GrafanaURL           string `toml:"grafana_URL"`
-	GrafanaAccess        string
-	GrafanaDatasource    string
-	HMCServer            string `toml:"hmc_server"`
-	HMCUser              string `toml:"hmc_user"`
-	HMCPassword          string `toml:"hmc_password"`
-	HMCDatabase          string `toml:"hmc_database"`
-	HMCDataRetention     string `toml:"hmc_data_retention"`
-	HMCManagedSystem     string `toml:"hmc_managed_system"`
-	HMCManagedSystemOnly bool   `toml:"hmc_managed_system_only"`
-	HMCSamples           int    `toml:"hmc_samples"`
-	ImportSkipDisks      bool
-	ImportAllCpus        bool
-	ImportBuildDashboard bool
-	ImportForce          bool
-	ImportSkipMetrics    string
-	ImportLogDatabase    string
-	ImportLogRetention   string
-	ImportDataRetention  string
-	ImportSSHUser        string `toml:"import_ssh_user"`
-	ImportSSHKey         string `toml:"import_ssh_key"`
-	DashboardWriteFile   bool
-	StatsLimit           int
-	StatsSort            string
-	StatsFilter          string
-	StatsFrom            string
-	StatsTo              string
-	StatsHost            string
-	Metric               string `toml:"metric,omitempty"`
-	ListFilter           string `toml:",omitempty"`
-	ListHost             string `toml:",omitempty"`
-	Inputs               Inputs `toml:"input"`
+	InfluxdbDatabase      string
+	GrafanaUser           string
+	GrafanaPassword       string
+	GrafanaURL            string `toml:"grafana_URL"`
+	GrafanaAccess         string
+	GrafanaDatasource     string
+	HMCServer             string `toml:"hmc_server"`
+	HMCUser               string `toml:"hmc_user"`
+	HMCPassword           string `toml:"hmc_password"`
+	HMCDatabase           string `toml:"hmc_database"`
+	HMCDataRetention      string `toml:"hmc_data_retention"`
+	HMCManagedSystem      string `toml:"hmc_managed_system"`
+	HMCManagedSystemOnly  bool   `toml:"hmc_managed_system_only"`
+	HMCSamples            int    `toml:"hmc_samples"`
+	ImportSkipDisks       bool
+	ImportAllCpus         bool
+	ImportBuildDashboard  bool
+	ImportForce           bool
+	ImportSkipMetrics     string
+	ImportLogDatabase     string
+	ImportLogRetention    string
+	ImportDataRetention   string
+	ImportSSHUser         string `toml:"import_ssh_user"`
+	ImportSSHKey          string `toml:"import_ssh_key"`
+	DashboardWriteFile    bool
+	StatsLimit            int
+	StatsSort             string
+	StatsFilter           string
+	StatsFrom             string
+	StatsTo               string
+	StatsHost             string
+	Metric                string `toml:"metric,omitempty"`
+	ListFilter            string `toml:",omitempty"`
+	ListHost              string `toml:",omitempty"`
+	Inputs                Inputs `toml:"input"`
 }
 
 // Inputs allows to put multiple input in the configuration file
@@ -87,39 +87,39 @@ func InitConfig() Config {
 	sshKey := filepath.Join(home, "/.ssh/id_rsa")
 
 	return Config{Debug: false,
-		Timezone:             "Europe/Paris",
-		InfluxdbUser:         "root",
-		InfluxdbPassword:     "root",
-		InfluxdbServer:       "localhost",
-		InfluxdbPort:         "8086",
-		InfluxdbDatabase:     "nmon_reports",
-		InfluxdbSecure: 			false,
-		InfluxdbSkipCertCheck:  false,
-		HMCUser:              "hscroot",
-		HMCPassword:          "abc123",
-		HMCDatabase:          "nmon2influxdbHMC",
-		HMCSamples:           10,
-		GrafanaUser:          "admin",
-		GrafanaPassword:      "admin",
-		GrafanaURL:           "http://localhost:3000",
-		GrafanaAccess:        "direct",
-		GrafanaDatasource:    "nmon2influxdb",
-		ImportSkipDisks:      false,
-		ImportAllCpus:        false,
-		ImportBuildDashboard: false,
-		ImportForce:          false,
-		ImportLogDatabase:    "nmon2influxdb_log",
-		ImportLogRetention:   "2d",
-		ImportSSHUser:        currUser.Username,
-		ImportSSHKey:         sshKey,
-		DashboardWriteFile:   false,
-		ImportSkipMetrics:    "JFSINODE|TOP|PCPU",
-		StatsLimit:           20,
-		StatsSort:            "mean",
-		StatsFilter:          "",
-		StatsFrom:            "",
-		StatsTo:              "",
-		StatsHost:            "",
+		Timezone:              "Europe/Paris",
+		InfluxdbUser:          "root",
+		InfluxdbPassword:      "root",
+		InfluxdbServer:        "localhost",
+		InfluxdbPort:          "8086",
+		InfluxdbDatabase:      "nmon_reports",
+		InfluxdbSecure:        false,
+		InfluxdbSkipCertCheck: false,
+		HMCUser:               "hscroot",
+		HMCPassword:           "abc123",
+		HMCDatabase:           "nmon2influxdbHMC",
+		HMCSamples:            10,
+		GrafanaUser:           "admin",
+		GrafanaPassword:       "admin",
+		GrafanaURL:            "http://localhost:3000",
+		GrafanaAccess:         "direct",
+		GrafanaDatasource:     "nmon2influxdb",
+		ImportSkipDisks:       false,
+		ImportAllCpus:         false,
+		ImportBuildDashboard:  false,
+		ImportForce:           false,
+		ImportLogDatabase:     "nmon2influxdb_log",
+		ImportLogRetention:    "2d",
+		ImportSSHUser:         currUser.Username,
+		ImportSSHKey:          sshKey,
+		DashboardWriteFile:    false,
+		ImportSkipMetrics:     "JFSINODE|TOP|PCPU",
+		StatsLimit:            20,
+		StatsSort:             "mean",
+		StatsFilter:           "",
+		StatsFrom:             "",
+		StatsTo:               "",
+		StatsHost:             "",
 	}
 }
 
@@ -202,6 +202,7 @@ func (config *Config) AddDashboardParams() {
 	config.GrafanaDatasource = dfltConfig.GrafanaDatasource
 	config.GrafanaUser = dfltConfig.GrafanaUser
 	config.GrafanaPassword = dfltConfig.GrafanaPassword
+	config.DashboardWriteFile = dfltConfig.DashboardWriteFile
 }
 
 // ParseParameters parse parameter from command line in Config struct
@@ -277,13 +278,13 @@ func ParseParameters(c *cli.Context) (config *Config) {
 // ConnectDB connect to the specified influxdb database
 func (config *Config) ConnectDB(db string) *influxdbclient.InfluxDB {
 	influxdbConfig := influxdbclient.InfluxDBConfig{
-		Host:     config.InfluxdbServer,
-		Port:     config.InfluxdbPort,
-		Database: db,
-		User:     config.InfluxdbUser,
-		Pass:     config.InfluxdbPassword,
-		Debug:    config.Debug,
-		Secure:   config.InfluxdbSecure,
+		Host:          config.InfluxdbServer,
+		Port:          config.InfluxdbPort,
+		Database:      db,
+		User:          config.InfluxdbUser,
+		Pass:          config.InfluxdbPassword,
+		Debug:         config.Debug,
+		Secure:        config.InfluxdbSecure,
 		SkipCertCheck: config.InfluxdbSkipCertCheck,
 	}
 	influxdb, err := influxdbclient.NewInfluxDB(influxdbConfig)

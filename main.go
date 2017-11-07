@@ -272,13 +272,13 @@ func main() {
 			Value: config.InfluxdbPort,
 		},
 		cli.BoolFlag{
-			Name:  "secure",
-			Usage: "use ssl for InfluxDB",
+			Name:   "secure",
+			Usage:  "use ssl for InfluxDB",
 			EnvVar: "NMON2INFLUXDB_SECURE",
 		},
 		cli.BoolFlag{
-			Name:  "skip_cert_check",
-			Usage: "skip cert check for ssl connzction to InfluxDB",
+			Name:   "skip_cert_check",
+			Usage:  "skip cert check for ssl connzction to InfluxDB",
 			EnvVar: "NMON2INFLUXDB_SKIP_CERT_CHECK",
 		},
 		cli.StringFlag{

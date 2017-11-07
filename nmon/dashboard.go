@@ -8,10 +8,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+	"path"
 	"regexp"
 	"sort"
-        "path"
 
 	"github.com/adejoux/grafanaclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -116,7 +117,7 @@ func (nmon *Nmon) WriteDashboard() {
 	r.WriteTo(writer)
 	writer.Flush()
 
-	fmt.Printf("Writing GRAFANA dashboard: %s\n", filename)
+	log.Printf("Writing GRAFANA dashboard: %s\n", filename)
 
 }
 
@@ -826,13 +827,13 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 			}
 
 			if status != "ok" {
-				fmt.Printf("No plugin for influxDB in Grafana !\n")
+				log.Printf("No plugin for influxDB in Grafana !\n")
 				os.Exit(1)
 			}
 		} else {
 			nmon2influxdblib.CheckError(err)
 			if _, present := plugins["influxdb"]; !present {
-				fmt.Printf("No plugin for influxDB in Grafana !\n")
+				log.Printf("No plugin for influxDB in Grafana !\n")
 				os.Exit(1)
 			}
 		}
@@ -848,7 +849,7 @@ func (nmon *Nmon) InitGrafanaSession() *grafanaclient.Session {
 		}
 		err = grafana.CreateDataSource(ds)
 		nmon2influxdblib.CheckError(err)
-		fmt.Printf("Grafana %s DataSource created.\n", nmon.Config.GrafanaDatasource)
+		log.Printf("Grafana %s DataSource created.\n", nmon.Config.GrafanaDatasource)
 	}
 
 	return grafana
@@ -860,10 +861,10 @@ func (nmon *Nmon) UploadDashboard(dashboard grafanaclient.Dashboard) (err error)
 
 	err = grafana.UploadDashboard(dashboard, true)
 	if err != nil {
-		fmt.Printf("Unable to upload Grafana dashboard: %s ! \n", err.Error())
+		log.Printf("Unable to upload Grafana dashboard: %s ! \n", err.Error())
 		return
 	}
 
-	fmt.Printf("Dashboard uploaded to grafana\n")
+	log.Printf("Dashboard uploaded to grafana\n")
 	return
 }

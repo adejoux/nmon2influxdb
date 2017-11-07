@@ -7,13 +7,13 @@ package nmon
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"math"
 
 	"github.com/adejoux/influxdbclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
@@ -63,7 +63,6 @@ func Import(c *cli.Context) {
 
 	for _, nmonFile := range nmonFiles.Valid() {
 
-
 		// store the list of metrics which was logged as skipped
 		LoggedSkippedMetrics := make(map[string]bool)
 		var count int64
@@ -75,18 +74,26 @@ func Import(c *cli.Context) {
 			nmon.TagParsers = tagParsers
 		}
 
+		if nmon.Debug {
+			log.Printf("Import file: %s", nmonFile.Name)
+		}
+
 		lines := nmonFile.Content()
 		log.Printf("NMON file separator: %s\n", nmonFile.Delimiter)
 		var last string
 		filters := new(influxdbclient.Filters)
 		filters.Add("file", path.Base(nmonFile.Name), "text")
 
-		result, err := influxdbLog.ReadLastPoint("value", filters, "timestamp")
+		timeStamp, err := influxdbLog.ReadLastPoint("value", filters, "timestamp")
 		nmon2influxdblib.CheckError(err)
 
+		if nmon.Debug {
+			log.Printf("influxdb stored timestamp: %v\n", timeStamp)
+		}
+
 		var lastTime time.Time
-		if !nmon.Config.ImportForce && len(result) > 0 {
-			lastTime, err = nmon.ConvertTimeStamp(result[1].(string))
+		if !nmon.Config.ImportForce && len(timeStamp) > 0 {
+			lastTime, err = nmon.ConvertTimeStamp(timeStamp)
 		} else {
 			lastTime, err = nmon.ConvertTimeStamp("00:00:00,01-JAN-1900")
 		}
@@ -95,10 +102,14 @@ func Import(c *cli.Context) {
 		origChecksum, err := influxdbLog.ReadLastPoint("value", filters, "checksum")
 		nmon2influxdblib.CheckError(err)
 
+		if nmon.Debug {
+			log.Printf("influxdb stored checksum: %v\n", origChecksum)
+		}
+
 		ckfield := map[string]interface{}{"value": nmonFile.Checksum()}
 		if !nmon.Config.ImportForce && len(origChecksum) > 0 {
 
-			if origChecksum[1].(string) == nmonFile.Checksum() {
+			if origChecksum == nmonFile.Checksum() {
 				fmt.Printf("file not changed since last import: %s\n", nmonFile.Name)
 				continue
 			}
@@ -159,7 +170,7 @@ func Import(c *cli.Context) {
 
 					// try to convert string to integer
 					converted, parseErr := strconv.ParseFloat(value, 64)
-					if (parseErr != nil || math.IsNaN(converted)) {
+					if parseErr != nil || math.IsNaN(converted) {
 						//if not working, skip to next value. We don't want text values in InfluxDB.
 						continue
 					}
