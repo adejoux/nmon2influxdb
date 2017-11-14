@@ -194,6 +194,15 @@ func Import(c *cli.Context) {
 								}
 							}
 						}
+
+						if _, ok := nmon.TagParsers["_ALL"][key]; ok {
+							for _, tagParser := range nmon.TagParsers["_ALL"][key] {
+								if tagParser.Regexp.MatchString(value) {
+									tags[tagParser.Name] = tagParser.Value
+								}
+							}
+						}
+
 					}
 					influxdb.AddPoint(measurement, timestamp, field, tags)
 

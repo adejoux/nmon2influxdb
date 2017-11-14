@@ -6,6 +6,7 @@ package nmon2influxdblib
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 //Tags array
@@ -31,20 +32,30 @@ func ParseInputs(inputs Inputs) TagParsers {
 			fmt.Printf("could not compile Config Input match parameter %s\n", input.Match)
 		}
 
-		// Intialize if empty struct
-		if _, ok := tagParsers[input.Measurement]; !ok {
-			tagParsers[input.Measurement] = make(map[string]Tags)
+		var measurements []string
+
+		if len(input.Measurement) == 0 {
+			measurements = []string{"_ALL"}
+		} else {
+			measurements = strings.Split(input.Measurement, ",")
 		}
 
-		tagger := tagParsers[input.Measurement][input.Name]
+		for _, measurement := range measurements {
+			// Intialize if empty struct
+			if _, ok := tagParsers[measurement]; !ok {
+				tagParsers[measurement] = make(map[string]Tags)
+			}
 
-		for _, tag := range input.Tags {
-			tag.Regexp = tagRegexp
-			tagger = append(tagger, tag)
+			tagger := tagParsers[measurement][input.Name]
+
+			for _, tag := range input.Tags {
+				tag.Regexp = tagRegexp
+				tagger = append(tagger, tag)
+			}
+
+			tagParsers[measurement][input.Name] = tagger
 		}
-
-		tagParsers[input.Measurement][input.Name] = tagger
-
 	}
+
 	return tagParsers
 }

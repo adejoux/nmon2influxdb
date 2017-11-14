@@ -156,6 +156,13 @@ func (hmc *HMC) AddPoint(name string, metric string, values []float64) {
 				}
 			}
 		}
+		if _, ok := hmc.TagParsers["_ALL"][key]; ok {
+			for _, tagParser := range hmc.TagParsers["_ALL"][key] {
+				if tagParser.Regexp.MatchString(value) {
+					tags[tagParser.Name] = tagParser.Value
+				}
+			}
+		}
 	}
 	hmc.InfluxDB.AddPoint(point.Name, hmc.GlobalPoint.Timestamp, field, tags)
 }
