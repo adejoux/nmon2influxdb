@@ -1,0 +1,20 @@
+# .goreleaser.yml
+builds:
+  - binary: nmon2influxdb
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+archive:
+  format: tar.gz
+  replacements:
+    amd64: 64-bit
+    darwin: macOS
+release:
+  github:
+    owner: adejoux
+    name: nmon2influxdb
+  draft: false
+  prerelease: false

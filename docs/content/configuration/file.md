@@ -109,6 +109,10 @@ Attribute's description:
   * **Name**: name of the tag to check
   * **Match**: the regular expression used to check the tag value. No need to put the regular expression between '/' characters.
 
+If **Measurement** is not specified, the tags will be applied to all measurements.
+
+To specify multiple measurements, split them by comma: **measurement1,measurement2**
+
 It's possible to add multiple tags for the same data:
 
 
