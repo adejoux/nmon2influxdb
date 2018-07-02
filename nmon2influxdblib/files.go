@@ -10,7 +10,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"strings"
 	"io"
 	"io/ioutil"
 	"log"
@@ -19,6 +18,7 @@ import (
 	"path"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/pkg/sftp"
 
@@ -102,8 +102,6 @@ func (nmonFile *File) GetRemoteScanner() (*RemoteFileScanner, error) {
 	reader := bufio.NewReader(file)
 	return &RemoteFileScanner{file, bufio.NewScanner(reader)}, nil
 }
-
-
 
 //Checksum generates SHA1 file checksum
 func (nmonFile *File) Checksum() (fileHash string) {
@@ -234,8 +232,9 @@ func InitSFTP(sshUser string, host string, key string) *sftp.Client {
 			log.Fatal(err)
 		}
 		signer, err := ssh.ParsePrivateKey(pemBytes)
-		if err != nil {
-			log.Fatalf("parse key failed:%v", err)
+
+		if err == nil {
+			auths = append(auths, ssh.PublicKeys(signer))
 		}
 
 		auths = append(auths, ssh.PublicKeys(signer))
@@ -247,9 +246,9 @@ func InitSFTP(sshUser string, host string, key string) *sftp.Client {
 	}
 
 	config := &ssh.ClientConfig{
-		User: sshUser,
-		Auth: auths,
-                HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		User:            sshUser,
+		Auth:            auths,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 	sshhost := fmt.Sprintf("%s:22", host)
 	conn, err := ssh.Dial("tcp", sshhost, config)
@@ -282,8 +281,8 @@ func (nmonFile *File) Content() []string {
 					matched := delimiterRegexp.FindStringSubmatch(line)
 					nmonFile.Delimiter = matched[1]
 				} else {
-				  nmonFile.Delimiter = ","
-			  }
+					nmonFile.Delimiter = ","
+				}
 				first = false
 			}
 
@@ -317,7 +316,6 @@ func (nmonFile *File) Content() []string {
 		}
 		scanner.Close()
 	}
-
 
 	sort.Strings(nmonFile.lines)
 
