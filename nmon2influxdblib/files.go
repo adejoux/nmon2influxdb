@@ -32,7 +32,6 @@ var delimiterRegexp = regexp.MustCompile(`^\w+(.)`)
 var statsRegexp = regexp.MustCompile(`\W(T\d{4,16})`)
 
 const gzipfile = ".gz"
-const size = 64000
 
 // File structure used to select nmon files to import
 type File struct {
@@ -256,7 +255,7 @@ func InitSFTP(sshUser string, host string, key string) *sftp.Client {
 		log.Fatalf("dial failed:%v", err)
 	}
 
-	c, err := sftp.NewClient(conn, sftp.MaxPacket(size))
+	c, err := sftp.NewClient(conn)
 	if err != nil {
 		log.Fatalf("unable to start sftp subsytem: %v", err)
 	}
