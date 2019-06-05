@@ -37,6 +37,7 @@ type HMC struct {
 	ManagedSystemOnly   bool
 	Samples             int
 	TagParsers          nmon2influxdblib.TagParsers
+	Token               string
 }
 
 // Point is a struct to simplify InfluxDB point creation
@@ -87,8 +88,7 @@ func NewHMC(c *cli.Context) *HMC {
 	hmcURL := fmt.Sprintf("https://"+"%s"+":12443", config.HMCServer)
 	//initialize new http session
 	hmc.Session = NewSession(config.HMCUser, config.HMCPassword, hmcURL)
-	hmc.Session.doLogon()
-
+	hmc.Token = hmc.Session.doLogon()
 	return &hmc
 }
 
@@ -235,8 +235,12 @@ func NewSession(user string, password string, url string) *Session {
 	return &Session{client: &http.Client{Transport: tr, Jar: jar, Timeout: time.Second * timeout}, User: user, Password: password, url: url}
 }
 
+type Token struct {
+	API	string `xml:"X-API-Session"`
+}
+
 // doLogon performs the login to the inflxudb instance
-func (s *Session) doLogon() {
+func (s *Session) doLogon() (string){
 
 	authurl := s.url + "/rest/api/web/Logon"
 
@@ -272,6 +276,34 @@ func (s *Session) doLogon() {
 		defer response.Body.Close()
 		if response.StatusCode != 200 {
 			log.Fatalf("HMC authentication error: %s\n", response.Status)
+		}
+	}
+
+	// store session token
+	var token Token
+	bodyBytes, err := ioutil.ReadAll(response.Body)
+	xml.Unmarshal([]byte(bodyBytes), &token)
+	// log.Printf("%v", token.API)
+	return token.API
+}
+
+func (s *Session) DoLogoff(token string) {
+	authurl := s.url + "/rest/api/web/Logon"
+	request, err := http.NewRequest("DELETE", authurl, nil)
+
+	// set request headers
+	// log.Printf("%v", token)
+	request.Header.Set("X-API-Session", token)
+	response, err := s.client.Do(request)
+
+	if err != nil {
+		log.Fatalf("HMC error sending auth request: %v\n", err)
+	} else {
+		defer response.Body.Close()
+		if response.StatusCode != 204 {
+			log.Fatalf("HMC logoff error: %s\n", response.Status)
+		} else {
+			log.Printf("Succesfully logged off")
 		}
 	}
 }

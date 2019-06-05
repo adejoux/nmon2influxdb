@@ -286,4 +286,5 @@ func Import(c *cli.Context) {
 			}
 		}
 	}
+	hmc.Session.DoLogoff(hmc.Token)
 }
