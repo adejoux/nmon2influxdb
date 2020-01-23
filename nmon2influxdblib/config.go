@@ -46,6 +46,7 @@ type Config struct {
 	HMCManagedSystem      string `toml:"hmc_managed_system"`
 	HMCManagedSystemOnly  bool   `toml:"hmc_managed_system_only"`
 	HMCSamples            int    `toml:"hmc_samples"`
+	HMCTimeout            int    `toml:"hmc_timeout"`
 	ImportSkipDisks       bool
 	ImportAllCpus         bool
 	ImportBuildDashboard  bool
@@ -99,6 +100,7 @@ func InitConfig() Config {
 		HMCPassword:           "abc123",
 		HMCDatabase:           "nmon2influxdbHMC",
 		HMCSamples:            10,
+		HMCTimeout:            30,
 		GrafanaUser:           "admin",
 		GrafanaPassword:       "admin",
 		GrafanaURL:            "http://localhost:3000",
@@ -242,6 +244,7 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.HMCManagedSystem = c.String("managed_system")
 	config.HMCManagedSystemOnly = c.Bool("managed_system-only")
 	config.HMCSamples = c.Int("samples")
+	config.HMCTimeout = c.Int("timeout")
 	config.InfluxdbServer = c.GlobalString("server")
 	config.InfluxdbUser = c.GlobalString("user")
 	config.InfluxdbPort = c.GlobalString("port")

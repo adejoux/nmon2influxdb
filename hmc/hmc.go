@@ -24,9 +24,6 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-// hmc can be really slow to answer
-const timeout = 30
-
 // HMC contains the base struct used by all the hmc sub command
 type HMC struct {
 	Session             *Session
@@ -87,8 +84,9 @@ func NewHMC(c *cli.Context) *HMC {
 	}
 	hmcURL := fmt.Sprintf("https://"+"%s"+":12443", config.HMCServer)
 	//initialize new http session
-	hmc.Session = NewSession(config.HMCUser, config.HMCPassword, hmcURL)
+	hmc.Session = NewSession(config.HMCUser, config.HMCPassword, hmcURL, config.HMCTimeout)
 	hmc.Token = hmc.Session.doLogon()
+
 	return &hmc
 }
 
@@ -222,7 +220,7 @@ type Session struct {
 }
 
 // NewSession initialize a Session struct
-func NewSession(user string, password string, url string) *Session {
+func NewSession(user string, password string, url string, timeout int) *Session {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -232,7 +230,9 @@ func NewSession(user string, password string, url string) *Session {
 		log.Fatal(err)
 	}
 
-	return &Session{client: &http.Client{Transport: tr, Jar: jar, Timeout: time.Second * timeout}, User: user, Password: password, url: url}
+	log.Printf("Session Timeout %d\n", timeout)
+
+	return &Session{client: &http.Client{Transport: tr, Jar: jar, Timeout: time.Second * time.Duration(timeout)}, User: user, Password: password, url: url}
 }
 
 type Token struct {

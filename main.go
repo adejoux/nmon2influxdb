@@ -73,7 +73,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "nmon2influxdb"
 	app.Usage = "upload NMON stats to InfluxDB database"
-	app.Version = "2.1.5"
+	app.Version = "2.1.6"
 	app.Commands = []cli.Command{
 		{
 			Name:  "import",
@@ -253,6 +253,11 @@ func main() {
 							Name:  "samples",
 							Usage: "import latest <value> samples",
 							Value: config.HMCSamples,
+						},
+						cli.IntFlag{
+							Name:  "timeout",
+							Usage: "HMC connection timeout",
+							Value: config.HMCTimeout,
 						},
 					},
 				},
