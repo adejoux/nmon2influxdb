@@ -55,6 +55,7 @@ hmc_password="abc123"
 hmc_managed_system="mysystem"
 hmc_database="nmon2influxdbHMC"
 hmc_data_retention="40d"
+hmc_timeout="30"
 {{< /highlight >}}
 
 # Additional parameters

@@ -22,6 +22,7 @@ OPTIONS:
    --managed_system, -m 	only import this managed system
    --managed_system-only, --sys-only	skip partition metrics
    --samples "0"			import latest <value> samples
+   --timeout 30				set a connection timeout
 {{< /highlight >}}
 
 # Parameters
@@ -32,6 +33,7 @@ OPTIONS:
   * **managed_system**: fetch HMC PCM data only for this managed system
   * **--sys-only**: skip partition metrics
   * **--samples <value>**: fetch the latest <value> samples. Each sample is averaging 30 seconds.
+  * **--timeout <value>**: set a connection timeout
 
 # Environment variables
 
@@ -53,6 +55,7 @@ hmc_managed_system="mysystem"
 hmc_database="nmon2influxdbHMC"
 hmc_data_retention="40d"
 hmc_samples=10
+hmc_timeout=30
 {{< /highlight >}}
 
 It's possible to set all CLI parameters. It's also possible to change the InfluxDB database name with **hmc_database** and change the data retention with **hmc_data_retention**.
