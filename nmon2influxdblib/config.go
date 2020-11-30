@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 
 	"github.com/adejoux/influxdbclient"
-	"github.com/codegangsta/cli"
 	"github.com/naoina/toml"
+	"github.com/urfave/cli/v2"
 )
 
 //used for debug
@@ -236,8 +236,8 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.GrafanaAccess = c.String("gaccess")
 	config.GrafanaURL = c.String("gurl")
 	config.GrafanaDatasource = c.String("datasource")
-	config.Debug = c.GlobalBool("debug")
-	config.DebugFile = c.GlobalString("debug-file")
+	config.Debug = c.Bool("debug")
+	config.DebugFile = c.String("debug-file")
 	config.HMCServer = c.String("hmc")
 	config.HMCUser = c.String("hmcuser")
 	config.HMCPassword = c.String("hmcpass")
@@ -245,14 +245,14 @@ func ParseParameters(c *cli.Context) (config *Config) {
 	config.HMCManagedSystemOnly = c.Bool("managed_system-only")
 	config.HMCSamples = c.Int("samples")
 	config.HMCTimeout = c.Int("timeout")
-	config.InfluxdbServer = c.GlobalString("server")
-	config.InfluxdbUser = c.GlobalString("user")
-	config.InfluxdbPort = c.GlobalString("port")
-	config.InfluxdbDatabase = c.GlobalString("db")
-	config.InfluxdbSecure = c.GlobalBool("secure")
-	config.InfluxdbSkipCertCheck = c.GlobalBool("skip_cert_check")
-	config.InfluxdbPassword = c.GlobalString("pass")
-	config.Timezone = c.GlobalString("tz")
+	config.InfluxdbServer = c.String("server")
+	config.InfluxdbUser = c.String("user")
+	config.InfluxdbPort = c.String("port")
+	config.InfluxdbDatabase = c.String("db")
+	config.InfluxdbSecure = c.Bool("secure")
+	config.InfluxdbSkipCertCheck = c.Bool("skip_cert_check")
+	config.InfluxdbPassword = c.String("pass")
+	config.Timezone = c.String("tz")
 
 	if len(config.DebugFile) > 0 {
 		//if a debug file is set. Debug is true

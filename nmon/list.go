@@ -9,12 +9,12 @@ import (
 
 	"github.com/adejoux/influxdbclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli/v2"
 	//	"os"
 )
 
 //ListMeasurement list all measurements in INFLUXDB database
-func ListMeasurement(c *cli.Context) {
+func ListMeasurement(c *cli.Context) error {
 	// parsing parameters
 	config := nmon2influxdblib.ParseParameters(c)
 
@@ -40,4 +40,5 @@ func ListMeasurement(c *cli.Context) {
 			}
 		}
 	}
+	return nil
 }

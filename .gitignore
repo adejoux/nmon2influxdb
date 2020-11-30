@@ -2,3 +2,4 @@
 docs/public
 dist/
 nmon2influxdb
+nmon2influxdb.exe

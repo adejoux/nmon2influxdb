@@ -9,13 +9,13 @@ import (
 
 	"github.com/adejoux/influxdbclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli/v2"
 )
 
 const querytimeformat = "2006-01-02 15:04:05"
 
 //Stat get and display metrics statistics
-func Stat(c *cli.Context) {
+func Stat(c *cli.Context) error {
 	// parsing parameters
 	config := nmon2influxdblib.ParseParameters(c)
 	nmon := InitNmonTemplate(config)
@@ -48,6 +48,7 @@ func Stat(c *cli.Context) {
 	stats := influxdbclient.BuildStats(result)
 
 	DisplayStats(&stats, config.StatsSort, config.StatsLimit)
+	return nil
 }
 
 // DisplayStats displays metrics statistics in text mode.

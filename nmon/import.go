@@ -17,7 +17,7 @@ import (
 
 	"github.com/adejoux/influxdbclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli/v2"
 )
 
 var hostRegexp = regexp.MustCompile(`^AAA.host.(\S+)`)
@@ -36,9 +36,9 @@ var nfsRegexp = regexp.MustCompile(`^NFS`)
 var nameRegexp = regexp.MustCompile(`(\d+)$`)
 
 //Import is the entry point for subcommand nmon import
-func Import(c *cli.Context) {
+func Import(c *cli.Context) error {
 
-	if len(c.Args()) < 1 {
+	if c.Args().Len() < 1 {
 		fmt.Printf("file name or directory needs to be provided\n")
 		os.Exit(1)
 	}
@@ -51,7 +51,7 @@ func Import(c *cli.Context) {
 	influxdbLog := config.GetLogDB()
 
 	nmonFiles := new(nmon2influxdblib.Files)
-	nmonFiles.Parse(c.Args(), config.ImportSSHUser, config.ImportSSHKey)
+	nmonFiles.Parse(c.Args().Slice(), config.ImportSSHUser, config.ImportSSHKey)
 
 	tagParsers := nmon2influxdblib.ParseInputs(config.Inputs)
 
@@ -303,4 +303,6 @@ func Import(c *cli.Context) {
 			nmon2influxdblib.CheckError(err)
 		}
 	}
+
+	return nil
 }

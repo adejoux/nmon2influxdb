@@ -16,7 +16,7 @@ import (
 
 	"github.com/adejoux/grafanaclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli/v2"
 )
 
 var nmonFileRegexp = regexp.MustCompile(`\.(nmon|nmon.gz|nmon.bz2)$`)
@@ -28,9 +28,9 @@ const aix = "aix"
 const dataSource = "nmon2influxdb"
 
 // Dashboard entry point for nmon dashboard sub command
-func Dashboard(c *cli.Context) {
+func Dashboard(c *cli.Context) error {
 
-	if len(c.Args()) < 1 {
+	if c.Args().Len() < 1 {
 		fmt.Printf("file name needs to be provided\n")
 		os.Exit(1)
 	}
@@ -42,11 +42,12 @@ func Dashboard(c *cli.Context) {
 
 	if nmonFileRegexp.MatchString(file) {
 		DashboardFile(config, file)
-		return
+		return nil
 	}
 
 	DashboardTemplate(config, file)
 
+	return nil
 }
 
 //DashboardFile export dashboard to file

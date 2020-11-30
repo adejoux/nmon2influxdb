@@ -21,7 +21,7 @@ import (
 
 	"github.com/adejoux/influxdbclient"
 	"github.com/adejoux/nmon2influxdb/nmon2influxdblib"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli/v2"
 )
 
 // HMC contains the base struct used by all the hmc sub command
@@ -236,11 +236,11 @@ func NewSession(user string, password string, url string, timeout int) *Session 
 }
 
 type Token struct {
-	API	string `xml:"X-API-Session"`
+	API string `xml:"X-API-Session"`
 }
 
 // doLogon performs the login to the inflxudb instance
-func (s *Session) doLogon() (string){
+func (s *Session) doLogon() string {
 
 	authurl := s.url + "/rest/api/web/Logon"
 
